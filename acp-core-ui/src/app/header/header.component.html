@@ -1,0 +1,92 @@
+<div class="usa-overlay"></div>
+
+<header>
+
+  <div class="header-container" style="display: flex;">
+    <div class="logo-container" style="float:left;">
+      <a class="logo" [routerLink]="['/']" title="Navigate to Home Page">
+        <img src="../../assets/img/autonomic_solutions_logo.JPG" width="120%" id="as-logo-img"
+          alt="Cloud Accelerator Logo" style="margin:0px;">
+      </a>
+    </div>
+
+    <div class="navbar">
+      <div style="width: 100%;">
+        <div class="menu">
+          <ul>
+            <li><a routerLink="">ABOUT</a></li> <!--main links throughout the system-->
+            <li><a routerLink="">CONTACT US</a></li>
+            <li><a routerLink="services">SERVICES</a></li>
+          </ul>
+        </div>
+        <!-- <div class="textmain">
+          <p>Self-Manageable | Software Driven | Reusable Engineering </p>
+        </div> -->
+      </div>
+    </div>
+      <!-- Ask Vinay what he wants to do with this menu -->
+      <!--<p id="subtitle" style="text-align:right" *ngIf="this.curUser">
+       <div class="usa-cocap-menu">
+            <a (click)="clickConcept();" style="cursor:pointer;">Concept Overview</a>
+            |
+            <a (click)="clickPlaybook();" style="cursor:pointer;">Cloud Adoption Playbook</a>
+          </div> -->
+      <!--
+            |
+            <a target="_blank" href="http://coe.aceinfosolutions.com">
+            AceInfo Centers of Excellence
+            </a>
+          
+    </p>-->
+  </div>
+
+  <div *ngIf="this.curUser" class="usa-nav">
+      <ul class="usa-nav__primary">
+        <li class="usa-nav__primary-item">
+          <a class="usa-nav__link" routerLink="services" style="color:white;font-size:18px">
+            <span class="home__logo"><fa-icon [icon]="faHome"></fa-icon> Home</span>
+          </a>
+        </li>
+        <!--<li class="usa-nav__primary-item">
+            <a class="usa-nav__link" href="javascript:void(0)">
+            <span>Resources</span>
+            </a>
+            </li>-->
+        <!-- <li class="usa-nav__primary-item">
+          <button (click)="resourceSubmenu()" class="usa-accordion__button usa-nav__link" aria-expanded="false"
+            aria-controls="basic-nav-section-two">
+            <span class="resources__logo"
+              style="color:white; font-size: 19px; display: flex; font-weight: 700; width: 150px;;"> <fa-icon
+                [icon]="faFolderOpen" style="margin: 0 5px;"></fa-icon> Resources</span>
+          </button>
+          <ul *ngIf="ResourceSubMenuOpen == true" id="basic-nav-section-two" class="usa-nav__submenu" hidden="true"
+            style="background-color: black; display: block;">
+            <li class="usa-nav__submenu-item">
+              <a routerLink="resources/architecture" style="color:white;font-size:16px"> <fa-icon
+                  [icon]="faSitemap"></fa-icon> Architecture Diagrams</a>
+            </li>
+            <li class="usa-nav__submenu-item">
+              <a routerLink="resources/whitepapers" style="color:white;font-size:16px"><fa-icon
+                  [icon]="faFileAlt"></fa-icon> White Papers</a>
+            </li>
+            <li class="usa-nav__submenu-item">
+              <a href="https://aceinfosolutions.atlassian.net/wiki/spaces/LZ/overview?homepageId=112493153"
+                target="_blank" style="color:white;font-size:16px"><fa-icon [icon]="faFileAlt"></fa-icon> Confluence</a>
+            </li>
+          </ul>
+        </li> -->
+        <li class="usa-nav__primary-item">
+          <a class="usa-nav__link" href="javascript:void(0)" style="color:white;font-size:18px">
+            <span class="userName__logo"><fa-icon [icon]="faUserCircle"></fa-icon> {{curUser.userName}} </span>
+          </a>
+        </li>
+        <li class="usa-nav__logout">
+          <a class="usa-nav__logout__link" (click)="logOutUser();" href="javascript:void(0)"
+            style="color:white;font-size:18px">
+            <span class="logout__logo"><fa-icon [icon]="faSignOutAlt"></fa-icon> Logout</span>
+          </a>
+        </li>
+      </ul>
+  </div>
+  <!--</div -->
+</header>

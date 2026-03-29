@@ -1,0 +1,15 @@
+<div class="logs-container">
+
+  <h2>{{ status }}</h2>
+
+  <div class="logs-box" #scrollContainer>
+    <div *ngFor="let log of logs">
+      <pre>{{ log }}</pre>
+    </div>
+  </div>
+
+  <div *ngIf="isComplete" class="actions">
+    <button (click)="goBack()">Go Back to Services</button>
+  </div>
+
+</div>

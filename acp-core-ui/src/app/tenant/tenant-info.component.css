@@ -1,0 +1,71 @@
+.tenant-container {
+  width: 85%;
+  background-color: #003160;
+  margin: 0px auto;
+  margin-bottom: 15px;
+  padding: 40px;
+  border-radius: 25px;
+  height: 400px;
+  color: white;
+}
+
+.tenant-title {
+  text-align: center;
+  margin: auto;
+  color: #003160;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: 2px;
+  font-size: xx-large;
+  font-weight: 500;
+  padding: 20px 0px;
+}
+
+.tenant-row {
+  color: white;
+  font-size: 20px;
+  padding: 15px;
+  width: 100%;
+  display: inline-table;
+}
+
+.left-block {
+  width: 275px;
+  float: left;
+}
+
+.mid-block {
+  width: 300px;
+  float: left;
+}
+
+.right-block {
+  width: 275px;
+  float: left;
+}
+
+.info-button {
+  margin: 3px;
+  font-size: 20px;
+}
+
+
+.contact-wrapper {
+  background-color: #0d5ba6;
+  padding: 5px;
+  border-radius: 15px;
+}
+
+
+@media only screen and (max-width: 600px) {
+  .tenant-row {
+    font-size: 15px;
+  }
+
+  .mid-block {
+    font-size: smaller;
+  }
+
+  .tenant-container {
+    height: 500px;
+  }
+}

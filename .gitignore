@@ -1,0 +1,77 @@
+################################
+# Terraform
+################################
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+################################
+# Node
+################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+################################
+# Angular
+################################
+acp-core-ui/node_modules/
+acp-core-ui/dist/
+acp-core-ui/.angular/
+acp-core-ui/.cache/
+
+################################
+# Environment Variables
+################################
+.env
+.env.*
+
+################################
+# Logs
+################################
+logs/
+*.log
+
+################################
+# OS files
+################################
+.DS_Store
+Thumbs.db
+
+################################
+# VS Code
+################################
+.vscode/
+
+################################
+# Build / temp
+################################
+dist/
+build/
+tmp/
+temp/
+
+################################
+# Java / Maven (you have pom.xml)
+################################
+target/
+*.class
+
+################################
+# Terraform deployments (IMPORTANT for ACP)
+################################
+terraform/deployments/*/.terraform/
+terraform/deployments/*/*.tfstate
+terraform/deployments/*/*.tfstate.*
+
+################################
+# AWS credentials
+################################
+.aws/

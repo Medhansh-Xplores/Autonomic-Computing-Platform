@@ -1,0 +1,22 @@
+.logs-container {
+  padding: 20px;
+}
+
+.logs-box {
+  background: black;
+  color: #00ff00;
+  height: 450px;
+  overflow-y: auto;
+  padding: 15px;
+  font-family: monospace;
+  border-radius: 6px;
+}
+
+.actions {
+  margin-top: 20px;
+}
+
+button {
+  padding: 8px 16px;
+  cursor: pointer;
+}

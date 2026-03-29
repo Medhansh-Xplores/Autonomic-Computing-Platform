@@ -1,0 +1,45 @@
+<div class="container">
+
+  <h2>Cloud Infrastructure</h2>
+
+  <!-- No Infra Message -->
+  <div *ngIf="deployments.length === 0" class="empty">
+    No Infrastructure Created
+  </div>
+
+  <!-- Scrollable Table -->
+  <div class="infra-table" *ngIf="deployments.length > 0">
+
+    <!-- Header -->
+    <div class="table-header">
+      <div>Cloud</div>
+      <div>Name</div>
+      <div>Type</div>
+      <div>Status</div>
+      <div>Region</div>
+      <div>Account</div>
+    </div>
+
+    <!-- Rows -->
+    <div class="table-body">
+      <div class="table-row" *ngFor="let d of deployments" (click)="openDeployment(d)">
+        <div class="cloud">
+          <div class="cloud-badge">
+            <img *ngIf="d.cloud === 'AWS'" src="assets/img/AWS-transparent.png" />
+
+            <img *ngIf="d.cloud === 'AZURE'" src="assets/img/AZURE-transparent.png" />
+
+            <img *ngIf="d.cloud === 'GCP'" src="assets/img/GCP-transparent.png" />
+          </div>
+        </div>
+        <div>{{ d.name }}</div>
+        <div>{{ d.type }}</div>
+        <div class="status">{{ d.status }}</div>
+        <div>{{ d.region }}</div>
+        <div>{{ d.account }}</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

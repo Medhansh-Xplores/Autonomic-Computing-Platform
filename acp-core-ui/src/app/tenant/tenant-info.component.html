@@ -1,0 +1,355 @@
+<body>
+  <h1 class="tenant-title">Tenant Information</h1>
+
+  <mat-tab-group mat-align-tabs="center">
+    <!-- THE BASIC INFO TAB -->
+    <mat-tab class="tabs" label="Info">
+      <div class="tenant-container">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Tenant Name:</strong></div>
+          <div class="mid-block"><i>{{userName}}</i></div>
+          <div class="right-block"></div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>License Type:</strong></div>
+          <div class="mid-block"><i>{{licenseType}}</i></div>
+          <div class="right-block"></div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Billing Contact:</strong></div>
+          <div class="mid-block"><i>{{billingContactName}}</i></div>
+          <div class="right-block"></div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Technical Contact:</strong></div>
+          <div class="mid-block"><i>{{technicalContactName}}</i></div>
+          <div class="right-block"></div>
+        </div>
+        <br />
+        <!-- <button class="info-button">Upgrade License</button>
+        <button class="info-button">Update Contacts</button> -->
+      </div>
+    </mat-tab>
+    <!-- THE BILLING TAB -->
+    <mat-tab class="tabs" label="Billing">
+      <div class="tenant-container">
+        <div class="tenant-row">
+          <div class="left-block"><strong>License Type:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="licenseChoice" name="licenseChoice" value="FREE" (change)="putEventLicense($event)" [checked]="licenseType=='FREE'">&nbsp;Free <br />
+            <input type="radio" id="licenseChoice" name="licenseChoice" value="STANDARD" (change)="putEventLicense($event)" [checked]="licenseType=='STANDARD'">&nbsp;Standard<br />
+            <input type="radio" id="licenseChoice" name="licenseChoice" value="ENTERPRISE" (change)="putEventLicense($event)" [checked]="licenseType=='ENTERPRISE'">&nbsp;Enterprise
+          </div>
+          <div class="right-block">
+            <button class="info-button">Compare</button>
+          </div>
+        </div>
+        <br />
+        <div class="tenant-row">
+          <div class="left-block"><strong>Billing Cycle:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="billingChoice" name="billingChoice" value="NONE" (change)="putEventBillingCycle($event)" [checked]="billingCycle=='NONE'">&nbsp;None <br />
+            <input type="radio" id="billingChoice" name="billingChoice" value="MONTHLY" (change)="putEventBillingCycle($event)" [checked]="billingCycle=='MONTHLY'">&nbsp;Monthly<br />
+            <input type="radio" id="billingChoice" name="billingChoice" value="YEARLY" (change)="putEventBillingCycle($event)" [checked]="billingCycle=='YEARLY'">&nbsp;Yearly
+          </div>
+          <div class="right-block"></div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Credit Card Details:</strong></div>
+          <div class="mid-block"><i>{{creditCardDetails}}</i></div>
+          <div class="right-block">
+            <button>Update</button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE CONTACTS TAB -->
+    <mat-tab class="tabs" label="Contacts">
+      <div class="tenant-container" style="height: 650px;">
+        <div class="contact-wrapper">
+          <h3>Billing Contact</h3>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Name:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 0)"[value]="billingContactName">
+            </div>
+          </div>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Email Address:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 1)" [value]="billingContactEmail">
+            </div>
+          </div>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Phone Number:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 2)" [value]="billingContactPhone">
+            </div>
+          </div>
+        </div>
+        <br />
+        <div class="contact-wrapper">
+          <h3>Technical Contact</h3>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Name:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 3)" [value]="technicalContactName">
+            </div>
+          </div>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Email Address:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 4)" [value]="technicalContactEmail">
+            </div>
+          </div>
+          <div class="tenant-row">
+            <div class="left-block"><strong>Phone Number:</strong></div>
+            <div class="mid-block">
+              <input type="text" (change)="valueChange($event, 5)" [value]="technicalContactPhone">
+            </div>
+          </div>
+        </div>
+        <button class="info-button" (click)="putEventContacts()">Submit Changes</button>
+      </div>
+    </mat-tab>
+    <!-- THE TECHNICAL CONFIG. TAB -->
+    <mat-tab class="tabs" label="Technical Config.">
+      <div class="tenant-container" style="height: 600px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Platform:</strong></div>
+          <div class="mid-block">
+            <input type="checkbox" id="platformChoice" name="platformChoice" value="none" checked="checked">&nbsp;None
+            <br />
+            <input type="checkbox" id="platformChoice" name="platformChoice" value="aws">&nbsp;Amazon Web Services
+            (AWS)<br />
+            <input type="checkbox" id="platformChoice" name="platformChoice" value="azure">&nbsp;Azure<br />
+            <input type="checkbox" id="platformChoice" name="platformChoice" value="gcp">&nbsp;Google Cloud Platform
+            (GCP)
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Source Control:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="sourceControlChoice" name="sourceControlChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="sourceControlChoice" name="sourceControlChoice"
+              value="atlassianBitBucket">&nbsp;Atlassian Bitbucket<br />
+            <input type="radio" id="sourceControlChoice" name="sourceControlChoice" value="azureRepos">&nbsp;Azure Repos
+            <br />
+            <input type="radio" id="sourceControlChoice" name="sourceControlChoice" value="github">&nbsp;Github <br />
+            <input type="radio" id="sourceControlChoice" name="sourceControlChoice" value="gitlab">&nbsp;Gitlab
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Issue Tracking:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="issueTrackingChoice" name="issueTrackingChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="issueTrackingChoice" name="issueTrackingChoice"
+              value="atlassianJIRA">&nbsp;Atlassian JIRA<br />
+            <input type="radio" id="issueTrackingChoice" name="issueTrackingChoice" value="azureBoards">&nbsp;Azure
+            Boards <br />
+            <input type="radio" id="issueTrackingChoice" name="issueTrackingChoice" value="github">&nbsp;Github Issues
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE CI/CD TAB -->
+    <mat-tab class="tabs" label="CI/CD">
+      <div class="tenant-container" style="height: 630px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>CI/CD:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="cicdChoice" name="cicdChoice" value="none" checked="checked">&nbsp;None <br />
+            <input type="radio" id="cicdChoice" name="cicdChoice" value="azurePipelines">&nbsp;Azure Pipelines<br />
+            <input type="radio" id="cicdChoice" name="cicdChoice" value="githubActions">&nbsp;Github Actions<br />
+            <input type="radio" id="cicdChoice" name="cicdChoice" value="jenkins">&nbsp;Jenkins
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Artifact Repository:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="artifactRepoChoice" name="artifactRepoChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="artifactRepoChoice" name="artifactRepoChoice" value="azureArtifacts">&nbsp;Azure
+            Artifacts<br />
+            <input type="radio" id="artifactRepoChoice" name="artifactRepoChoice" value="githubPackages">&nbsp;Github
+            Packages <br />
+            <input type="radio" id="artifactRepoChoice" name="artifactRepoChoice" value="jfrogArtifactory">&nbsp;JFrog
+            Artifactory <br />
+            <input type="radio" id="artifactRepoChoice" name="artifactRepoChoice" value="nexusRepository">&nbsp;Nexus
+            Repository
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Dependency Vulnerability Scanning:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="anchore">&nbsp;Anchore<br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="aquaTrivy">&nbsp;Aqua Trivy <br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="githubAdvancedSec">&nbsp;Github Advanced Security <br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="nexusIQ">&nbsp;Nexus IQ <br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="snykOpenSource">&nbsp;Snyk Open Source<br />
+            <input type="radio" id="dependencyVScanningChoice" name="dependencyVScanningChoice"
+              value="whitesourceBolt">&nbsp;Whitesource Bolt
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE IaC TAB -->
+    <mat-tab class="tabs" label="IaC">
+      <div class="tenant-container" style="height: 420px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Infrastructure-As-Code:</strong></div>
+          <div class="mid-block">
+            <input type="checkbox" id="iacChoice" name="iacChoice" value="none" checked="checked">&nbsp;None
+            <br />
+            <input type="checkbox" id="iacChoice" name="iacChoice" value="awsCloudFormation">&nbsp;AWS CloudFormation<br />
+            <input type="checkbox" id="iacChoice" name="iacChoice" value="azureResourceManager">&nbsp;Azure Resource Manager<br />
+            <input type="checkbox" id="iacChoice" name="iacChoice" value="hashicorpTerraform">&nbsp; Hashicorp Terraform
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Policy Enforcement:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice"
+              value="aquaSecurityTFSEC">&nbsp;Aqua Security tfsec<br />
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice" value="bridgecrewCheckov">&nbsp;Bridgecrew Checkov
+            <br />
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice" value="gruntworkTerratest">&nbsp;Gruntwork Terratest <br />
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice" value="hashicorpSentinel">&nbsp;Hashicorp Sentinel <br />
+            <input type="radio" id="policyEnfChoice" name="policyEnfChoice" value="snykIAC">&nbsp;Snyk Infrastructure as Code <br />
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE CONTAINER TAB -->
+    <mat-tab class="tabs" label="Container">
+      <div class="tenant-container" style="height: 850px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Container Platforms:</strong></div>
+          <div class="mid-block" style="width: 500px">
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="none" checked="checked">&nbsp;None
+            <br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="ecs">&nbsp;Amazon Elastic Container Service (ECS)<br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="ecks">&nbsp;Amazon Elastic Container Kubernetes Service (ECKS)<br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="aks">&nbsp; Azure Kubernetes Service (AKS) <br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="gke">&nbsp;Google Kubernetes Engine (GKE)<br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="rosa">&nbsp;Red Hat OpenShift on AWS (ROSA)<br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="aro">&nbsp; Azure Red Hat Openshift (ARO) <br />
+            <input type="checkbox" id="containerPlatformChoice" name="containerPlatformChoice" value="ocp-gcp">&nbsp; Openshift Container Platform on GCP
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Container Registry:</strong></div>
+          <div class="mid-block"  style="width: 500px">
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice"
+              value="ecr">&nbsp;Amazon Elastic Container Registry (ECR)<br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="acr">&nbsp;Azure Container Registry (ACR)
+            <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="dockerHub">&nbsp;Docker Hub <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="githubPackages">&nbsp;Github Packages <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="gcr">&nbsp;Google Container Registry (GCR) <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="jfrogArtifactory">&nbsp;JFrog Artifactory <br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="nexusRepository">&nbsp;Nexus Repository<br />
+            <input type="radio" id="containerRegistryChoice" name="containerRegistryChoice" value="reHatQuay">&nbsp;Red Hat Quay
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Container Scanning:</strong></div>
+          <div class="mid-block"  style="width: 500px">
+            <input type="radio" id="containerScanChoice" name="containerScanChoice" value="none"
+              checked="checked">&nbsp;None <br />
+            <input type="radio" id="containerScanChoice" name="anchore"
+              value="ecr">&nbsp;Anchore<br />
+            <input type="radio" id="containerScanChoice" name="containerScanChoice" value="aquaTrivy">&nbsp;Aqua Trivy
+            <br />
+            <input type="radio" id="containerScanChoice" name="containerScanChoice" value="clair">&nbsp;Clair <br />
+            <input type="radio" id="containerScanChoice" name="containerScanChoice" value="nexusLifecycle">&nbsp;Nexus Lifecycle <br />
+            <input type="radio" id="containerScanChoice" name="containerScanChoice" value="snykContainer">&nbsp;Snyk Container 
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE LANGUAGE TAB -->
+    <mat-tab class="tabs" label="Language">
+      <div class="tenant-container" style="height: 300px;">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Core Language:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="languageChoice" name="languageChoice" value="java" checked="checked">&nbsp;Java <br />
+            <input type="radio" id="languageChoice" name="languageChoice" value="node">&nbsp;Node.js<br />
+            <input type="radio" id="languageChoice" name="languageChoice" value="python">&nbsp;Python
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE TEMPLATES TAB -->
+    <mat-tab class="tabs" label="Templates">
+      <div class="tenant-container" style="height: 350px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Java Template:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="javaTemplateChoice" name="javaTemplateChoice" value="springBootMicroservice" checked="checked">&nbsp;Spring Boot Microservice <br />
+            <input type="radio" id="javaTemplateChoice" name="javaTemplateChoice" value="war">&nbsp;J2EE Web Application (WAR)<br />
+            <input type="radio" id="javaTemplateChoice" name="javaTemplateChoice" value="awsLambda">&nbsp;AWS Lambda
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Node.js Template:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="nodeTemplateChoice" name="nodeTemplateChoice" value="awsLambda"
+              checked="checked">&nbsp;AWS Lambda <br />
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Python Template:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="pythonTemplateChoice" name="pythonTemplateChoice" value="awsLambda"
+              checked="checked">&nbsp;AWS Lambda <br />
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+    <!-- THE RUNTIMES TAB -->
+    <mat-tab class="tabs" label="Runtimes">
+      <div class="tenant-container" style="height: 425px">
+        <div class="tenant-row">
+          <div class="left-block"><strong>Java Runtime:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="javaRuntimeChoice" name="javaRuntimeChoice" value="java8" checked="checked">&nbsp;Java 8 <br />
+            <input type="radio" id="javaRuntimeChoice" name="javaRuntimeChoice" value="java11">&nbsp;Java 11<br />
+            <input type="radio" id="javaRuntimeChoice" name="javaRuntimeChoice" value="java17">&nbsp;Java 17
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Node.js Runtime:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="nodeRumtimeChoice" name="nodeRumtimeChoice" value="node12"
+              checked="checked">&nbsp;Node.js 12 <br />
+              <input type="radio" id="nodeRumtimeChoice" name="nodeRumtimeChoice" value="node14">&nbsp;Node.js 14<br />
+          </div>
+        </div>
+        <div class="tenant-row">
+          <div class="left-block"><strong>Python Runtime:</strong></div>
+          <div class="mid-block">
+            <input type="radio" id="pythonRuntimeChoice" name="pythonRuntimeChoice" value="python3.6" checked="checked">&nbsp;Python 3.6 <br />
+            <input type="radio" id="pythonRuntimeChoice" name="pythonRuntimeChoice" value="python3.7">&nbsp;Python 3.7<br />
+            <input type="radio" id="pythonRuntimeChoice" name="pythonRuntimeChoice" value="python3.8">&nbsp;Python 3.8 <br />
+            <input type="radio" id="pythonRuntimeChoice" name="pythonRuntimeChoice" value="python3.9">&nbsp;Python 3.9
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</body>

@@ -1,0 +1,73 @@
+<body>
+    <section class="usa-hero" style="background-image:url('../../assets/img/login_background.png');background-position:left top;min-height:500px;" aria-label="Introduction">
+      <div class="content">
+        <div class="main-text-login" style="float:left">
+          <h1>Autonomic Computing <br> 
+            Platform (ACP)</h1>
+           <p class="par">Patterned on the human body's self healing autonomic nervous system</p>
+        </div>
+        <div *ngIf="!this.curUser"  id="form-container-2" class="usa-hero__callout tablet:grid-offset-9 tablet:grid-col3" style="width:100%; background-color:rgba(0, 49, 96, .5);margin-right:auto;">
+  
+  
+          <!--<h1 class="usa-hero__heading"><span class="usa-hero__heading--alt">Hero callout:</span>Bring attention to a project priority</h1>-->
+  
+            <!--</h1><p>Support the callout with some short explanatory text. You don’t need more than a couple of sentences.</p><a class="usa-button" href="javascript:void(0)">Call to action</a>-->
+  
+          <div class="form-container">
+            <form class="usa-form">
+              <fieldset class="usa-fieldset">
+                <legend class="usa-legend" style="color:rgb(255,255,255);">Login here</legend>
+                <span>or <a routerLink="['/newuser']" style="color:rgb(255,255,255);">create an account</a></span>
+                <br>
+                <div class="usa-input-error-message" style="color:red;" role="alert" *ngIf="error">
+                  {{error}}
+                </div>
+                <label class="usa-label" style="color:rgb(255,255,255);" for="username">Username or email address</label>
+                <input class="usa-input" id="username" name="username" type="text" autocapitalize="off" placeholder="enter username here" [(ngModel)]="username" required="true"autocorrect="off">
+  
+                <label class="usa-label" style="color:rgb(255,255,255);" for="password-sign-in">Password</label>
+                <input class="usa-input" id="password-sign-in" name="password" required="true" placeholder="enter password here" [(ngModel)]="password" type="password">
+                <p class="usa-form__note">
+                <a title="Show password" href="javascript:void(0);"
+                                         class="usa-show-password"
+                                         aria-controls="password-sign-in" style="color:rgb(255,255,255);">Show password</a>
+                </p>
+  
+  
+                <button class="usa-button" type="submit" (click)="loginUser()"value="Sign In" disabled="{{loggingIn}}" >
+                  <span *ngIf="loggingIn === true">
+                    <img src="../../assets/img/ajax-loader.gif" > Please Wait
+                  </span>
+                  <span *ngIf="loggingIn === false || !loggingIn">
+                    Sign In
+                  </span>
+  
+                </button>
+                <!--<p><a href="javascript:void(0)" title="Forgot username" style="color:rgb(255,255,255);">
+                  Forgot username?</a></p>-->
+                <p><span routerLink="['/forgotpassword']" title="Forgot password" style="color:rgb(255,255,255);cursor:pointer;text-decoration:underline;">
+                  Forgot password?</span></p>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section>
+  
+      <div class="text-section">
+        <div class="left-text">
+          <h1>Enable Autonomic<br>Computing through<br>self-service features<br>and self-managing<br>computing models</h1>
+        </div>
+        <div class="right-text">
+          <p>Rapidly build interoperable, distributed and intelligent systems<br>across multi and hybrid clouds.</p>
+          <p>Improve agility, security, and resiliency of systems at reduced cost.</p>
+          <p>Improve system efficiency through situational awareness and<br>contextual adaptation.</p>
+        </div>
+      </div>
+  
+  
+    </section>
+  </body>
+  
+  

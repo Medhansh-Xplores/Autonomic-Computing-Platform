@@ -1,0 +1,630 @@
+<body>
+    <!-- INITIAL LANDING PAGE -->
+    <h1 class="title">Quickstart Wizard</h1>
+    <div class="form-page" [hidden]="divToShow != 1">
+        <table class="landing">
+            <tr>
+                <td>
+                    <p><strong>Platform</strong></p>
+                </td>
+                <td>
+                    <input type="radio" value="AWS" name="platformChoice" (change)="onPlatformChange($event)"
+                        [checked]="platformType == 'AWS'"> Amazon Web Services<br>
+                    <input type="radio" value="AZURE" name="platformChoice" (change)="onPlatformChange($event)"
+                        [checked]="platformType == 'Azure'"> Azure<br>
+                    <input type="radio" value="GCP" name="platformChoice" (change)="onPlatformChange($event)"
+                        [checked]="platformType == 'Google Cloud Platform'"> Google Cloud Platform
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone Blueprint</strong></p><br>
+                </td>
+                <td>
+                    <select #optionsLanding (change)='onBlueprintChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Landing Zone Name</strong></p><br>
+                </td>
+                <td>
+                    <input type="text" (change)="onZoneNameChange($event)" [value]="zoneName">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Portfolio</strong></p>
+                </td>
+                <td>
+                    <select #portfolioLanding (change)="onPortfolioChange($event)">
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <div class="navbutton">
+            <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            <button class="custombutton" (click)="changePage($event)" value=-1>NEXT</button>
+        </div>
+    </div>
+
+    <!-- AWS CUSTOMIZATION -->
+    <div class="form-page" [hidden]="divToShow != 2">
+        <table class="landing">
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    <p>AWS Virtual Private Cloud</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Account</strong></p>
+                </td>
+                <td>
+                    <select #accountsAWS (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select [(ngModel)]="region" #regionsAWS (change)='onRegionChange($event)' required>
+                        <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" [value]="VPCname" readonly>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC CIDR Block</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Public Subnet CIDR</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onPublicSubnetChange($event)"
+                        placeholder="10.0.1.0/24">
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Private Subnet CIDR</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onPrivateSubnetChange($event)"
+                        placeholder="10.0.2.0/24">
+                </td>
+            </tr>
+
+        </table>
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
+                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AZURE CUSTOMIZATION -->
+    <div class="form-page" [hidden]="divToShow != 3">
+        <table class="landing">
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/azure-transparent-logo.png">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    <p>Azure Virtual Private Cloud</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Subscription ID</strong></p>
+                </td>
+                <td>
+                    <select #accountsAzure (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select [(ngModel)]="region" #regionsAzure (change)='onRegionChange($event)' required>
+                        <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Virtual Network Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC CIDR Block</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </td>
+            </tr>
+        </table>
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
+                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GCP CUSTOMIZATION -->
+    <div class="form-page" [hidden]="divToShow != 4">
+        <table class="landing">
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/google-cloud-logo-5.png">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    <p>GCP Virtual Private Cloud</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Project</strong></p>
+                </td>
+                <td>
+                    <select #accountsGCP (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select #regionsGCP (change)='onRegionChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC CIDR Block</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </td>
+            </tr>
+        </table>
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
+                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AWS ELASTIC CUSTOMIZATION -->
+    <div class="form-page" [hidden]="divToShow != 5">
+        <table class="landing">
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    <p>AWS Elastic Kubernetes Service (EKS) with Fargate</p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Account</strong></p>
+                </td>
+                <td>
+                    <select #accountsEKS (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select #regionsEKS (change)='onRegionChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Cluster Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onClusterNameChange($event)" [value]="ClusterName">
+                </td>
+            </tr>
+        </table>
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
+                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AWS ECS FARGATE CUSTOMIZATION -->
+    <div class="form-page" [hidden]="divToShow != 7">
+        <table class="landing">
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    <p>AWS ECS (Fargate)</p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Basic Info</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Account</strong></p>
+                </td>
+                <td>
+                    <select #accountsECS (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select [(ngModel)]="region" (change)='onRegionChange($event)'>
+                        <option *ngFor="let x of awsregionlist" [value]="x.code">
+                            {{x.name}}
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Cluster Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" [(ngModel)]="ClusterName" readonly>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Network</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC</strong></p>
+                </td>
+                <td>
+                    <select class="customdropdown" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
+
+                        <option value="">Select VPC</option>
+
+                        <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
+                            {{ vpc.name }} ({{ vpc.vpcId }})
+                        </option>
+
+                    </select>
+
+                    <div *ngIf="loadingVpcs">
+                        Loading VPCs...
+                    </div>
+
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Compute</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>CPU</strong></p>
+                </td>
+                <td>
+                    <select class="customdropdown" [(ngModel)]="cpu">
+                        <option value="256">256 (.25 vCPU)</option>
+                        <option value="512">512 (.5 vCPU)</option>
+                        <option value="1024">1024 (1 vCPU)</option>
+                        <option value="2048">2048 (2 vCPU)</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Memory</strong></p>
+                </td>
+                <td>
+                    <select class="customdropdown" [(ngModel)]="memory">
+                        <option value="512">512 MB</option>
+                        <option value="1024">1 GB</option>
+                        <option value="2048">2 GB</option>
+                        <option value="4096">4 GB</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>
+                    CANCEL
+                </button>
+            </div>
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>
+                    BACK
+                </button>
+
+                <button class="custombutton" (click)="changePage($event)" value=8>
+                    NEXT
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ECS REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 8">
+
+        <table class="landing">
+
+            <tr>
+                <td>
+                    <p><strong>Landing Zone</strong></p>
+                </td>
+                <td>
+                    AWS ECS (Fargate)
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Landing Zone Name</strong></p>
+                </td>
+                <td>
+                    {{zoneName}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Account / Region</strong></p>
+                </td>
+                <td>
+                    {{accountNum}} / {{region}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Cluster Name</strong></p>
+                </td>
+                <td>
+                    {{ClusterName}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>VPC</strong></p>
+                </td>
+                <td>
+                    {{vpcName}} ({{vpcId}})
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>CPU</strong></p>
+                </td>
+                <td>
+                    {{cpu}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Memory</strong></p>
+                </td>
+                <td>
+                    {{memory}}
+                </td>
+            </tr>
+
+        </table>
+
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>
+                    CANCEL
+                </button>
+            </div>
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=7>
+                    BACK
+                </button>
+
+                <button class="custombutton" (click)="submitForProcessing()">
+                    CREATE
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 6">
+        <table class="landing">
+            <tr>
+                <td>
+                    <p><strong>Landing Zone:</strong></p>
+                </td>
+                <td>
+                    {{blueprintDescription}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Landing Zone Name:</strong></p><br>
+                </td>
+                <td>
+                    {{zoneName}}
+                </td>
+            <tr>
+                <td>
+                    <p><strong>Account/Region:</strong></p><br>
+                </td>
+                <td>
+                    {{accountNum}} / {{region}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC CIDR Block</strong></p>
+                </td>
+                <td>
+                    {{CIDRBlock}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC Name</strong></p>
+                </td>
+                <td>
+                    {{VPCname}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Public Subnet CIDR</strong></p>
+                </td>
+                <td>
+                    {{publicSubnet}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Private Subnet CIDR</strong></p>
+                </td>
+                <td>
+                    {{privateSubnet}}
+                </td>
+            </tr>
+        </table>
+        <div class="navbutton">
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=-2>BACK</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'CREATE' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>

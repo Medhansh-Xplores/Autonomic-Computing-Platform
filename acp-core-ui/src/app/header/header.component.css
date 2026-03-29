@@ -1,0 +1,195 @@
+.menu{
+  list-style-type: none;
+}
+
+.logo:hover {
+  cursor: pointer;
+}
+
+.navbar{
+  width: 100%;
+  height: 100px;
+  margin: auto;
+  background-color: rgba(255, 255, 255, 0);
+}
+
+.textmain{
+    text-decoration: none;
+    font-size: 15px;
+    font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+    width: 500px;
+    height: 80px;
+    padding: 2%;
+    float: right;
+    font-weight: bold;
+    color: #003160;
+    padding-right: 0%;
+    /* letter-spacing: 3px; */
+    line-height: 1.8;
+    position: relative;
+  }
+
+  ul{
+    float: left;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 200px;
+  }
+  ul li{
+    list-style: none;
+    margin-left: 90px;
+    font-size: 18px;
+    width: 130px;
+    text-align: center;
+  }
+  ul li a{
+    text-decoration: none;
+    color: #003160;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  /* User Login Nav */
+  .usa-nav {
+    width: 100%;
+  }
+  .grid-row{
+    width: 100%;
+  }
+  
+  .usa-nav__submenu{
+    list-style-type:none;
+    display:flex;
+    justify-content: center;
+    top: 85px;
+    left: 100px;
+    
+  }
+
+  .usa-nav__submenu-item{
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  .usa-nav__primary-item{
+
+  }
+
+  .usa-nav__logout__link{
+    color: black;
+    
+  }
+
+  /* User Menu Items  */
+  .logout__logo{
+    text-align: right;
+    position: absolute;
+    right: 2%;
+  }
+
+  .userName__logo{
+    text-align: right;
+    position: absolute;
+    right: 10%;
+  }
+
+  .home__logo{
+    text-align: right;
+    position: absolute;
+    left: 2%;
+  }
+
+  .resources__logo{
+    text-align: right;
+    position: absolute;
+  }
+
+  .usa-nav {
+    background-color: #003160;
+    padding: 0;
+    margin: 0;
+    margin-bottom: 2%;
+  }
+
+  .usa-nav__submenu {
+    left: 10%;
+    top: 85px;
+  }
+
+
+
+  /* Mobile Styling */
+  /* Mobile Styling */
+  @media only screen and (max-width: 600px) {
+
+    header {
+      height: 130px;
+    }
+
+    ul {
+      position: absolute;
+      margin-bottom: 0px;
+      margin-top: 0px;
+      margin-left: 0px;
+      margin-right: 30px;
+    }
+
+    ul li {
+      width: 100px;
+      font-size: 12px;
+      position: relative;
+      margin: auto;
+      padding-bottom: 0px;
+      font-weight: 700;
+      text-align: center;
+    }
+    img {
+      position: relative;
+      margin: auto;
+      width: 150px;
+    }
+    .menu {
+      height: 20px;
+      width: 100%;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      float: none;
+      width: 100%;
+    }
+    
+    .navbar {
+      height: 0px;
+    }
+
+    .textmain {
+      font-size: 0px;
+      text-align: center;
+      height: 0px;
+      color: rgba(255, 255, 255, 0.0);
+      padding-top: 20px;
+    }
+
+    .header-container {
+      flex-direction: column;
+    }
+  }
+
+  /* Tablet size styling */
+@media only screen and (max-width: 600px) {
+  .textmain {
+    display: none;
+  }
+
+  .logo-container {
+  }
+}

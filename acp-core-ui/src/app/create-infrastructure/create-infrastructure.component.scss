@@ -1,0 +1,67 @@
+:host {
+    >.main-container {
+        /* max-width: 1264px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between; */
+        background: none;
+        margin: 0 auto;
+    }
+    ::ng-deep {
+        .mat-tab-group {
+            flex-direction: row;
+        }
+        .mat-tab-header {
+          border-bottom: none;
+        }
+        .mat-tab-header-pagination {
+            display: none !important;
+        }
+        .mat-tab-labels {
+            flex-direction: column;
+        }
+        .mat-ink-bar {
+            height: 100%;
+            left: 98% !important;
+        }
+        .mat-tab-body-wrapper {
+            flex: 1 1 auto;
+        }
+    }
+}
+
+/* .main-container {
+    position: relative;
+    width: 100%;
+    flex: 1 0 auto;
+    margin: 0 auto;
+    text-align: left;
+} */
+
+/* #content {
+    box-sizing: content-box;
+    margin: 0;
+    padding: 0;
+    width: 1264px;
+    background-color: #ffffff;
+} */
+
+/* #content {
+    max-width: 1100px;
+    width: 100%;
+    background-color: #ffffff;
+    padding: 0;
+    box-sizing: border-box;
+} */
+
+#content,
+#main-content {
+    &::before,
+    &::after {
+        content: "";
+        display: table;
+    }
+    &::after {
+        clear: both;
+    }
+}

@@ -1,0 +1,77 @@
+/* Styling Service Boxes */
+.top-row {
+    margin-top: 100px;
+    margin-bottom: 35px;
+}
+.bottom-row {
+    margin-bottom: 100px;
+}
+.top-row, .bottom-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+img {
+    width: 250px;
+    height: 250px;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+.SCS img {
+    width: 250px;
+    height: 252px;
+}
+.AS img {
+    width: 242px;
+    height: 249px;
+}
+
+@media only screen and (max-width: 600px) {
+    .page3-title {
+        padding-bottom: 20px;
+        width: 80%;
+        padding: 0;
+        font-size: 16px;
+        margin-top: 0px;
+        background-color: transparent;
+    }
+    .menu-container {
+        height: 70px;
+        padding: 0%;
+    }
+    .top-row {
+        margin: auto;
+        margin-top: 70px;
+        padding: 0px;
+    }
+    .bottom-row {
+        margin: auto;
+        margin-top: 45px;
+        margin-bottom: 70px;
+    }
+    .services {
+        width: 100%;
+    }
+    img {
+        width: 150px;
+        height: 150px;
+        margin-left: 0px;
+        margin-right: 0px;
+        margin-top: 0px;
+        margin-bottom: 0px;
+    }
+    .SCS img {
+        width: 150px;
+        height: 151px;
+    }
+    .AS img {
+        width: 150px;
+        height: 150px;
+    }
+    .IS img {
+        width: 150px;
+        height: 151px;
+        margin-right: 5px;     
+        margin-top: 3px; 
+    }
+}

@@ -1,0 +1,75 @@
+.container {
+  padding: 30px;
+}
+
+.infra-table {
+  background: #163e6d;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Header */
+.table-header {
+  display: grid;
+  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr;
+  padding: 15px;
+  background: #1e4f86;
+  color: white;
+  font-weight: 600;
+  border-bottom: 3px solid #ffc107;
+}
+
+/* Scroll body */
+.table-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Rows */
+.table-row {
+  display: grid;
+  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr;
+  padding: 10px 15px;
+  color: white;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.cloud img {
+  height: 18px;
+  vertical-align: middle;
+}
+
+.table-row:hover {
+  background: #1d4e87;
+}
+
+.status {
+  font-weight: 600;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+}
+
+.cloud img {
+  height: 20px;
+}
+
+.cloud-badge {
+  background: white;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cloud-badge img {
+  height: 16px;
+}
+
+.cloud {
+  display: flex;
+  align-items: center;
+}

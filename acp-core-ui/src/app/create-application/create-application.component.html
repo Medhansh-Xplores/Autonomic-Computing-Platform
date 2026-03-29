@@ -1,0 +1,361 @@
+<header>
+    <div class="menu-container">
+      <div class="menu-btn"></div>
+      <h1 class="page-title">Create Microservice and Applications</h1>
+    </div>
+  </header>
+  
+  
+  <div class="grid-container - ">
+    <div class="grid-row" *ngIf="hasErrors == true">
+      <div class="usa-alert usa-alert--error grid-col-12" role="alert" >
+        <div class="usa-alert__body">
+          <h3 class="usa-alert__heading">Error status</h3>
+          <span class="usa-alert__text">
+            Please correct the following field(s):
+            <ul>
+              <li *ngIf="correctAppType == false">Application Type</li>
+              <li *ngIf="correctPlatform == false && correctAppType == true">Target Operational Platform</li>
+              <li *ngIf="correctAppName == false && correctAppType == true && correctPlatform == true">
+                Application Project Name
+              </li>
+              <li *ngIf="correctAppPort == false && correctAppType == true && correctPlatform == true">
+                Default Application Port
+              </li>
+              <li *ngIf="correctMemoryLimit == false && correctAppType == true && correctPlatform == true">
+                Container Memory Allocation
+              </li>
+              <!--<li *ngIf="correctendPoint == false">Application Endpoint</li>-->
+              <li *ngIf="correctimage == false && correctAppType == true && correctPlatform == true">
+                Container Image Tag
+              </li>
+            </ul>
+  
+          </span>
+        </div>
+      </div>
+      <br>
+    </div>
+    <div class="grid-row">
+      <form class="usa-form usa-form--xlarge" style="width:100%">
+        <fieldset class="usa-fieldset" style="padding:10px">
+          <div class="grid-row">
+            <div class="grid-col-5">
+              <div class="usa-form-group"
+                   [class.usa-form-group--error]="correctAppType == false && this.hasErrors === true">
+                <label class="usa-label"
+                       [class.usa-label--error]="correctAppType == false && this.hasErrors === true"
+                       for="applicationType">
+                  <span style="float:left">
+                    <b>Application Type:</b>
+                    <span class="usa-error-message"
+                          *ngIf="correctAppType == false && this.hasErrors === true">
+                  An option must be selected from the dropdown menu.
+                </span>
+                  </span>
+                  <!--<span style="float:right">
+                    <a style="cursor:pointer;" (click)="helpMe('Application Type')">
+                      <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                    </a>
+                  </span>-->
+                  <!-- <a style="cursor:pointer;" (click)="showHelpBot()">HelperBot</a> -->
+                </label>
+  
+                <select  class="usa-select" id="applicationType" (change)="selectType($event)"
+                         name="applicationType">
+                  <option *ngFor="let t of types; let i = index" id="{{i}}-{{t}}" value={{t}}>{{t}}</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid-col-2">
+              <!--  Empty for Spacing Purposes [(ngModel)]="tripOrigin"-->
+            </div>
+            <div class="grid-col-5">
+              <!--<div class="usa-form-group"
+                   [class.usa-form-group--error]="correctPlatform == false && this.hasErrors === true">
+                <label class="usa-label"
+                       [class.usa-label--error]="correctPlatform == false && this.hasErrors === true"
+                       for="operationalPlatform">
+                  <b>Target Operational Platform:</b>
+                </label>
+                <span class="usa-error-message"
+                      *ngIf="correctPlatform == false && this.hasErrors === true">
+                  An option must be selected from the dropdown menu.
+                </span>
+                <select class="usa-select" id="operationalPlatform" (change)="selectPlatform($event)"
+                        name="operationalPlatform">
+                  <option *ngFor="let p of platforms; let i = index" id="{{i}}-{{p}}" [value]="p">{{p}}</option>
+                </select>
+              </div>-->
+            </div>
+          </div>
+          <div *ngIf="typeSelected == 'WebApp' || typeSelected == 'MicroService'">
+            <div class="grid-row">
+              <div class="grid-col-5">
+                <div class="usa-form-group"
+                     [class.usa-form-group--error]="correctPlatform == false && correctAppType == true && this.hasErrors === true">
+                  <label class="usa-label"
+                         [class.usa-label--error]="correctPlatform == false && correctAppType == true && this.hasErrors === true"
+                         for="operationalPlatform">
+                    <span style="float:left">
+                      <b>Target Operational Platform:</b>
+                      <span class="usa-error-message"
+                            *ngIf="correctPlatform == false && correctAppType == true && this.hasErrors === true">
+                            An option must be selected from the dropdown menu.
+                      </span>
+                    </span>
+                    <!--<span style="float:right">
+                      <a style="cursor:pointer;" (click)="helpMe('Target Operational Platform')">
+                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                      </a>
+                    </span>-->
+                  </label>
+  
+                  <select class="usa-select" id="operationalPlatform" (change)="selectPlatform($event)"
+                          name="operationalPlatform">
+                    <option *ngFor="let p of platforms; let i = index" id="{{i}}-{{p['value']}}" [value]="p['value']">{{p['name']}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid-col-2">
+                <!--  Empty for Spacing Purposes [(ngModel)]="tripOrigin"-->
+              </div>
+              <div class="grid-col-5">
+                <!--  Empty for Spacing Purposes [(ngModel)]="tripOrigin"-->
+              </div>
+            </div>
+            <div *ngIf="platformSelected == 'EKS' || platformSelected == 'Openshift' ||
+            platformSelected == 'GKE'">
+              <br>
+              <h2 *ngIf="typeSelected == 'WebApp'">WebApp Parameters:</h2>
+              <h2 *ngIf="typeSelected == 'MicroService'">MicroService Parameters:</h2>
+              <br>
+              <div class="grid-row">
+                <div class="grid-col-5">
+                  <div class="usa-form-group"
+                       [class.usa-form-group--error]="correctAppName == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                    <label class="usa-label"
+                           [class.usa-label--error]="correctAppName == false && correctAppType == true && correctPlatform == true && hasErrors == true"
+                           for="appName">
+                      <span style="float:left">
+                        <b>Application Project Name:</b>
+                        <span class="usa-error-message"
+                              *ngIf="correctAppName == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                              Application Name cannot start with a number or an uppercase letter as well contain any
+                               special characters.
+                        </span>
+                      </span>
+                      <!--<span style="float:right">
+                        <a style="cursor:pointer;" (click)="helpMe('Application Project Name')">
+                          <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        </a>
+                      </span>-->
+                    </label>
+  
+                    <input class="usa-input" id="appName" name="appName" placeholder="sampleName"
+                           value="" [(ngModel)]="webApp.appName" type="text">
+                  </div>
+                </div>
+                <div class="grid-col-2">
+                  <!--  Empty for Spacing Purposes-->
+                </div>
+                <div class="grid-col-5">
+                  <div class="usa-form-group"
+                       [class.usa-form-group--error]="correctAppPort == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                    <label class="usa-label"
+                           [class.usa-label--error]="correctAppPort == false && correctAppType == true && correctPlatform == true && hasErrors == true"
+                           for="appPort">
+                      <span style="float:left">
+                        <b>Default Application Port:</b>
+                        <span class="usa-error-message" *ngIf="correctAppPort == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                          Default Application Port must be a number and be within the registered port range of
+                          1024 - 49151.
+                        </span>
+                      </span>
+                      <!--<span style="float:right">
+                        <a style="cursor:pointer;" (click)="helpMe('Default Port')">
+                          <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        </a>
+                      </span>-->
+                    </label>
+  
+                    <input class="usa-input" id="appPort" name="appPort" placeholder="8080"
+                           value="" [(ngModel)]="webApp.appPort" type="text">
+                  </div>
+                </div>
+              </div>
+              <div class="grid-row">
+                <div class="grid-col-5">
+                  <div class="usa-form-group"
+                       [class.usa-form-group--error]="correctMemoryLimit == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                    <label class="usa-label"
+                           [class.usa-label--error]="correctMemoryLimit == false && correctAppType == true && correctPlatform == true && hasErrors == true"
+                           for="memoryAllocation">
+                      <span style="float:left">
+                        <b>Container Memory Allocation (Mi):</b>
+                        <span class="usa-error-message"
+                              *ngIf="correctMemoryLimit == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                              Container Allocation must be a number.
+                        </span>
+                      </span>
+                      <!--<span style="float:right">
+                        <a style="cursor:pointer;" (click)="helpMe('Container Memory Allocation')">
+                          <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        </a>
+                      </span>-->
+                    </label>
+  
+                    <input class="usa-input" id="memoryAllocation" name="memoryAllocation" placeholder="1024"
+                           value="" [(ngModel)]="webApp.memoryLimit" type="text">
+                  </div>
+                </div>
+                <div class="grid-col-2">
+                  <!--  Empty for Spacing Purposes-->
+                </div>
+                <!--<div class="grid-col-5">
+                  <div class="usa-form-group"
+                       [class.usa-form-group--error]="correctendPoint== false && hasErrors == true">
+                    <label class="usa-label"
+                           [class.usa-label--error]="correctendPoint == false && hasErrors == true"
+                           for="applicationEndpoint">
+                      <b>Application Endpoint:</b>
+                    </label>
+                    <span class="usa-error-message"
+                          *ngIf="correctendPoint == false && hasErrors == true">
+                  Application Endpoint must begin with a slash.
+                </span>
+                    <input class="usa-input" id="applicationEndpoint" name="applicationEndpoint" placeholder="/sampleEndpont"
+                           value="" [(ngModel)]="webApp.endPoint" type="text">
+                  </div>
+                </div>-->
+                <div class="grid-col-5">
+                  <div class="usa-form-group"
+                       [class.usa-form-group--error]="correctimage == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                    <label class="usa-label"
+                           [class.usa-label--error]="correctimage == false && correctAppType == true && correctPlatform == true && hasErrors == true"
+                           for="containerImage">
+                      <span style="float:left">
+                        <b>Container Image Tag:</b>
+                        <span class="usa-error-message"
+                              *ngIf="correctimage == false && correctAppType == true && correctPlatform == true && hasErrors == true">
+                              Container Image Tag must consist of at least one character.
+                        </span>
+                      </span>
+                      <!--<span style="float:right">
+                        <a style="cursor:pointer;" (click)="helpMe('Container Image Tag')">
+                          <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        </a>
+                      </span>-->
+                    </label>
+  
+                    <input class="usa-input" id="containerImage" name="containerImage" placeholder="latest"
+                           value="" [(ngModel)]="webApp.image" type="text">
+                  </div>
+                </div>
+              </div>
+              <div class="grid-row">
+                <div class="grid-col-5">
+                  <div class="usa-form-group">
+                    <label class="usa-label" for="createdBy">
+                      <b>Created By:</b>
+                    </label>
+                    <input class="usa-input" id="createdBy" name="createdBy" type="text"
+                           [(ngModel)]="webApp.user" value="" readonly>
+                  </div>
+                </div>
+                <div class="grid-col-2">
+  
+                </div>
+                <div class="grid-col-5">
+  
+                </div>
+              </div>
+            </div>
+            <div *ngIf="platformSelected == 'Quantum'">
+              <br>
+              <h2>Quantum Cloud Parameters:</h2>
+              <br>
+              <div class="usa-alert usa-alert--info" >
+                <div class="usa-alert__body">
+                  <h3 class="usa-alert__heading">Information</h3>
+                  <p class="usa-alert__text">
+                    Quantum Cloud Applications is currently not operational.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="platformSelected == 'HPC'">
+              <br>
+              <h2>CloudHPC Parameters:</h2>
+              <br>
+              <div class="usa-alert usa-alert--info" >
+                <div class="usa-alert__body">
+                  <h3 class="usa-alert__heading">Information</h3>
+                  <p class="usa-alert__text">
+                    Cloud HPC Applications is currently not operational.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="typeSelected == 'NodeJS'">
+            <br>
+            <h2>NodeJS Parameters:</h2>
+            <br>
+            <div class="usa-alert usa-alert--info" >
+              <div class="usa-alert__body">
+                <h3 class="usa-alert__heading">Information</h3>
+                <p class="usa-alert__text">
+                  NodeJS Applications is currently not operational.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="typeSelected == 'Rails'">
+            <br>
+            <h2>Rails Parameters:</h2>
+            <br>
+            <div class="usa-alert usa-alert--info" >
+              <div class="usa-alert__body">
+                <h3 class="usa-alert__heading">Information</h3>
+                <p class="usa-alert__text">
+                  Rails Applications is currently not operational.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="typeSelected == 'Go'">
+            <br>
+            <h2>Go Parameters:</h2>
+            <br>
+            <div class="usa-alert usa-alert--info" >
+              <div class="usa-alert__body">
+                <h3 class="usa-alert__heading">Information</h3>
+                <p class="usa-alert__text">
+                  Go Applications is currently not operational.
+                </p>
+              </div>
+            </div>
+          </div>
+  
+          <div class="grid-row">
+            <div class="tablet:grid-col-2">
+              <input type="button" (click)="submit()" class="usa-button full-width-button" id="submit" value="Submit"
+                     disabled="{{submitDisabled}}" style="margin-bottom: 60px;">
+            </div>
+            <div class="progress tablet:grid-col-10" id="loading-progress-bar-div" style="margin-top: 1.5rem;"
+                 *ngIf="submitDisabled === true">
+              <div class="progress-bar progress-bar-striped active"  role="progressbar" aria-valuemin="0"
+                   aria-valuenow="100" aria-valuemax="100" style="width:100%; border-radius: 10px;">
+                <p id="loading-p" style="margin-top:10px">{{submissionInfo}}</p>
+              </div>
+            </div>
+          </div>
+  
+  
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  
+  

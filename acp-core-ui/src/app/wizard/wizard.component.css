@@ -1,0 +1,77 @@
+.title {
+    display: flex;
+    margin: auto;
+    width: 50%;
+    text-align: center;
+    justify-content: center;
+    color: #003160;
+}
+
+.form-table {
+    background-color: darkgray;
+    border-radius: 25px;
+    margin: auto;
+}
+
+th,
+td {
+    padding: 15px;
+}
+
+.form-page {
+    position: relative;
+    margin: auto;
+    width: 100%;
+    padding: 18px;
+    border-radius: 5px;
+}
+
+.landing {
+    background-color: #003160;
+    color: white;
+    border-radius: 25px;
+    margin: auto;
+    width: 50%;
+    box-shadow: 7px 7px linear-gradient(to bottom, #e6bb00, white);
+}
+
+.navbutton {
+    margin: auto;
+    width: 50%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.logo {
+    border-radius: 10%;
+    width: 100px;
+}
+
+.custombutton {
+    color: black;
+    border: inline grey;
+    padding: 7px;
+    margin-top: 10px;
+    border-radius: 20px;
+}
+
+.custominput {
+    color: black;
+    border-radius: 10px;
+    border: black;
+}
+
+.customdropdown {
+    color: black;
+    border: inline grey;
+    border-radius: 10px;
+
+}
+
+.section-title {
+    margin-top: 20px;
+    margin-bottom: 5px;
+    border-bottom: 2px solid #e6bb00;
+    padding-bottom: 5px;
+    font-weight: 600;
+}
