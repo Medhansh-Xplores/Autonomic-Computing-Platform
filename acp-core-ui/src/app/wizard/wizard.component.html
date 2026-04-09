@@ -18,30 +18,23 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone Blueprint</strong></p><br>
+                    <p><strong>Infrastructure Type</strong></p><br>
                 </td>
                 <td>
-                    <select #optionsLanding (change)='onBlueprintChange($event)'>
-                        <option></option>
+                    <select class="customdropdown" #optionsLanding (change)='onBlueprintChange($event)'>
+                        <option value="" disabled selected>
+                            --- Choose a Platform ---
+                        </option>
                     </select>
                 </td>
             </tr>
 
             <tr>
                 <td>
-                    <p><strong>Landing Zone Name</strong></p><br>
+                    <p><strong>Infrastructure Name</strong></p><br>
                 </td>
                 <td>
                     <input type="text" (change)="onZoneNameChange($event)" [value]="zoneName">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Portfolio</strong></p>
-                </td>
-                <td>
-                    <select #portfolioLanding (change)="onPortfolioChange($event)">
-                    </select>
                 </td>
             </tr>
         </table>
@@ -61,7 +54,7 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
                     <p>AWS Virtual Private Cloud</p>
@@ -106,21 +99,41 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Public Subnet CIDR</strong></p>
+                    <p><strong>Public Subnet 1 CIDR</strong></p>
                 </td>
                 <td>
-                    <input class="custominput" type="text" (change)="onPublicSubnetChange($event)"
+                    <input class="custominput" type="text" (change)="onPublicSubnet1Change($event)"
                         placeholder="10.0.1.0/24">
                 </td>
             </tr>
 
             <tr>
                 <td>
-                    <p><strong>Private Subnet CIDR</strong></p>
+                    <p><strong>Public Subnet 2 CIDR</strong></p>
                 </td>
                 <td>
-                    <input class="custominput" type="text" (change)="onPrivateSubnetChange($event)"
+                    <input class="custominput" type="text" (change)="onPublicSubnet2Change($event)"
                         placeholder="10.0.2.0/24">
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Private Subnet 1 CIDR</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onPrivateSubnet1Change($event)"
+                        placeholder="10.0.3.0/24">
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Private Subnet 2 CIDR</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" (change)="onPrivateSubnet2Change($event)"
+                        placeholder="10.0.4.0/24">
                 </td>
             </tr>
 
@@ -146,7 +159,7 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
                     <p>Azure Virtual Private Cloud</p>
@@ -211,7 +224,7 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
                     <p>GCP Virtual Private Cloud</p>
@@ -276,7 +289,7 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
                     <p>AWS Elastic Kubernetes Service (EKS) with Fargate</p>
@@ -340,10 +353,10 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
-                    <p>AWS ECS (Fargate)</p>
+                    <p>AWS Elastic Container Service (Fargate)</p>
                 </td>
             </tr>
             <tr>
@@ -470,7 +483,7 @@
 
             <tr>
                 <td>
-                    <p><strong>Landing Zone</strong></p>
+                    <p><strong>Infrastructure Type</strong></p>
                 </td>
                 <td>
                     AWS ECS (Fargate)
@@ -479,7 +492,7 @@
 
             <tr>
                 <td>
-                    <p><strong>Landing Zone Name</strong></p>
+                    <p><strong>Infrastructure Name</strong></p>
                 </td>
                 <td>
                     {{zoneName}}
@@ -553,12 +566,272 @@
 
     </div>
 
+    <!-- AWS RDS CONFIGURATION -->
+    <div class="form-page" [hidden]="divToShow != 9">
+
+        <table class="landing">
+
+            <tr>
+                <td>
+                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Infrastructure Type</strong></p>
+                </td>
+                <td>
+                    AWS Relational Database Service
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Basic Info</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Account</strong></p>
+                </td>
+                <td>
+                    <select #accountsRDS (change)='onAccountChange($event)'>
+                        <option></option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Region</strong></p>
+                </td>
+                <td>
+                    <select [(ngModel)]="region" (change)='onRegionChange($event)'>
+                        <option *ngFor="let x of awsregionlist" [value]="x.code">
+                            {{x.name}}
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Database Engine</strong></p>
+                </td>
+                <td>
+                    <select [(ngModel)]="dbEngine">
+                        <option value="postgres">Postgres</option>
+                        <option value="mysql">MySQL</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>RDS Identifier</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" [(ngModel)]="rdsIdentifier" readonly>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Credentials</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Username</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" [(ngModel)]="dbUsername">
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Password</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="password" [(ngModel)]="dbPassword">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Network</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>VPC</strong></p>
+                </td>
+                <td>
+
+                    <select class="customdropdown" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
+
+                        <option value="">Select VPC</option>
+
+                        <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
+                            {{ vpc.name }} ({{ vpc.vpcId }})
+                        </option>
+
+                    </select>
+
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <h3 class="section-title">Optional</h3>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Create Initial Database</strong></p>
+                </td>
+                <td>
+                    <input type="checkbox" [(ngModel)]="createInitialDb">
+                </td>
+            </tr>
+            <tr *ngIf="createInitialDb">
+                <td>
+                    <p><strong>Initial Database Name</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="text" [(ngModel)]="initialDbName">
+                </td>
+            </tr>
+
+
+        </table>
+
+        <div class="navbutton">
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>
+                    CANCEL
+                </button>
+            </div>
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=1>
+                    BACK
+                </button>
+
+                <button class="custombutton" (click)="changePage($event)" value=10>
+                    NEXT
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+    <!-- RDS REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 10">
+
+        <table class="landing">
+
+            <tr>
+                <td>
+                    <p><strong>Infrastructure Type</strong></p>
+                </td>
+                <td>
+                    AWS RDS
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Infrastructure Name</strong></p>
+                </td>
+                <td>
+                    {{zoneName}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Account / Region</strong></p>
+                </td>
+                <td>
+                    {{accountNum}} / {{region}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Database Engine</strong></p>
+                </td>
+                <td>
+                    {{dbEngine}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>RDS Identifier</strong></p>
+                </td>
+                <td>
+                    {{rdsIdentifier}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Username</strong></p>
+                </td>
+                <td>
+                    {{dbUsername}}
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>VPC</strong></p>
+                </td>
+                <td>
+                    {{vpcName}} ({{vpcId}})
+                </td>
+            </tr>
+
+            <tr *ngIf="createInitialDb">
+                <td>
+                    <p><strong>Initial Database</strong></p>
+                </td>
+                <td>
+                    {{initialDbName}}
+                </td>
+            </tr>
+
+        </table>
+
+        <div class="navbutton">
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=0>
+                    CANCEL
+                </button>
+            </div>
+
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value=9>
+                    BACK
+                </button>
+
+                <button class="custombutton" (click)="submitForProcessing()">
+                    CREATE
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
     <!-- REVIEW -->
     <div class="form-page" [hidden]="divToShow != 6">
         <table class="landing">
             <tr>
                 <td>
-                    <p><strong>Landing Zone:</strong></p>
+                    <p><strong>Infrastructure Type:</strong></p>
                 </td>
                 <td>
                     {{blueprintDescription}}
@@ -566,11 +839,12 @@
             </tr>
             <tr>
                 <td>
-                    <p><strong>Landing Zone Name:</strong></p><br>
+                    <p><strong>Infrastructure Name:</strong></p><br>
                 </td>
                 <td>
                     {{zoneName}}
                 </td>
+            </tr>
             <tr>
                 <td>
                     <p><strong>Account/Region:</strong></p><br>
@@ -598,20 +872,30 @@
 
             <tr>
                 <td>
-                    <p><strong>Public Subnet CIDR</strong></p>
+                    <p><strong>Public Subnet 1</strong></p>
                 </td>
-                <td>
-                    {{publicSubnet}}
-                </td>
+                <td>{{publicSubnet1}}</td>
             </tr>
 
             <tr>
                 <td>
-                    <p><strong>Private Subnet CIDR</strong></p>
+                    <p><strong>Public Subnet 2</strong></p>
                 </td>
+                <td>{{publicSubnet2}}</td>
+            </tr>
+
+            <tr>
                 <td>
-                    {{privateSubnet}}
+                    <p><strong>Private Subnet 1</strong></p>
                 </td>
+                <td>{{privateSubnet1}}</td>
+            </tr>
+
+            <tr>
+                <td>
+                    <p><strong>Private Subnet 2</strong></p>
+                </td>
+                <td>{{privateSubnet2}}</td>
             </tr>
         </table>
         <div class="navbutton">

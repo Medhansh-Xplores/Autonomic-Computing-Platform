@@ -1,0 +1,28 @@
+.main-container {
+    padding: 20px 40px;
+}
+
+.page-title {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    color: #1b365d;
+    font-weight: 600;
+}
+
+.servicelist {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin-top: 40px;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+    .servicelist {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+}

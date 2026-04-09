@@ -188,3 +188,65 @@ exports.createECS = async (req, res) => {
   }
 
 };
+
+exports.deployAwsRds = async (req, res) => {
+
+  try {
+
+    const data = req.body;
+
+    const { accountID, region, vpcId } = data;
+
+    // Assume role
+    const sts = new STSClient({ region });
+
+    const assumeRole = await sts.send(
+      new AssumeRoleCommand({
+        RoleArn: `arn:aws:iam::${accountID}:role/ACPDeploymentRole`,
+        RoleSessionName: "acp-rds-subnet"
+      })
+    );
+
+    const credentials = {
+      accessKeyId: assumeRole.Credentials.AccessKeyId,
+      secretAccessKey: assumeRole.Credentials.SecretAccessKey,
+      sessionToken: assumeRole.Credentials.SessionToken
+    };
+
+    const ec2 = new EC2Client({
+      region,
+      credentials
+    });
+
+    const response = await ec2.send(
+      new DescribeSubnetsCommand({
+        Filters: [
+          {
+            Name: "vpc-id",
+            Values: [vpcId]
+          }
+        ]
+      })
+    );
+
+    // Filter PRIVATE subnets only
+    const subnetIds = response.Subnets
+      .filter(subnet => !subnet.MapPublicIpOnLaunch)
+      .map(subnet => subnet.SubnetId);
+
+    data.subnet_ids = subnetIds;
+
+    await terraformService.deployAwsRds(data);
+
+    res.send({
+      message: "RDS deployment started"
+    });
+
+  } catch (err) {
+
+    console.error(err);
+    res.status(500).send(err);
+
+  }
+
+};

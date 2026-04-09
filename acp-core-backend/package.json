@@ -16,6 +16,7 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.1019.0",
     "@aws-sdk/client-sts": "^3.1019.0",
+    "adm-zip": "^0.5.17",
     "aws-sdk": "^2.1693.0",
     "axios": "^1.13.6",
     "body-parser": "^2.2.2",

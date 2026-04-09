@@ -15,7 +15,7 @@
 
 th,
 td {
-    padding: 15px;
+    padding: 12px 15px;
 }
 
 .form-page {
@@ -40,6 +40,12 @@ td {
     width: 50%;
     display: flex;
     justify-content: space-between;
+    margin-top: 18px;
+    /* add this */
+}
+
+.navbutton div:last-child button {
+    margin-left: 10px;
 }
 
 .logo {
@@ -48,30 +54,45 @@ td {
 }
 
 .custombutton {
-    color: black;
-    border: inline grey;
-    padding: 7px;
-    margin-top: 10px;
-    border-radius: 20px;
+    background-color: #1c3b57;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.custombutton:hover {
+    background-color: #295c85;
 }
 
 .custominput {
     color: black;
     border-radius: 10px;
     border: black;
+    padding: 6px;
+    width: 220px;
 }
 
 .customdropdown {
     color: black;
-    border: inline grey;
     border-radius: 10px;
-
+    padding: 6px;
+    width: 220px;
 }
 
 .section-title {
-    margin-top: 20px;
-    margin-bottom: 5px;
+    margin-top: 30px;
+    margin-bottom: 10px;
     border-bottom: 2px solid #e6bb00;
-    padding-bottom: 5px;
+    padding-bottom: 8px;
     font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+}
+
+.section-spacing {
+    height: 10px;
 }

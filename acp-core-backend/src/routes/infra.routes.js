@@ -8,6 +8,11 @@ router.post(
   infraController.createVPC
 );
 
+router.post(
+  "/deployments/aws-rds",
+  infraController.deployAwsRds
+);
+
 router.get("/logs", infraController.getLogs);
 
 router.get("/deployments", infraController.getDeployments);

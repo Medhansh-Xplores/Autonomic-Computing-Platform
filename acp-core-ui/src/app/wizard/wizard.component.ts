@@ -32,7 +32,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
   VPCname = '';
   networkName = '';
   numItems!: number;
-  portfolioID!: string;
   ClusterName = '';
   ServiceName = '';
   TaskName = '';
@@ -45,8 +44,10 @@ export class WizardComponent implements OnInit, AfterViewInit {
   privateSubnet!: string;
   isCreating = false;
   vpcId: string = "";
-  publicSubnets: string = "";
-  privateSubnets: string = "";
+  publicSubnet1: string = '';
+  publicSubnet2: string = '';
+  privateSubnet1: string = '';
+  privateSubnet2: string = '';
   cpu: string = "";
   memory: string = "";
   containerName: string = "";
@@ -61,6 +62,12 @@ export class WizardComponent implements OnInit, AfterViewInit {
   vpcName: string = '';
   vpcCidr: string = '';
   accounts: any[] = [];
+  dbEngine: string = '';
+  dbUsername: string = '';
+  dbPassword: string = '';
+  rdsIdentifier: string = '';
+  initialDbName: string = '';
+  createInitialDb: boolean = false;
 
   awsregionlist = [
     { code: "us-east-2", name: "US East (Ohio)" },
@@ -175,8 +182,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
     { name: "brazilsoutheast", regionaldisplayname: "(South America) Brazil Southeast" },
   ];
 
-  @ViewChild('optionsLanding', { static: false }) optionsLanding!: ElementRef;
-  @ViewChild('portfolioLanding', { static: false }) portfolioLanding!: ElementRef;
+  @ViewChild('optionsLanding', { static: false }) optionsLanding!: ElementRef
   @ViewChild('accountsAWS', { static: false }) accountsAWS!: ElementRef;
   @ViewChild('accountsAzure', { static: false }) accountsAzure!: ElementRef;
   @ViewChild('accountsGCP', { static: false }) accountsGCP!: ElementRef;
@@ -186,6 +192,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
   @ViewChild('regionsGCP', { static: false }) regionsGCP!: ElementRef;
   @ViewChild('regionsEKS', { static: false }) regionsEKS!: ElementRef;
   @ViewChild('accountsECS', { static: false }) accountsECS!: ElementRef;
+  @ViewChild('accountsRDS', { static: false }) accountsRDS!: ElementRef;
 
   constructor(private router: Router,
     private route: ActivatedRoute,
@@ -225,6 +232,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
         this.renderer.setProperty(this.accountsAWS.nativeElement, 'innerHTML', tempVal);
         this.renderer.setProperty(this.accountsEKS.nativeElement, 'innerHTML', tempVal);
         this.renderer.setProperty(this.accountsECS.nativeElement, 'innerHTML', tempVal);
+        this.renderer.setProperty(this.accountsRDS.nativeElement, 'innerHTML', tempVal);
       });
 
 
@@ -263,24 +271,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
         this.renderer.setProperty(this.accountsGCP.nativeElement, 'innerHTML', tempVal);
       });
 
-
-    // Portfolios
-    this.http.get<any>(this.apiBase + "tenants/" + this.licenseNum + "/portfolios")
-      .subscribe(data => {
-        this.numItems = data.length;
-        let tempVal = "";
-        tempVal = "<select> <option value='null'>--- Choose an Option ---</option>";
-
-        for (let i = 0; i < this.numItems; i++) {
-          tempVal += "<option value='" + data[i].portfolioID + "'>"
-            + data[i].portfolioName + "</option>";
-        }
-
-        tempVal += "</select>";
-
-        this.renderer.setProperty(this.portfolioLanding.nativeElement, 'innerHTML', tempVal);
-      });
-
   }
 
   changePage(e: any) {
@@ -296,7 +286,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
       // FIRST PAGE VALIDATION
       if (this.divToShow == 1) {
 
-        if (!this.blueprintID || !this.zoneName || !this.portfolioID) {
+        if (!this.blueprintID || !this.zoneName) {
           alert("Please fill all required fields");
           return;
         }
@@ -343,6 +333,12 @@ export class WizardComponent implements OnInit, AfterViewInit {
         changeNum = 7;
       }
 
+      else if (this.blueprintID == "aws-rds") {
+        this.blueprintDescription = "AWS RDS";
+        this.rdsIdentifier = this.zoneName;
+        changeNum = 9;
+      }
+
       else {
         alert("Please choose a valid platform type.")
         changeNum = 1;
@@ -356,8 +352,10 @@ export class WizardComponent implements OnInit, AfterViewInit {
         !this.region ||
         !this.VPCname ||
         !this.CIDRBlock ||
-        !this.publicSubnet ||
-        !this.privateSubnet
+        !this.publicSubnet1 ||
+        !this.publicSubnet2 ||
+        !this.privateSubnet1 ||
+        !this.privateSubnet2
       ) {
         alert("Please fill all required fields");
         return;
@@ -379,6 +377,29 @@ export class WizardComponent implements OnInit, AfterViewInit {
       }
     }
 
+    // RDS VALIDATION
+    if (changeNum == 10 && this.blueprintID == "aws-rds") {
+
+      if (
+        !this.accountNum ||
+        !this.region ||
+        !this.dbEngine ||
+        !this.rdsIdentifier ||
+        !this.dbUsername ||
+        !this.dbPassword ||
+        !this.vpcId
+      ) {
+        alert("Please fill all required fields");
+        return;
+      }
+
+      if (this.createInitialDb && !this.initialDbName) {
+        alert("Please enter Initial Database Name");
+        return;
+      }
+
+    }
+
     this.divToShow = changeNum;
   }
 
@@ -394,6 +415,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
         //FOR EACH OPTION, PUT IT IN THE SELECT 
         tempVal += "<option value='" + data.items[i].blueprintID + "' name='" + data.items[i].blueprintDescription + "'>" + data.items[i].blueprintDescription + "</option>";
       }
+
       tempVal += "</select>";
       // Update the renderer.
       this.renderer.setProperty(this.optionsLanding.nativeElement, 'innerHTML', tempVal);
@@ -502,10 +524,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
     this.blueprintID = e.target.value;
   }
 
-  onPortfolioChange(e: any) {
-    this.portfolioID = e.target.options[e.target.selectedIndex].value;
-  }
-
   validateCIDR(cidr: string): boolean {
     const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
     return cidrRegex.test(cidr);
@@ -528,6 +546,22 @@ export class WizardComponent implements OnInit, AfterViewInit {
     this.privateSubnet = e.target.value;
   }
 
+  onPublicSubnet1Change(e: any) {
+    this.publicSubnet1 = e.target.value;
+  }
+
+  onPublicSubnet2Change(e: any) {
+    this.publicSubnet2 = e.target.value;
+  }
+
+  onPrivateSubnet1Change(e: any) {
+    this.privateSubnet1 = e.target.value;
+  }
+
+  onPrivateSubnet2Change(e: any) {
+    this.privateSubnet2 = e.target.value;
+  }
+
   validateIP(ip: string): boolean {
     const ipPattern = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
     return ipPattern.test(ip);
@@ -539,18 +573,27 @@ export class WizardComponent implements OnInit, AfterViewInit {
     // DIFFERENT POSTS FOR DIFFERENT LANDING ZONES, DIFFERENT JSONS FOR DIFFERENT PLATFORMS
     if (this.blueprintID == "aws-vpc") {
       // AWS STANDARD
+      // Auto generate AZs
+      const az1 = this.region + "a";
+      const az2 = this.region + "b";
+
       const body = {
-        "tenantID": this.licenseNum,
-        "blueprintID": this.blueprintID,
-        "portfolioID": this.portfolioID,
-        "blueprintRelease": "8.7.8",
-        "accountID": this.accountNum,
-        "region": this.region,
-        "vpcName": this.VPCname,
-        "cidr": this.CIDRBlock,
-        "publicSubnet": this.publicSubnet,
-        "privateSubnet": this.privateSubnet
-      }
+        tenantID: this.licenseNum,
+        blueprintID: this.blueprintID,
+        blueprintRelease: "8.7.8",
+        accountID: this.accountNum,
+        region: this.region,
+        vpcName: this.VPCname,
+        cidr: this.CIDRBlock,
+
+        public_subnet_1: this.publicSubnet1,
+        public_subnet_2: this.publicSubnet2,
+        private_subnet_1: this.privateSubnet1,
+        private_subnet_2: this.privateSubnet2,
+
+        az_1: az1,
+        az_2: az2
+      };
       //SEND IT OFF
       this.isCreating = true;
 
@@ -558,7 +601,9 @@ export class WizardComponent implements OnInit, AfterViewInit {
         next: (data) => {
           console.log("NAVIGATING TO LOGS");
           this.isCreating = false;
-          this.router.navigate(['/deployment-logs']);
+          this.router.navigate(['/deployment-logs'], {
+            state: { infraType: this.blueprintDescription }
+          });
         },
         error: (err) => {
           console.error(err);
@@ -568,7 +613,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
       });
 
     }
-    
+
     if (this.blueprintID == "aws-ecs") {
 
       const body = {
@@ -596,7 +641,9 @@ export class WizardComponent implements OnInit, AfterViewInit {
 
           this.isCreating = false;
 
-          this.router.navigate(['/deployment-logs']);
+          this.router.navigate(['/deployment-logs'], {
+            state: { infraType: this.blueprintDescription }
+          });
 
         },
 
@@ -611,12 +658,65 @@ export class WizardComponent implements OnInit, AfterViewInit {
 
     }
 
+    else if (this.blueprintID == "aws-rds") {
+
+      const body = {
+
+        tenantID: this.licenseNum,
+        blueprintID: this.blueprintID,
+
+        accountID: this.accountNum,
+        region: this.region,
+
+        rdsIdentifier: this.rdsIdentifier,
+        dbEngine: this.dbEngine,
+
+        username: this.dbUsername,
+        password: this.dbPassword,
+
+        vpcId: this.vpcId,
+
+        createInitialDb: this.createInitialDb,
+        initialDbName: this.initialDbName,
+
+        zoneName: this.zoneName
+
+      };
+
+      this.isCreating = true;
+
+      this.http.post<any>(
+        this.apiBase + "deployments/aws-rds",
+        body
+      ).subscribe({
+
+        next: () => {
+
+          this.isCreating = false;
+
+          this.router.navigate(['/deployment-logs'], {
+            state: { infraType: this.blueprintDescription }
+          });
+
+        },
+
+        error: (err) => {
+
+          console.error(err);
+          this.isCreating = false;
+          alert("Deployment failed");
+
+        }
+
+      });
+
+    }
+
     else if (this.blueprintID == "awseksfargate") {
       // AWS EKS WITH FARGATE
       const body = {
         "tenantID": this.licenseNum,
         "blueprintID": this.blueprintID,
-        "portfolioID": this.portfolioID,
         "blueprintRelease": "0.8.6",
         "accountID": this.accountNum,
         "region": this.region,
@@ -633,7 +733,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
       const body = {
         "tenantID": this.licenseNum,
         "blueprintID": this.blueprintID,
-        "portfolioID": this.portfolioID,
         "blueprintRelease": "4.1.4",
         "accountID": this.accountNum,
         "region": this.region,
@@ -650,7 +749,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
       const body = {
         "tenantID": this.licenseNum,
         "blueprintID": this.blueprintID,
-        "portfolioID": this.portfolioID,
         "blueprintRelease": "8.6.6",
         "accountID": this.accountNum,
         "region": this.region,

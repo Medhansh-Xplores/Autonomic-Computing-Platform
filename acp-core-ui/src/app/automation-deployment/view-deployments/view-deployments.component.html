@@ -1,0 +1,70 @@
+<div class="container">
+
+    <h2>View Deployments</h2>
+
+    <!-- No Deployments -->
+    <div *ngIf="deployments.length === 0" class="empty">
+        No Deployments Found
+    </div>
+
+    <!-- Table -->
+    <div class="infra-table" *ngIf="deployments.length > 0">
+
+        <!-- Header -->
+        <div class="table-header">
+            <div>Deployment</div>
+            <div>Workflow</div>
+            <div>Status</div>
+            <div>Deployed At</div>
+            <div>App URL</div>
+        </div>
+
+        <!-- Rows -->
+        <div class="table-body">
+            <div class="table-row" *ngFor="let d of deployments">
+
+                <!-- Deployment Column -->
+                <div class="deployment-cell">
+                    <div class="deployment-name">
+                        {{ d.name || '—' }}
+                    </div>
+
+                    <div class="deployment-sub">
+                        {{ d.cloud || '—' }}
+                    </div>
+
+                    <div class="deployment-sub">
+                        {{ d.account || '—' }}/{{ d.repoName || '—' }}
+                    </div>
+                </div>
+
+                <!-- Workflow -->
+                <div>
+                    {{ d.workflow }}
+                </div>
+
+                <!-- Status -->
+                <div class="status" [ngClass]="getStatusClass(d)">
+                    {{ getStatusLabel(d) }}
+                </div>
+
+                <!-- Deployed At -->
+                <div>
+                    {{ d.deployedAt ? (d.deployedAt | date:'medium') : '—' }}
+                </div>
+
+                <!-- URL -->
+                <div>
+                    <a *ngIf="d.url" [href]="d.url" target="_blank" rel="noopener" class="app-link">
+                        Open
+                    </a>
+
+                    <span *ngIf="!d.url">—</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>

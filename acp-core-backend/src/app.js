@@ -15,6 +15,7 @@ const portfolioRoutes = require("./routes/portfolio.routes");
 const accountRoutes = require("./routes/account.routes");
 const infraRoutes = require("./routes/infra.routes");
 const vpcRoutes = require("./routes/vpc.routes");
+const githubRoutes = require('./routes/github.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -24,6 +25,7 @@ app.use("/api/v1", portfolioRoutes);
 app.use("/api/v1", accountRoutes);
 app.use("/api/v1", infraRoutes);
 app.use("/api/v1", vpcRoutes);
+app.use('/api/v1/github', githubRoutes);
 
 // Health
 app.get("/health", (req, res) => {

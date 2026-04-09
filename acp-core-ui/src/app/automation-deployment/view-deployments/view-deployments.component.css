@@ -1,0 +1,137 @@
+.container {
+    padding: 30px;
+}
+
+/* Title */
+h2 {
+    margin-bottom: 20px;
+    color: #0b2545;
+    font-weight: 600;
+}
+
+/* Main table container */
+.infra-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+}
+
+/* Header */
+.table-header {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr 1fr 1.8fr 1fr 1.5fr;
+    padding: 16px;
+    background: #1e4f86;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    border-bottom: 3px solid #ffc107;
+}
+
+/* Scroll body */
+.table-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* Rows */
+.table-row {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr 1fr 1.8fr 1fr 1.5fr;
+    padding: 14px 16px;
+    color: #0b2545;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 1px solid #e6e6e6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Alternate Row Colors */
+.table-row:nth-child(odd) {
+    background: #f2f3f6;
+}
+
+.table-row:nth-child(even) {
+    background: #ccdff5;
+}
+
+/* Hover */
+.table-row:hover {
+    background: #b8c6f8;
+    border-left: 4px solid #1e4f86;
+    padding-left: 12px;
+}
+
+/* Status */
+.status {
+    font-weight: 600;
+    color: #1e4f86;
+}
+
+/* Running Status */
+.status.running {
+    color: #ff9800;
+}
+
+/* Success Status */
+.status.completed {
+    color: #4caf50;
+}
+
+/* Failed Status */
+.status.failed {
+    color: #f44336;
+}
+
+/* Empty state */
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+}
+
+/* Scrollbar styling */
+.table-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-body::-webkit-scrollbar-thumb {
+    background: #c2d3f3;
+    border-radius: 10px;
+}
+
+.table-body::-webkit-scrollbar-thumb:hover {
+    background: #9fb8e8;
+}
+
+.app-link {
+    color: #1e4f86;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-link:hover {
+    text-decoration: underline;
+}
+
+.deployment-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.deployment-name {
+    font-weight: 600;
+}
+
+.deployment-sub {
+    font-size: 12px;
+    opacity: 0.8;
+}

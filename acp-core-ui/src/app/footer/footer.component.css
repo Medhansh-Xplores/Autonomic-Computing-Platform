@@ -1,28 +1,59 @@
-@media all and (min-width: 90em){
-    .navFooter{
-      display:block;
-    }
+/* Push footer to bottom */
+:host {
+  display: block;
+}
+
+.old-pic {
+  margin-top: 135px;
+  /* add this */
+  width: 100%;
+  background-color: #003160;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.old-pic img {
+  max-width: 550px;
+  width: 100%;
+  height: auto;
+}
+
+/* Footer text */
+.usa-footer__secondary-section {
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* Desktop */
+@media all and (min-width: 90em) {
+  .navFooter {
+    display: block;
   }
-  
-  @media only screen and (max-width: 600px){
-    .usa-footer__secondary-section{
-      text-align: center;
-      height: 75px;
-    }
-    .usa-footer__secondary-section{
-      padding: 0%;
-      margin: 0%;
-    }
-    .grid-container {
-      padding: 0%;
-      margin: 0%;
-    }
-    .footer-space{
-  
-    }
-    a {
-      font-size: 12px;
-    }
+}
+
+/* Mobile */
+@media only screen and (max-width: 600px) {
+
+  .usa-footer__secondary-section {
+    text-align: center;
+    height: auto;
+    padding: 5px 0;
+    margin: 0;
   }
-  
-  
+
+  .grid-container {
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-space {
+    margin-top: 10px;
+  }
+
+  a {
+    font-size: 12px;
+  }
+
+}

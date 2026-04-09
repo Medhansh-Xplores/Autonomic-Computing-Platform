@@ -1,10 +1,10 @@
 
 import { BrowserModule } from '@angular/platform-browser';
-import { APP_INITIALIZER, NgModule, SimpleChange} from '@angular/core';
+import { APP_INITIALIZER, NgModule, SimpleChange } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule} from '@angular/common/http';
-import { CommonModule, HashLocationStrategy, LocationStrategy  } from '@angular/common';
-import { FontAwesomeModule, FaIconLibrary  } from '@fortawesome/angular-fontawesome';
+import { HttpClientModule } from '@angular/common/http';
+import { CommonModule, HashLocationStrategy, LocationStrategy } from '@angular/common';
+import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faCoffee, fas } from '@fortawesome/free-solid-svg-icons';
 import { MatTabsModule } from '@angular/material/tabs'
 
@@ -18,7 +18,7 @@ import { CreateApplicationComponent } from './create-application/create-applicat
 import { LoginComponent } from './login/login.component';
 import { CreateInfrastructureComponent } from './create-infrastructure/create-infrastructure.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatDialogModule} from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { InfrastructureServicesComponent } from './infrastructure-services/infrastructure-services.component';
 import { InfrastructureResourcesComponent } from './infrastructure-resources/infrastructure-resources.component';
 import { ApplicationResourcesComponent } from './application-resources/application-resources.component';
@@ -28,6 +28,10 @@ import { TenantInfoComponent } from './tenant/tenant-info.component';
 import { WizardComponent } from './wizard/wizard.component';
 import { DeploymentLogsComponent } from './deployment-logs.component/deployment-logs.component';
 import { EnvService } from 'src/environments/env.service';
+import { AutomationDeploymentComponent } from './automation-deployment/automation-deployment.component';
+import { DeployExistingComponent } from './automation-deployment/deploy-existing/deploy-existing.component';
+import { AutomationLogsComponent } from './automation-logs/automation-logs.component';
+import { ViewDeploymentsComponent } from './automation-deployment/view-deployments/view-deployments.component';
 
 @NgModule({
   declarations: [
@@ -45,6 +49,10 @@ import { EnvService } from 'src/environments/env.service';
     TenantInfoComponent,
     WizardComponent,
     DeploymentLogsComponent,
+    AutomationDeploymentComponent,
+    DeployExistingComponent,
+    AutomationLogsComponent,
+    ViewDeploymentsComponent,
   ],
   imports: [
     BrowserModule,
@@ -59,13 +67,13 @@ import { EnvService } from 'src/environments/env.service';
     MatTabsModule,
   ],
   providers: [
-    {provide : LocationStrategy, useClass: HashLocationStrategy},
-    {provide : APP_INITIALIZER, useFactory : (envService: EnvService) => () => envService.init(), deps: [EnvService], multi: true}
+    { provide: LocationStrategy, useClass: HashLocationStrategy },
+    { provide: APP_INITIALIZER, useFactory: (envService: EnvService) => () => envService.init(), deps: [EnvService], multi: true }
   ],
   entryComponents: [],
   bootstrap: [AppComponent]
 })
-export class AppModule { 
+export class AppModule {
   constructor(library: FaIconLibrary) {
     library.addIconPacks(fas);
     library.addIcons(faCoffee);

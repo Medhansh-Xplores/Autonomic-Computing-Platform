@@ -11,6 +11,13 @@ import { MainPageComponent } from './main-page/main-page.component';
 import { TenantInfoComponent } from './tenant/tenant-info.component';
 import { WizardComponent } from './wizard/wizard.component';
 import { DeploymentLogsComponent } from './deployment-logs.component/deployment-logs.component';
+import { AutomationDeploymentComponent } from './automation-deployment/automation-deployment.component';
+import { SecurityComplianceComponent } from './security-compliance/security-compliance.component';
+import { DeployExistingComponent } from './automation-deployment/deploy-existing/deploy-existing.component';
+import { AutomationLogsComponent } from './automation-logs/automation-logs.component';
+import { ViewDeploymentsComponent } from './automation-deployment/view-deployments/view-deployments.component';
+
+
 
 const routes: Routes = [
   { path: '', component: LoginComponent },
@@ -24,7 +31,14 @@ const routes: Routes = [
   { path: 'ApplicationResources', component: ApplicationResourcesComponent },
   { path: 'tenant', component: TenantInfoComponent },
   { path: 'wizard', component: WizardComponent },
-  { path: 'deployment-logs', component: DeploymentLogsComponent }
+  { path: 'deployment-logs', component: DeploymentLogsComponent },
+  { path: 'automation-deployment', component: AutomationDeploymentComponent },
+  { path: 'security-compliance', component: SecurityComplianceComponent },
+  { path: 'deploy-existing', component: DeployExistingComponent },
+  { path: 'automation-logs', component: AutomationLogsComponent },
+  { path: 'view-deployments', component: ViewDeploymentsComponent },
+  { path: 'running-deployments', component: ViewDeploymentsComponent },
+  
 ];
 
 @NgModule({

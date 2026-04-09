@@ -1,0 +1,41 @@
+<div class="logs-container">
+
+    <div class="logs-header">
+        <h2>
+            {{ status }}
+            <span *ngIf="appName"> : {{ appName }}</span>
+        </h2>
+
+        <div class="status-indicator" *ngIf="!isComplete">
+            <span class="spinner"></span>
+            Running...
+        </div>
+    </div>
+
+    <div class="steps-container">
+        <div *ngFor="let step of steps" class="step-box">
+            <div class="step-header">
+                <span *ngIf="step.status === 'completed' && step.conclusion === 'success'">✅</span>
+                <span *ngIf="step.status === 'completed' && step.conclusion === 'failure'">❌</span>
+                <span *ngIf="step.status !== 'completed'">⏳</span>
+
+                {{ step.name }}
+            </div>
+
+            <div class="step-logs" *ngIf="step.logs?.length">
+                <pre>{{ step.logs.join('\n') }}</pre>
+            </div>
+
+            <div class="step-logs" *ngIf="step.logs && step.logs.length === 0">
+                <pre>No logs found for this step yet.</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions" *ngIf="isComplete">
+        <button class="back-btn" (click)="goBack()">
+            ← Back to Workflows
+        </button>
+    </div>
+
+</div>

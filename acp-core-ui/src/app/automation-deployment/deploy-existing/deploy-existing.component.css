@@ -1,0 +1,202 @@
+:host {
+    display: block;
+    min-height: auto;
+}
+
+/* Title */
+.title {
+    text-align: center;
+    margin: 30px 0;
+    font-size: 32px;
+    font-weight: 600;
+    color: #1c3b57;
+}
+
+/* Page Container */
+.form-page {
+    width: 100%;
+    margin: 5px auto 0px auto;
+}
+
+/* Main Blue Container */
+.landing {
+    width: 900px;
+    margin: 0 auto;
+    background-color: #060d56;
+    border-radius: 30px;
+    padding: 25px 50px 15px 50px;
+    color: white;
+}
+
+/* Section Box */
+.section-box {
+    background-color: #254e73;
+    padding: 25px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+
+/* Section Heading */
+.section-heading {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 8px;
+}
+
+/* Section Layout */
+.section-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-left {
+    width: 220px;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.section-right {
+    flex: 1;
+}
+
+/* Disabled Section */
+.disabled-section {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Radio Options */
+.radio-option {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+.radio-option input {
+    margin-right: 10px;
+    transform: scale(1.1);
+}
+
+/* Inputs */
+.custominput,
+.customdropdown {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+}
+
+/* Navigation Buttons */
+.navbutton {
+    width: 900px;
+    margin: 25px auto;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Buttons */
+.custombutton {
+    background-color: #1c3b57;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.custombutton:hover {
+    background-color: #295c85;
+}
+
+/* Workflow Table */
+.workflow-table {
+    width: 100%;
+    color: white;
+    border-collapse: collapse;
+}
+
+.workflow-table th,
+.workflow-table td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.workflow-table th {
+    text-align: left;
+}
+
+/* Loader */
+.loader-container {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.loader {
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top: 4px solid #00ff88;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+
+.loader-text {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #cfe6ff;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Skeleton Loader */
+.skeleton-row td {
+    padding: 12px;
+}
+
+.skeleton {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+            #244d72 25%,
+            #2c5e8a 37%,
+            #244d72 63%);
+    background-size: 400% 100%;
+    animation: skeleton-loading 1.4s ease infinite;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* Responsive */
+@media screen and (max-width: 1000px) {
+
+    .landing {
+        width: 95%;
+        padding: 30px;
+    }
+
+    .navbutton {
+        width: 95%;
+    }
+
+}

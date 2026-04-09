@@ -48,10 +48,13 @@ exports.createVPC = (data) => {
   terraform apply -auto-approve \
   -var="vpc_name=${data.vpcName}" \
   -var="cidr=${data.cidr}" \
-  -var="public_subnet=${data.publicSubnet}" \
-  -var="private_subnet=${data.privateSubnet}" \
+  -var="public_subnet_1=${data.public_subnet_1}" \
+  -var="public_subnet_2=${data.public_subnet_2}" \
+  -var="private_subnet_1=${data.private_subnet_1}" \
+  -var="private_subnet_2=${data.private_subnet_2}" \
   -var="region=${data.region}" \
-  -var="az=${data.region}a" \
+  -var="az_1=${data.az_1}" \
+  -var="az_2=${data.az_2}" \
   -var="role_arn=${roleArn}"
   `;
 
@@ -107,41 +110,65 @@ exports.getLogs = () => {
 
 exports.getDeployments = () => {
 
-  const deploymentsPath = path.join(
+  const deployments = [];
+
+  const basePath = path.join(
     __dirname,
-    "../../terraform/deployments/vpc"
+    "../../terraform/deployments"
   );
 
-  if (!fs.existsSync(deploymentsPath)) {
-    return [];
-  }
+  const types = fs.readdirSync(basePath);
 
-  const folders = fs.readdirSync(deploymentsPath);
+  types.forEach(type => {
 
-  const deployments = folders.map((folder) => {
+    const typePath = path.join(basePath, type);
 
-    const metadataPath = path.join(
-      deploymentsPath,
-      folder,
-      "metadata.json"
-    );
+    const folders = fs.readdirSync(typePath);
 
-    if (!fs.existsSync(metadataPath)) {
-      return null;
-    }
+    folders.forEach(folder => {
 
-    return JSON.parse(
-      fs.readFileSync(metadataPath, "utf8")
-    );
+      const metadataPath = path.join(
+        typePath,
+        folder,
+        "metadata.json"
+      );
 
-  }).filter(Boolean);
+      if (fs.existsSync(metadataPath)) {
+
+        const metadata = JSON.parse(
+          fs.readFileSync(metadataPath, "utf8")
+        );
+
+        deployments.push(metadata);
+
+      }
+
+    });
+
+  });
 
   return deployments;
+
 };
 
 exports.createECS = (data) => {
 
   logs = [];
+
+  // -------------------------------
+  // Validate Request
+  // -------------------------------
+  if (
+    !data.account ||
+    !data.region ||
+    !data.clusterName ||
+    !data.vpcId ||
+    !data.cpu ||
+    !data.memory ||
+    !data.zoneName
+  ) {
+    throw new Error("Missing required ECS parameters");
+  }
 
   const deploymentName = data.zoneName;
 
@@ -159,38 +186,256 @@ exports.createECS = (data) => {
 
   fs.cpSync(templatePath, deploymentPath, { recursive: true });
 
+  // -------------------------------
+  // Metadata
+  // -------------------------------
+  const metadata = {
+    name: data.zoneName,
+    type: "ECS",
+    region: data.region,
+    account: data.account,
+    status: "Creating",
+    cloud: "AWS"
+  };
+
+  fs.writeFileSync(
+    path.join(deploymentPath, "metadata.json"),
+    JSON.stringify(metadata, null, 2)
+  );
+
+  // -------------------------------
+  // Role ARN (FIXED POSITION)
+  // -------------------------------
   const roleArn =
     `arn:aws:iam::${data.account}:role/ACPDeploymentRole`;
 
-  const command = `
-terraform init && 
-terraform apply -auto-approve \
--var="cluster_name=${data.clusterName}" \
--var="region=${data.region}" \
--var="vpc_id=${data.vpcId}" \
--var="cpu=${data.cpu}" \
--var="memory=${data.memory}" \
--var="zone_name=${data.zoneName}" \
--var="role_arn=${roleArn}"
+  // -------------------------------
+  // Auto create tfvars
+  // -------------------------------
+  const tfvars = `
+cluster_name = "${data.clusterName}"
+region       = "${data.region}"
+vpc_id       = "${data.vpcId}"
+
+cpu          = ${data.cpu}
+memory       = ${data.memory}
+
+zone_name    = "${data.zoneName}"
+created_by   = "ACP-Portal"
+
+role_arn     = "${roleArn}"
+
+# Default values (can override later)
+container_port    = 5000
+listener_priority = 100
+path_patterns     = ["/api/*"]
+
+environment_variables = []
 `;
 
-  const child = exec(command, { cwd: deploymentPath });
+  fs.writeFileSync(
+    path.join(deploymentPath, "terraform.tfvars"),
+    tfvars
+  );
+
+  // -------------------------------
+  // Terraform Command
+  // -------------------------------
+  const command = `
+terraform init &&
+terraform apply -auto-approve
+`;
+
+  let child;
+
+  try {
+    child = exec(command, { cwd: deploymentPath });
+  } catch (error) {
+    console.error("ECS Exec Error:", error);
+    throw error;
+  }
 
   child.stdout.on("data", (data) => {
-
     logs.push(data.toString());
-
+    console.log(data.toString());
   });
 
   child.stderr.on("data", (data) => {
-
     logs.push(data.toString());
+    console.error(data.toString());
+  });
+
+  child.on("close", (code) => {
+
+    const metadataPath = path.join(
+      deploymentPath,
+      "metadata.json"
+    );
+
+    if (fs.existsSync(metadataPath)) {
+
+      const metadata = JSON.parse(
+        fs.readFileSync(metadataPath)
+      );
+
+      metadata.status =
+        code === 0 ? "Active" : "Failed";
+
+      fs.writeFileSync(
+        metadataPath,
+        JSON.stringify(metadata, null, 2)
+      );
+    }
+
+    logs.push(
+      code === 0
+        ? "INFRA_CREATED"
+        : "INFRA_FAILED"
+    );
 
   });
 
-  child.on("close", () => {
+};
 
-    logs.push("INFRA_CREATED");
+exports.deployAwsRds = (data) => {
+
+  logs = [];
+
+  // -------------------------------
+  // Validate Request
+  // -------------------------------
+  if (
+    !data.accountID ||
+    !data.region ||
+    !data.rdsIdentifier ||
+    !data.dbEngine ||
+    !data.username ||
+    !data.password ||
+    !data.vpcId ||
+    !data.zoneName
+  ) {
+    throw new Error("Missing required RDS parameters");
+  }
+
+  const deploymentName = data.zoneName;
+
+  const templatePath = path.join(
+    __dirname,
+    "../../terraform/templates/rds"
+  );
+
+  const deploymentPath = path.join(
+    __dirname,
+    `../../terraform/deployments/rds/${deploymentName}`
+  );
+
+  fs.mkdirSync(deploymentPath, { recursive: true });
+
+  fs.cpSync(templatePath, deploymentPath, { recursive: true });
+
+  // -------------------------------
+  // Metadata
+  // -------------------------------
+  const metadata = {
+    name: data.zoneName,
+    type: "RDS",
+    region: data.region,
+    account: data.accountID,
+    status: "Creating",
+    cloud: "AWS"
+  };
+
+  fs.writeFileSync(
+    path.join(deploymentPath, "metadata.json"),
+    JSON.stringify(metadata, null, 2)
+  );
+
+  // -------------------------------
+  // Role ARN
+  // -------------------------------
+  const roleArn =
+    `arn:aws:iam::${data.accountID}:role/ACPDeploymentRole`;
+
+  // -------------------------------
+  // Terraform tfvars
+  // -------------------------------
+  const tfvars = `
+region          = "${data.region}"
+rds_identifier  = "${data.rdsIdentifier}"
+db_engine       = "${data.dbEngine}"
+
+db_username     = "${data.username}"
+db_password     = "${data.password}"
+
+vpc_id          = "${data.vpcId}"
+subnet_ids      = ${JSON.stringify(data.subnet_ids)}
+
+create_db       = ${data.createInitialDb || false}
+initial_db_name = "${data.initialDbName || ""}"
+
+zone_name       = "${data.zoneName}"
+role_arn        = "${roleArn}"
+`;
+
+  fs.writeFileSync(
+    path.join(deploymentPath, "terraform.tfvars"),
+    tfvars
+  );
+
+  // -------------------------------
+  // Terraform Command
+  // -------------------------------
+  const command = `
+terraform init &&
+terraform apply -auto-approve
+`;
+
+  let child;
+
+  try {
+    child = exec(command, { cwd: deploymentPath });
+  } catch (error) {
+    console.error("RDS Exec Error:", error);
+    throw error;
+  }
+
+  child.stdout.on("data", (data) => {
+    logs.push(data.toString());
+    console.log(data.toString());
+  });
+
+  child.stderr.on("data", (data) => {
+    logs.push(data.toString());
+    console.error(data.toString());
+  });
+
+  child.on("close", (code) => {
+
+    const metadataPath = path.join(
+      deploymentPath,
+      "metadata.json"
+    );
+
+    if (fs.existsSync(metadataPath)) {
+
+      const metadata = JSON.parse(
+        fs.readFileSync(metadataPath)
+      );
+
+      metadata.status =
+        code === 0 ? "Active" : "Failed";
+
+      fs.writeFileSync(
+        metadataPath,
+        JSON.stringify(metadata, null, 2)
+      );
+    }
+
+    logs.push(
+      code === 0
+        ? "INFRA_CREATED"
+        : "INFRA_FAILED"
+    );
 
   });
 

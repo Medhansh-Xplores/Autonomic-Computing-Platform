@@ -27,6 +27,11 @@ router.get("/", (req, res) => {
       platformType: "AWS"
     },
     {
+      blueprintID: "aws-rds",
+      blueprintDescription: "AWS RDS",
+      platformType: "AWS"
+    },
+    {
       blueprintID: "aws-eks",
       blueprintDescription: "AWS EKS (Kubernetes)",
       platformType: "AWS"
