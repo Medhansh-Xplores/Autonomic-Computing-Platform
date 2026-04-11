@@ -118,42 +118,6 @@ export class CreateInfrastructureComponent implements OnInit {
     }
   }
 
-  /* async selectPlatform (event1: any) {
-    console.log("test");
-    if (this.platformSelected !== event1.target.value) {
-      this.hasErrors = false;
-    }
-    // // console.log('Platform  is: ' + event1.target.value);
-    this.platformSelected = event1.target.value;
-    if (this.platformSelected === 'AWS') {
-      this.obj = new AwsInfrastructure();
-      this.authSub =  await this.authService.currentUser.subscribe(
-        userAuth => {
-          this.curUser = userAuth;
-          // // console.log(this.curUser);
-          this.obj.createdBy = this.curUser.userName;
-        });
-    }
-    if (this.platformSelected === 'Google') {
-      this.obj = new GcpInfrastructure();
-      this.authSub =  await this.authService.currentUser.subscribe(
-        userAuth => {
-          this.curUser = userAuth;
-          // // console.log(this.curUser);
-          this.obj.createdBy = this.curUser.userName;
-        });
-    }
-    if (this.platformSelected === 'Azure') {
-      this.obj = new AzureInfrastructure();
-      this.authSub =  await this.authService.currentUser.subscribe(
-        userAuth => {
-          this.curUser = userAuth;
-          // // console.log(this.curUser);
-          this.obj.createdBy = this.curUser.userName;
-        });
-    }
-  } */
-
   selectLandingZone(event: any, platform: string) {
     console.log('Landing Zone  is: ' + event.target.value);
     if (platform === 'Google') {

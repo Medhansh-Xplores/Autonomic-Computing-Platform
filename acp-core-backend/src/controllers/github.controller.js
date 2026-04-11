@@ -1,6 +1,6 @@
 const githubService = require('../services/github.service');
 const axios = require("axios");
-const AdmZip = require('adm-zip');
+const { connectEcsToRds } = require('../services/aws.service');
 
 exports.getWorkflows = async (req, res) => {
     try {
@@ -113,6 +113,7 @@ exports.getLogs = async (req, res) => {
                 }
             );
 
+            const AdmZip = require('adm-zip');
             const zip = new AdmZip(logsZipResp.data);
             const fullText = zip.getEntries()
                 .map(e => e.getData().toString())
@@ -136,3 +137,295 @@ exports.getLogs = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch logs" });
     }
 };
+
+// ─── NEW CONTROLLER ───────────────────────────────────────────────────────────
+exports.deployToEcs = async (req, res) => {
+    try {
+        const {
+            // GitHub
+            repoUrl, branch, token,
+            // Monorepo paths
+            frontendPath, backendPath,
+            // AWS
+            account, region, ecsCluster, rdsInstance,
+            // App
+            appName,
+            // AWS credentials to inject as secrets
+            awsAccessKeyId, awsSecretAccessKey
+        } = req.body;
+
+        console.log("Deploy ECS payload:", {
+            repoUrl,
+            branch,
+            frontendPath,
+            backendPath,
+            account,
+            region,
+            ecsCluster,
+            rdsInstance,
+            appName
+        });
+
+        // Derive names from Terraform naming convention
+        // Your Terraform uses: cluster_name-frontend / cluster_name-backend
+        // ECR uses: zone_name-frontend / zone_name-backend
+        // Since portal knows cluster_name, we derive zone_name from it or use cluster_name
+        const ecsServiceFrontend = `${ecsCluster}-frontend`;
+        const ecsServiceBackend = `${ecsCluster}-backend`;
+        const ecsTaskDefFrontend = `${ecsCluster}-frontend`;
+        const ecsTaskDefBackend = `${ecsCluster}-backend`;
+        const ecrRepoFrontend = `${ecsCluster}-frontend`;
+        const ecrRepoBackend = `${ecsCluster}-backend`;
+        const containerNameFrontend = 'frontend';   // hardcoded in your Terraform
+        const containerNameBackend = 'backend';    // hardcoded in your Terraform
+
+        // Get ECR registry URL (account.dkr.ecr.region.amazonaws.com)
+        const ecrRegistry = `${account}.dkr.ecr.${region}.amazonaws.com`;
+
+        // Step 1: Generate the workflow YAML content
+        // Read the template file OR generate inline
+        const workflowContent = generateEcsWorkflowYaml({
+            region, ecrRegistry,
+            ecrRepoFrontend, ecrRepoBackend,
+            ecsCluster,
+            ecsServiceFrontend, ecsServiceBackend,
+            ecsTaskDefFrontend, ecsTaskDefBackend,
+            containerNameFrontend, containerNameBackend,
+            frontendPath: frontendPath || 'frontend',
+            backendPath: backendPath || 'backend'
+        });
+
+        // Step 2: Commit workflow file to repo
+        await githubService.commitWorkflowFile({
+            repoUrl, branch, token,
+            workflowContent
+        });
+
+        // Step 3: Set AWS secrets on repo
+        // Use the portal's assumed-role credentials for the target account
+        const { STSClient, AssumeRoleCommand } = require('@aws-sdk/client-sts');
+        const sts = new STSClient({ region: 'us-east-1' });
+        const roleResp = await sts.send(new AssumeRoleCommand({
+            RoleArn: `arn:aws:iam::${account}:role/ACPDeploymentRole`,
+            RoleSessionName: 'ACPDeploySession'
+        }));
+        const creds = roleResp.Credentials;
+
+        await githubService.setRepoSecret({
+            repoUrl, token,
+            secretName: 'AWS_ACCESS_KEY_ID',
+            secretValue: creds.AccessKeyId
+        });
+        await githubService.setRepoSecret({
+            repoUrl, token,
+            secretName: 'AWS_SECRET_ACCESS_KEY',
+            secretValue: creds.SecretAccessKey
+        });
+        await githubService.setRepoSecret({
+            repoUrl, token,
+            secretName: 'AWS_SESSION_TOKEN',
+            secretValue: creds.SessionToken
+        });
+        // Step 3.5: Connect ECS to selected RDS
+        // Step 3.5: Connect ECS to selected RDS
+        try {
+            if (rdsInstance) {
+                console.log("Connecting ECS to RDS...");
+                await connectEcsToRds({
+                    account,
+                    region,
+                    ecsCluster,
+                    rdsInstance
+                });
+                console.log("ECS connected to RDS successfully");
+            }
+        } catch (err) {
+            console.error("RDS connection failed:", err);
+        }
+
+        // Step 4: Trigger the workflow
+        const workflowId = 'deploy-to-ecs.yml';
+        const workflowInputs = {
+            aws_region: region,
+            ecr_registry: ecrRegistry,
+            ecr_repo_frontend: ecrRepoFrontend,
+            ecr_repo_backend: ecrRepoBackend,
+            ecs_cluster: ecsCluster,
+            ecs_service_frontend: ecsServiceFrontend,
+            ecs_service_backend: ecsServiceBackend,
+            ecs_task_def_frontend: ecsTaskDefFrontend,
+            ecs_task_def_backend: ecsTaskDefBackend,
+            container_name_frontend: containerNameFrontend,
+            container_name_backend: containerNameBackend,
+            frontend_path: frontendPath || 'frontend',
+            backend_path: backendPath || 'backend'
+        };
+
+        // Small delay to let GitHub index the newly committed workflow file
+        await new Promise(r => setTimeout(r, 3000));
+
+        const { runId } = await githubService.triggerWorkflow({
+            repoUrl, branch, token,
+            workflowId,
+            inputs: workflowInputs
+        });
+
+        // Step 5: Save deployment record
+        const deploymentService = require('../services/deployments.service');
+        const { id: deploymentId } = deploymentService.createDeployment({
+            name: appName || ecsCluster,
+            cloud: 'AWS',
+            deployment: 'ECS Fargate',
+            repoUrl,
+            branch,
+            ecsCluster,
+            region,
+            account,
+            runId,
+            status: 'running',
+            triggeredFrom: 'ACP Portal',
+            createdAt: new Date().toISOString()
+        });
+
+        res.json({ runId, deploymentId });
+
+    } catch (error) {
+        console.error('ECS deploy error:', error?.response?.data || error.message);
+        res.status(500).json({ message: 'ECS deployment failed', error: error.message });
+    }
+};
+
+// ─── YAML GENERATOR HELPER ────────────────────────────────────────────────────
+function generateEcsWorkflowYaml(cfg) {
+    return `name: Deploy to ECS (Blue/Green)
+
+on:
+  workflow_dispatch:
+    inputs:
+      aws_region:
+        required: true
+        type: string
+      ecr_registry:
+        required: true
+        type: string
+      ecr_repo_frontend:
+        required: true
+        type: string
+      ecr_repo_backend:
+        required: true
+        type: string
+      ecs_cluster:
+        required: true
+        type: string
+      ecs_service_frontend:
+        required: true
+        type: string
+      ecs_service_backend:
+        required: true
+        type: string
+      ecs_task_def_frontend:
+        required: true
+        type: string
+      ecs_task_def_backend:
+        required: true
+        type: string
+      container_name_frontend:
+        required: true
+        default: "frontend"
+        type: string
+      container_name_backend:
+        required: true
+        default: "backend"
+        type: string
+      frontend_path:
+        required: true
+        default: "frontend"
+        type: string
+      backend_path:
+        required: true
+        default: "backend"
+        type: string
+
+env:
+  IMAGE_TAG: \${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build and push images
+    runs-on: ubuntu-latest
+    outputs:
+      frontend_image: \${{ steps.out.outputs.frontend_image }}
+      backend_image: \${{ steps.out.outputs.backend_image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: \${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: \${{ inputs.aws_region }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push frontend
+        run: |
+          docker build -t \${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_frontend }}:\${{ env.IMAGE_TAG }} -f \${{ inputs.frontend_path }}/Dockerfile \${{ inputs.frontend_path }}
+          docker push \${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_frontend }}:\${{ env.IMAGE_TAG }}
+      - name: Build and push backend
+        run: |
+          docker build -t \${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_backend }}:\${{ env.IMAGE_TAG }} -f \${{ inputs.backend_path }}/Dockerfile \${{ inputs.backend_path }}
+          docker push \${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_backend }}:\${{ env.IMAGE_TAG }}
+      - id: out
+        run: |
+          echo "frontend_image=\${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_frontend }}:\${{ env.IMAGE_TAG }}" >> \$GITHUB_OUTPUT
+          echo "backend_image=\${{ inputs.ecr_registry }}/\${{ inputs.ecr_repo_backend }}:\${{ env.IMAGE_TAG }}" >> \$GITHUB_OUTPUT
+
+  deploy-backend:
+    name: Deploy backend
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: \${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: \${{ inputs.aws_region }}
+      - run: aws ecs describe-task-definition --task-definition \${{ inputs.ecs_task_def_backend }} --query taskDefinition > backend-task-def.json
+      - id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend-task-def.json
+          container-name: \${{ inputs.container_name_backend }}
+          image: \${{ needs.build-and-push.outputs.backend_image }}
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: \${{ steps.task-def.outputs.task-definition }}
+          service: \${{ inputs.ecs_service_backend }}
+          cluster: \${{ inputs.ecs_cluster }}
+          wait-for-service-stability: true
+
+  deploy-frontend:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-backend]
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: \${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: \${{ inputs.aws_region }}
+      - run: aws ecs describe-task-definition --task-definition \${{ inputs.ecs_task_def_frontend }} --query taskDefinition > frontend-task-def.json
+      - id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: frontend-task-def.json
+          container-name: \${{ inputs.container_name_frontend }}
+          image: \${{ needs.build-and-push.outputs.frontend_image }}
+      - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: \${{ steps.task-def.outputs.task-definition }}
+          service: \${{ inputs.ecs_service_frontend }}
+          cluster: \${{ inputs.ecs_cluster }}
+          wait-for-service-stability: true
+`;
+}

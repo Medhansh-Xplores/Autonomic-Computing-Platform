@@ -96,3 +96,20 @@ td {
 .section-spacing {
     height: 10px;
 }
+
+.create-header-box {
+    position: absolute;
+    left: 10px;
+    top: 110px;
+    padding: 10px 40px;
+    background: #bfcaf6;
+    border-radius: 8px;
+    border-left: 4px solid #2C5CC5;
+    z-index: 10;
+}
+
+.create-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1c3b57;
+}

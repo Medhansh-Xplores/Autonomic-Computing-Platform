@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { EnvService } from 'src/environments/env.service';
 import { Router } from '@angular/router';
@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
     templateUrl: './deploy-existing.component.html',
     styleUrls: ['./deploy-existing.component.css']
 })
-export class DeployExistingComponent {
+export class DeployExistingComponent implements OnInit {
 
     constructor(
         private http: HttpClient,
@@ -31,17 +31,21 @@ export class DeployExistingComponent {
         }
     }
 
+    ngOnInit() {
+        this.loadAccounts();
+    }
+
     divToShow = 1;
     apiBase = this.envService.apiUrl;
 
+    cpu: any;
+    memory: any;
+    port: any;
     source: any;
     cloud: any;
     deployment: any;
     deploymentOptions: any[] = [];
     appName: any;
-    port: any;
-    cpu: any;
-    memory: any;
     repoUrl: any;
     branch: any;
     dockerfilePath: any;
@@ -59,25 +63,21 @@ export class DeployExistingComponent {
     region: any;
     ecsCluster: any;
     ecsOptions: any[] = [];
-    accountOptions: any[] = [
-        { accountID: '377122171982', accountName: 'Autonomic Root Account' }
-    ];
-    regionOptions: any[] = [
-        'us-east-1',
-        'us-east-2',
-        'us-west-1',
-        'us-west-2',
-        'ap-south-1',
-        'eu-west-1'
-    ];
-    ecrRepository: any;
-    ecrImageTag: any;
-    containerName: any;
-    containerPort: any;
-
+    accountOptions: any[] = [];
+    regionOptions: any[] = [];
+    loadingAccounts = false;
+    loadingRegions = false;
+    loadingEcs = false;
     loading = false;
     loadingWorkflows = false;
     loadingSteps = false;
+    frontendPath: any = 'frontend';
+    backendPath: any = 'backend';
+    rdsInstance: any;
+    rdsOptions: any[] = [];
+    loadingRds = false;
+    useRds = false;
+    backendPort: any = '3000';
 
     isAcpAwsEcsFlow(): boolean {
         return this.source === 'GitHub'
@@ -115,7 +115,7 @@ export class DeployExistingComponent {
 
         if (this.isAcpAwsEcsFlow()) {
             if (this.divToShow === 2) {
-                if (!this.account || !this.region || !this.ecsCluster) {
+                if (!this.account || !this.region || !this.ecsCluster || (this.useRds && !this.rdsInstance)) {
                     alert('Please select Account, Region and ECS Cluster');
                     return;
                 }
@@ -137,8 +137,8 @@ export class DeployExistingComponent {
             }
 
             if (this.divToShow === 4) {
-                if (!this.appName || !this.containerName || !this.containerPort || !this.ecrRepository || !this.ecrImageTag) {
-                    alert('Please fill app container and ECR configuration');
+                if (!this.appName || !this.backendPort) {
+                    alert('Please fill application configuration');
                     return;
                 }
                 this.divToShow++;
@@ -248,11 +248,8 @@ export class DeployExistingComponent {
                 'EC2',
                 'Lambda'
             ];
-            this.ecsOptions = [
-                'acp-ecs-cluster-dev',
-                'acp-ecs-cluster-qa',
-                'acp-ecs-cluster-prod'
-            ];
+
+            this.loadAccounts();
         }
 
         if (val === 'Azure') {
@@ -279,28 +276,48 @@ export class DeployExistingComponent {
 
     deploy() {
         if (this.isAcpAwsEcsFlow()) {
-            const reviewPayload = {
-                source: this.source,
-                deploymentMode: this.deploymentMode,
-                cloud: this.cloud,
-                deployment: this.deployment,
+            this.loading = true;
+
+            const payload = {
+                repoUrl: this.repoUrl,
+                branch: this.branch,
+                token: this.githubToken,
+                frontendPath: this.frontendPath,
+                backendPath: this.backendPath,
                 account: this.account,
                 region: this.region,
                 ecsCluster: this.ecsCluster,
-                repoUrl: this.repoUrl,
-                branch: this.branch,
-                repoType: this.repoType,
+                rdsInstance: this.useRds ? this.rdsInstance : null,
+                useRds: this.useRds,
                 appName: this.appName,
-                containerName: this.containerName,
-                containerPort: this.containerPort,
-                cpu: this.cpu,
-                memory: this.memory,
-                ecrRepository: this.ecrRepository,
-                ecrImageTag: this.ecrImageTag
+                backendPort: this.backendPort
             };
 
-            console.log('ACP AWS ECS deploy config:', reviewPayload);
-            alert('Frontend flow is ready. Backend API integration for ACP ECS deploy is pending.');
+            this.http.post(this.apiBase + 'github/deploy-ecs', payload)
+                .subscribe({
+                    next: (res: any) => {
+                        this.loading = false;
+                        const { runId, deploymentId } = res;
+
+                        this.router.navigate(['/automation-logs'], {
+                            state: {
+                                repoUrl: this.repoUrl,
+                                workflow: 'deploy-to-ecs.yml',
+                                branch: this.branch,
+                                token: this.githubToken,
+                                deploymentId: deploymentId,
+                                runId: runId,
+                                appName: this.appName,
+                                cloud: 'AWS'
+                            }
+                        });
+                    },
+                    error: (err: any) => {
+                        this.loading = false;
+                        console.error('ECS deploy failed', err);
+                        alert('Deployment failed: ' + (err?.error?.message || 'Unknown error'));
+                    }
+                });
             return;
         }
 
@@ -406,6 +423,95 @@ export class DeployExistingComponent {
                     alert('Deployment failed');
                 }
             });
+    }
+
+    // Load Accounts
+    loadAccounts() {
+
+        this.loadingAccounts = true;
+
+        this.http.get(this.apiBase + 'aws/accounts')
+            .subscribe({
+                next: (res: any) => {
+                    this.accountOptions = res;
+                    this.loadingAccounts = false;
+                },
+                error: (err) => {
+                    console.error('Failed to load accounts', err);
+                    this.loadingAccounts = false;
+                }
+            });
+
+    }
+
+
+    // Load Regions
+    loadRegions() {
+
+        this.region = null;
+        this.ecsCluster = null;
+        this.regionOptions = [];
+        this.ecsOptions = [];
+
+        this.loadingRegions = true;
+
+        this.http.get(
+            this.apiBase + 'aws/regions?account=' + this.account
+        ).subscribe({
+            next: (res: any) => {
+                this.regionOptions = res;
+                this.loadingRegions = false;
+            },
+            error: (err) => {
+                console.error('Failed to load regions', err);
+                this.loadingRegions = false;
+            }
+        });
+
+    }
+
+    // Load ECS Clusters
+    loadEcsClusters() {
+
+        this.ecsCluster = null;
+        this.ecsOptions = [];
+
+        this.loadingEcs = true;
+
+        this.http.get(
+            this.apiBase + 'aws/ecs-clusters?account=' + this.account + '&region=' + this.region
+        ).subscribe({
+            next: (res: any) => {
+                this.ecsOptions = res;
+                this.loadingEcs = false;
+            },
+            error: (err) => {
+                console.error('Failed to load ECS clusters', err);
+                this.loadingEcs = false;
+            }
+        });
+
+    }
+    // Load RDS Instances
+    loadRdsInstances() {
+
+        this.rdsInstance = null;
+        this.rdsOptions = [];
+
+        this.loadingRds = true;
+
+        this.http.get(
+            this.apiBase + 'aws/rds-instances?account=' + this.account + '&region=' + this.region
+        ).subscribe({
+            next: (res: any) => {
+                this.rdsOptions = res;
+                this.loadingRds = false;
+            },
+            error: (err) => {
+                console.error('Failed to load RDS', err);
+                this.loadingRds = false;
+            }
+        });
     }
 
 }

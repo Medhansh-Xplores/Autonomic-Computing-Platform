@@ -410,14 +410,12 @@ export class WizardComponent implements OnInit, AfterViewInit {
     this.http.get<any>(this.apiBase + "blueprints?platformTypeFilter=" + this.platformType).subscribe(data => {
       this.numItems = data.items.length;
       let tempVal = "";
-      tempVal = "<select> <option value='null'>--- Choose an Option ---</option>";
+      tempVal = "<option value='null'>--- Choose an Option ---</option>";
+
       for (let i = 0; i < this.numItems; i++) {
-        //FOR EACH OPTION, PUT IT IN THE SELECT 
-        tempVal += "<option value='" + data.items[i].blueprintID + "' name='" + data.items[i].blueprintDescription + "'>" + data.items[i].blueprintDescription + "</option>";
+        tempVal += `<option value='${data.items[i].blueprintID}'>${data.items[i].blueprintDescription}</option>`;
       }
 
-      tempVal += "</select>";
-      // Update the renderer.
       this.renderer.setProperty(this.optionsLanding.nativeElement, 'innerHTML', tempVal);
     })
 

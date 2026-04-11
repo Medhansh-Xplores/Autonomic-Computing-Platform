@@ -200,3 +200,50 @@
     }
 
 }
+
+.dropdown-with-loader {
+    position: relative;
+}
+
+.small-spinner {
+    position: absolute;
+    right: 35px;
+    /* moved left */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    border: 2px solid #ccc;
+    border-top: 2px solid #1c3b57;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: translateY(-50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+.create-header-box {
+    position: absolute;
+    left: 10px;
+    top: 110px;
+    padding: 10px 40px;
+    background: #bfcaf6;
+    border-radius: 8px;
+    border-left: 4px solid #2C5CC5;
+    z-index: 10;
+    pointer-events: none;
+}
+
+
+.create-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1c3b57;
+}

@@ -14,14 +14,18 @@
     "nodemon": "^3.1.14"
   },
   "dependencies": {
-    "@aws-sdk/client-ec2": "^3.1019.0",
-    "@aws-sdk/client-sts": "^3.1019.0",
+    "@aws-sdk/client-ec2": "^3.1028.0",
+    "@aws-sdk/client-ecs": "^3.1028.0",
+    "@aws-sdk/client-rds": "^3.1028.0",
+    "@aws-sdk/client-sts": "^3.1027.0",
     "adm-zip": "^0.5.17",
     "aws-sdk": "^2.1693.0",
     "axios": "^1.13.6",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "libsodium-wrappers": "^0.8.3",
+    "tweetsodium": "^0.0.6"
   }
 }

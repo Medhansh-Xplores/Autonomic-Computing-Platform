@@ -1,3 +1,8 @@
+<div class="create-header-box">
+    <div class="create-header-title">
+        Deploy Existing Application
+    </div>
+</div>
 <div class="title">Deploy Existing Application</div>
 <div class="form-page" [hidden]="divToShow != 1">
 
@@ -161,33 +166,96 @@
 
             <div class="section-row">
                 <div class="section-left">Account</div>
-                <div class="section-right">
-                    <select class="customdropdown" [(ngModel)]="account">
-                        <option value="" disabled>Select Account</option>
+
+                <div class="section-right dropdown-with-loader">
+                    <select class="customdropdown" [(ngModel)]="account" (change)="loadRegions()"
+                        [disabled]="loadingAccounts || !accountOptions.length">
+
+                        <option value="">
+                            {{ loadingAccounts ? 'Loading accounts...' :
+                            (accountOptions.length ? 'Select Account' : 'No accounts available') }}
+                        </option>
+
                         <option *ngFor="let acc of accountOptions" [value]="acc.accountID">
                             {{ acc.accountName }} ({{ acc.accountID }})
                         </option>
+
                     </select>
+
+                    <div *ngIf="loadingAccounts" class="small-spinner"></div>
+
                 </div>
             </div>
 
             <div class="section-row">
                 <div class="section-left">Region</div>
-                <div class="section-right">
-                    <select class="customdropdown" [(ngModel)]="region">
-                        <option value="" disabled>Select Region</option>
-                        <option *ngFor="let r of regionOptions" [value]="r">{{ r }}</option>
+                <div class="section-right dropdown-with-loader">
+
+                    <select class="customdropdown" [(ngModel)]="region" (change)="loadEcsClusters(); loadRdsInstances()"
+                        [disabled]="loadingRegions || !account">
+
+                        <option value="">
+                            {{ loadingRegions ? 'Loading regions...' : 'Select Region' }}
+                        </option>
+
+                        <option *ngFor="let r of regionOptions" [value]="r">
+                            {{ r }}
+                        </option>
+
                     </select>
+
+                    <div *ngIf="loadingRegions" class="small-spinner"></div>
+
                 </div>
             </div>
 
             <div class="section-row">
                 <div class="section-left">ECS Cluster</div>
-                <div class="section-right">
-                    <select class="customdropdown" [(ngModel)]="ecsCluster">
-                        <option value="" disabled>Select ECS Cluster</option>
-                        <option *ngFor="let ecs of ecsOptions" [value]="ecs">{{ ecs }}</option>
+                <div class="section-right dropdown-with-loader">
+
+                    <select class="customdropdown" [(ngModel)]="ecsCluster" [disabled]="loadingEcs || !region">
+
+                        <option value="">
+                            {{ loadingEcs ? 'Loading ECS clusters...' : 'Select ECS Cluster' }}
+                        </option>
+
+                        <option *ngFor="let ecs of ecsOptions" [value]="ecs">
+                            {{ ecs }}
+                        </option>
+
                     </select>
+
+                    <div *ngIf="loadingEcs" class="small-spinner"></div>
+
+                </div>
+            </div>
+            <!-- Use RDS -->
+            <div class="section-row">
+                <div class="section-left">Use RDS</div>
+                <div class="section-right">
+                    <input type="checkbox" [(ngModel)]="useRds">
+                </div>
+            </div>
+
+            <!-- RDS Dropdown -->
+            <div class="section-row" *ngIf="useRds">
+                <div class="section-left">RDS Instance</div>
+                <div class="section-right dropdown-with-loader">
+
+                    <select class="customdropdown" [(ngModel)]="rdsInstance" [disabled]="loadingRds || !region">
+
+                        <option value="">
+                            {{ loadingRds ? 'Loading RDS...' : 'Select RDS Instance' }}
+                        </option>
+
+                        <option *ngFor="let rds of rdsOptions" [value]="rds">
+                            {{ rds }}
+                        </option>
+
+                    </select>
+
+                    <div *ngIf="loadingRds" class="small-spinner"></div>
+
                 </div>
             </div>
         </div>
@@ -379,6 +447,22 @@
                     <input class="custominput" [(ngModel)]="branch" placeholder="main">
                 </div>
             </div>
+            <!-- Monorepo paths — only meaningful for monorepos -->
+            <div class="section-row">
+                <div class="section-left">Frontend path</div>
+                <div class="section-right">
+                    <input class="custominput" [(ngModel)]="frontendPath"
+                        placeholder="frontend (subfolder with Dockerfile)">
+                </div>
+            </div>
+
+            <div class="section-row">
+                <div class="section-left">Backend path</div>
+                <div class="section-right">
+                    <input class="custominput" [(ngModel)]="backendPath"
+                        placeholder="backend (subfolder with Dockerfile)">
+                </div>
+            </div>
         </div>
 
         <div *ngIf="isAcpAwsEcsFlow()" class="section-box">
@@ -514,60 +598,16 @@
                 </div>
             </div>
 
+
             <div class="section-row">
-                <div class="section-left">Container Name</div>
+                <div class="section-left">Backend Port</div>
                 <div class="section-right">
-                    <input class="custominput" [(ngModel)]="containerName" placeholder="my-app-container">
+                    <input class="custominput" [(ngModel)]="backendPort" placeholder="3000">
                 </div>
             </div>
 
-            <div class="section-row">
-                <div class="section-left">Container Port</div>
-                <div class="section-right">
-                    <input class="custominput" [(ngModel)]="containerPort" placeholder="3000">
-                </div>
-            </div>
-
-            <div class="section-row">
-                <div class="section-left">CPU</div>
-                <div class="section-right">
-                    <select class="customdropdown" [(ngModel)]="cpu">
-                        <option value="256">256</option>
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="section-row">
-                <div class="section-left">Memory</div>
-                <div class="section-right">
-                    <select class="customdropdown" [(ngModel)]="memory">
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                        <option value="2048">2048</option>
-                    </select>
-                </div>
-            </div>
         </div>
 
-        <div class="section-box">
-            <div class="section-heading">ECR Configuration</div>
-
-            <div class="section-row">
-                <div class="section-left">ECR Repository</div>
-                <div class="section-right">
-                    <input class="custominput" [(ngModel)]="ecrRepository" placeholder="my-app-repo">
-                </div>
-            </div>
-
-            <div class="section-row">
-                <div class="section-left">Image Tag</div>
-                <div class="section-right">
-                    <input class="custominput" [(ngModel)]="ecrImageTag" placeholder="latest">
-                </div>
-            </div>
-        </div>
     </div>
 
     <table class="landing" *ngIf="!isAcpAwsEcsFlow()">
@@ -619,68 +659,74 @@
 
 </div>
 
-
 <!-- STEP 5 — REVIEW -->
 <div class="form-page" [hidden]="divToShow != 5">
 
-    <table class="landing">
+    <div class="landing">
 
-        <tr>
-            <td><strong>Source</strong></td>
-            <td>{{source}}</td>
-        </tr>
+        <div class="section-box">
+            <div class="section-heading">Review Deployment</div>
 
-        <tr>
-            <td><strong>Cloud</strong></td>
-            <td>{{cloud}}</td>
-        </tr>
+            <div class="section-row">
+                <div class="section-left">Source</div>
+                <div class="section-right">{{source}}</div>
+            </div>
 
-        <tr>
-            <td><strong>Deployment</strong></td>
-            <td>{{deployment}}</td>
-        </tr>
+            <div class="section-row">
+                <div class="section-left">Cloud</div>
+                <div class="section-right">{{cloud}}</div>
+            </div>
 
-        <tr>
-            <td><strong>Application</strong></td>
-            <td>{{appName}}</td>
-        </tr>
+            <div class="section-row">
+                <div class="section-left">Deployment</div>
+                <div class="section-right">{{deployment}}</div>
+            </div>
 
-        <tr>
-            <td><strong>Port</strong></td>
-            <td>{{ isAcpAwsEcsFlow() ? containerPort : port }}</td>
-        </tr>
+            <div class="section-row">
+                <div class="section-left">Application</div>
+                <div class="section-right">{{appName}}</div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>Account</strong></td>
-            <td>{{account}}</td>
-        </tr>
+            <div class="section-row">
+                <div class="section-left">Backend Port</div>
+                <div class="section-right">
+                    {{ isAcpAwsEcsFlow() ? backendPort : port }}
+                </div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>Region</strong></td>
-            <td>{{region}}</td>
-        </tr>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">Account</div>
+                <div class="section-right">{{account}}</div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>ECS Cluster</strong></td>
-            <td>{{ecsCluster}}</td>
-        </tr>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">Region</div>
+                <div class="section-right">{{region}}</div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>Repository</strong></td>
-            <td>{{repoUrl}} ({{branch}})</td>
-        </tr>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">ECS Cluster</div>
+                <div class="section-right">{{ecsCluster}}</div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>Container Name</strong></td>
-            <td>{{containerName}}</td>
-        </tr>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">Repository</div>
+                <div class="section-right">{{repoUrl}} ({{branch}})</div>
+            </div>
 
-        <tr *ngIf="isAcpAwsEcsFlow()">
-            <td><strong>ECR</strong></td>
-            <td>{{ecrRepository}}:{{ecrImageTag}}</td>
-        </tr>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">Frontend Path</div>
+                <div class="section-right">{{frontendPath}}</div>
+            </div>
 
-    </table>
+            <div class="section-row" *ngIf="isAcpAwsEcsFlow()">
+                <div class="section-left">Backend Path</div>
+                <div class="section-right">{{backendPath}}</div>
+            </div>
+
+        </div>
+
+    </div>
 
     <div class="navbutton">
 
@@ -688,8 +734,8 @@
             BACK
         </button>
 
-        <button class="custombutton" (click)="deploy()">
-            DEPLOY
+        <button class="custombutton" (click)="deploy()" [disabled]="loading">
+            {{ loading ? 'DEPLOYING...' : 'DEPLOY' }}
         </button>
 
     </div>

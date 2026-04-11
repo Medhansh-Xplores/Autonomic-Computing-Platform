@@ -74,3 +74,99 @@ exports.triggerWorkflow = async (data) => {
 
     return { message: "Workflow triggered", runId };
 };
+
+// ─── NEW FUNCTION 1 ───────────────────────────────────────────────────────────
+// Commit GitHub workflow file
+exports.commitWorkflowFile = async ({ repoUrl, branch, token, workflowContent }) => {
+    const { owner, repo } = parseRepo(repoUrl);
+    const filePath = '.github/workflows/deploy-to-ecs.yml';
+
+    const headers = {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    let sha = undefined;
+
+    try {
+        const existing = await axios.get(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+            { headers }
+        );
+
+        sha = existing.data.sha;
+    } catch (e) {
+        // file doesn't exist yet
+    }
+
+    const body = {
+        message: 'chore: add ACP ECS deployment workflow',
+        content: Buffer.from(workflowContent).toString('base64'),
+        branch
+    };
+
+    if (sha) body.sha = sha;
+
+    await axios.put(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+        body,
+        { headers }
+    );
+};
+
+
+// ─── NEW FUNCTION 2 ───────────────────────────────────────────────────────────
+// Set GitHub repo secret
+exports.setRepoSecret = async ({ repoUrl, token, secretName, secretValue }) => {
+    const { owner, repo } = parseRepo(repoUrl);
+
+    const headers = {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    const keyResp = await axios.get(
+        `https://api.github.com/repos/${owner}/${repo}/actions/secrets/public-key`,
+        { headers }
+    );
+
+    const { key, key_id } = keyResp.data;
+
+    const sodium = require('libsodium-wrappers');
+
+    await sodium.ready;
+
+    const messageBytes = Buffer.from(secretValue);
+    const keyBytes = Buffer.from(key, 'base64');
+
+    const encryptedBytes = sodium.crypto_box_seal(
+        messageBytes,
+        keyBytes
+    );
+
+    const encryptedValue = Buffer.from(encryptedBytes).toString('base64');
+
+    await axios.put(
+        `https://api.github.com/repos/${owner}/${repo}/actions/secrets/${secretName}`,
+        {
+            encrypted_value: encryptedValue,
+            key_id
+        },
+        { headers }
+    );
+};
+
+
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+function parseRepo(repoUrl) {
+    const cleaned = repoUrl
+        .replace(/\.git$/, '')
+        .replace(/^https?:\/\/github\.com\//, '')
+        .replace(/\/+$/, '');
+
+    const [owner, repo] = cleaned.split('/');
+
+    return { owner, repo };
+}

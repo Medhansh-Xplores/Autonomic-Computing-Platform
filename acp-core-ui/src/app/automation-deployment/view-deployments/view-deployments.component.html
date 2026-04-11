@@ -12,35 +12,48 @@
 
         <!-- Header -->
         <div class="table-header">
-            <div>Deployment</div>
-            <div>Workflow</div>
-            <div>Status</div>
-            <div>Deployed At</div>
-            <div>App URL</div>
+            <th>Deployment</th>
+            <th>Cloud</th>
+            <th>
+                GitHub
+                <div class="header-sub">Account / Repo / Workflow</div>
+            </th>
+            <th>Status</th>
+            <th>Deployed At</th>
+            <th>App URL</th>
         </div>
 
         <!-- Rows -->
         <div class="table-body">
             <div class="table-row" *ngFor="let d of deployments">
 
-                <!-- Deployment Column -->
-                <div class="deployment-cell">
+                <!-- Deployment -->
+                <div>
                     <div class="deployment-name">
                         {{ d.name || '—' }}
                     </div>
-
-                    <div class="deployment-sub">
-                        {{ d.cloud || '—' }}
-                    </div>
-
-                    <div class="deployment-sub">
-                        {{ d.account || '—' }}/{{ d.repoName || '—' }}
-                    </div>
                 </div>
 
-                <!-- Workflow -->
+                <!-- Cloud -->
                 <div>
-                    {{ d.workflow }}
+                    {{ d.cloud || '—' }}
+                </div>
+
+                <!-- GitHub -->
+                <div class="deployment-cell">
+
+                    <div class="deployment-sub">
+                        {{ d.account || '—' }}<span *ngIf="d.account"> /</span>
+                    </div>
+
+                    <div class="deployment-sub">
+                        {{ d.repoName || '—' }}<span *ngIf="d.repoName"> /</span>
+                    </div>
+
+                    <div class="deployment-sub">
+                        {{ d.workflow || '—' }}
+                    </div>
+
                 </div>
 
                 <!-- Status -->
@@ -53,7 +66,7 @@
                     {{ d.deployedAt ? (d.deployedAt | date:'medium') : '—' }}
                 </div>
 
-                <!-- URL -->
+                <!-- App URL -->
                 <div>
                     <a *ngIf="d.url" [href]="d.url" target="_blank" rel="noopener" class="app-link">
                         Open
