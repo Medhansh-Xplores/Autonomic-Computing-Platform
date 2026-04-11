@@ -1,0 +1,8 @@
+{
+  "name": "task-vpc",
+  "type": "VPC",
+  "region": "us-east-1",
+  "account": "377122171982",
+  "status": "Active",
+  "cloud": "AWS"
+}

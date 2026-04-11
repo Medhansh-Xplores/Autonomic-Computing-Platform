@@ -1,0 +1,18 @@
+{
+  "name": "task-app",
+  "cloud": "AWS",
+  "deployment": "ECS Fargate",
+  "repoUrl": "https://github.com/AutonomicSolutions/acp-workloads",
+  "branch": "main",
+  "ecsCluster": "task-app",
+  "region": "us-east-1",
+  "account": "377122171982",
+  "runId": 24281396375,
+  "status": "Deployed",
+  "triggeredFrom": "ACP Portal",
+  "createdAt": "2026-04-11T11:21:43.836Z",
+  "id": "5e89f33f-d02b-427b-8752-576e947186b3",
+  "updatedAt": "2026-04-11T11:30:06.061Z",
+  "url": null,
+  "deployedAt": "2026-04-11T11:30:06.061Z"
+}

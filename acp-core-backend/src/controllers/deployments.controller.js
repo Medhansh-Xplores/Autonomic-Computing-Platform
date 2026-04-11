@@ -1,10 +1,13 @@
 const deploymentService = require('../services/deployments.service');
 
 exports.createDeployment = (req, res) => {
-
-    const result = deploymentService.createDeployment(req.body);
-
-    res.json(result);
+    try {
+        const result = deploymentService.createDeployment(req.body);
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create deployment' });
+    }
 };
 
 exports.getDeployments = (req, res) => {

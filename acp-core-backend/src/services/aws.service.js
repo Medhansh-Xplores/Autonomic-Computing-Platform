@@ -1,6 +1,6 @@
 const { STSClient, AssumeRoleCommand } = require("@aws-sdk/client-sts");
 const { EC2Client, DescribeRegionsCommand, AuthorizeSecurityGroupIngressCommand } = require("@aws-sdk/client-ec2");
-const { ECSClient, ListClustersCommand, DescribeServicesCommand } = require("@aws-sdk/client-ecs");
+const { ECSClient, ListClustersCommand, ListServicesCommand, DescribeServicesCommand } = require('@aws-sdk/client-ecs');
 const { RDSClient, DescribeDBInstancesCommand } = require("@aws-sdk/client-rds");
 
 
@@ -95,14 +95,17 @@ exports.getAwsRdsInstances = async (account, region) => {
 };
 
 exports.connectEcsToRds = async function ({
+    account,
     region,
     ecsCluster,
     rdsInstance
 }) {
 
-    const ecs = new ECSClient({ region });
-    const rds = new RDSClient({ region });
-    const ec2 = new EC2Client({ region });
+    const credentials = await assumeRole(account);
+
+    const ecs = new ECSClient({ region, credentials });
+    const rds = new RDSClient({ region, credentials });
+    const ec2 = new EC2Client({ region, credentials });
     // 1. Get ECS Service
     const services = await ecs.send(
         new ListServicesCommand({
@@ -166,7 +169,7 @@ exports.connectEcsToRds = async function ({
 
     } catch (err) {
 
-        if (err.code !== "InvalidPermission.Duplicate") {
+        if (err.name !== "InvalidPermission.Duplicate") {
             throw err;
         }
 

@@ -192,7 +192,8 @@ exports.deployToEcs = async (req, res) => {
             ecsTaskDefFrontend, ecsTaskDefBackend,
             containerNameFrontend, containerNameBackend,
             frontendPath: frontendPath || 'frontend',
-            backendPath: backendPath || 'backend'
+            backendPath: backendPath || 'backend',
+            backendPort: req.body.backendPort || '3000'
         });
 
         // Step 2: Commit workflow file to repo
