@@ -68,6 +68,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
   rdsIdentifier: string = '';
   initialDbName: string = '';
   createInitialDb: boolean = false;
+  backendPort: string = "4000";
 
   awsregionlist = [
     { code: "us-east-2", name: "US East (Ohio)" },
@@ -370,7 +371,8 @@ export class WizardComponent implements OnInit, AfterViewInit {
       if (
         !this.accountNum ||
         !this.region ||
-        !this.ClusterName
+        !this.ClusterName ||
+        !this.backendPort
       ) {
         alert("Please fill all required fields");
         return;
@@ -624,7 +626,8 @@ export class WizardComponent implements OnInit, AfterViewInit {
         vpcId: this.vpcId,
         cpu: this.cpu,
         memory: this.memory,
-        zoneName: this.zoneName
+        zoneName: this.zoneName,
+        backendPort: this.backendPort
 
       };
 

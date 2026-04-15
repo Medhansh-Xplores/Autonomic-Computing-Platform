@@ -94,6 +94,21 @@ exports.getAwsRdsInstances = async (account, region) => {
 
 };
 
+exports.getRdsDetails = async (account, region, rdsIdentifier) => {
+    const credentials = await assumeRole(account);
+    const rds = new RDSClient({ region, credentials });
+    const response = await rds.send(
+        new DescribeDBInstancesCommand({ DBInstanceIdentifier: rdsIdentifier })
+    );
+    const db = response.DBInstances[0];
+    return {
+        host: db.Endpoint.Address,
+        port: String(db.Endpoint.Port),
+        dbName: db.DBName || '',
+        username: db.MasterUsername
+    };
+};
+
 exports.connectEcsToRds = async function ({
     account,
     region,

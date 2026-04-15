@@ -154,6 +154,8 @@ exports.deployToEcs = async (req, res) => {
             awsAccessKeyId, awsSecretAccessKey
         } = req.body;
 
+        const backendPort = req.body.backendPort || '4000';
+
         console.log("Deploy ECS payload:", {
             repoUrl,
             branch,
@@ -227,7 +229,25 @@ exports.deployToEcs = async (req, res) => {
             secretName: 'AWS_SESSION_TOKEN',
             secretValue: creds.SessionToken
         });
-        // Step 3.5: Connect ECS to selected RDS
+
+        if (rdsInstance) {
+            const fs = require('fs');
+            const path = require('path');
+            const rdsMetaPath = path.join(__dirname, `../../terraform/deployments/rds/${rdsInstance}/metadata.json`);
+            const rdsMeta = JSON.parse(fs.readFileSync(rdsMetaPath));
+
+            const dbSecrets = {
+                DB_HOST: rdsMeta.rdsEndpoint,
+                DB_PORT: rdsMeta.rdsPort || '5432',
+                DB_NAME: rdsMeta.dbName || '',
+                DB_USER: rdsMeta.dbUsername,
+                DB_PASSWORD: rdsMeta.dbPassword
+            };
+
+            for (const [name, value] of Object.entries(dbSecrets)) {
+                await githubService.setRepoSecret({ repoUrl, token, secretName: name, secretValue: String(value) });
+            }
+        }
         // Step 3.5: Connect ECS to selected RDS
         try {
             if (rdsInstance) {
@@ -259,7 +279,8 @@ exports.deployToEcs = async (req, res) => {
             container_name_frontend: containerNameFrontend,
             container_name_backend: containerNameBackend,
             frontend_path: frontendPath || 'frontend',
-            backend_path: backendPath || 'backend'
+            backend_path: backendPath || 'backend',
+            backend_port: backendPort
         };
 
         // Small delay to let GitHub index the newly committed workflow file
@@ -346,6 +367,9 @@ on:
         required: true
         default: "backend"
         type: string
+      backend_port:
+        required: true
+        type: string
 
 env:
   IMAGE_TAG: \${{ github.sha }}
@@ -391,12 +415,24 @@ jobs:
           aws-session-token: \${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: \${{ inputs.aws_region }}
       - run: aws ecs describe-task-definition --task-definition \${{ inputs.ecs_task_def_backend }} --query taskDefinition > backend-task-def.json
+
+      - name: Patch container port in task definition
+        run: |
+          jq '(.containerDefinitions[] | select(.name == "${cfg.containerNameBackend}") | .portMappings) = [{"containerPort": ${cfg.backendPort}, "protocol": "tcp"}]' backend-task-def.json > patched.json && mv patched.json backend-task-def.json
+
       - id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: backend-task-def.json
           container-name: \${{ inputs.container_name_backend }}
           image: \${{ needs.build-and-push.outputs.backend_image }}
+          environment-variables: |
+            DB_HOST=\${{ secrets.DB_HOST }}
+            DB_PORT=\${{ secrets.DB_PORT }}
+            DB_NAME=\${{ secrets.DB_NAME }}
+            DB_USER=\${{ secrets.DB_USER }}
+            DB_PASSWORD=\${{ secrets.DB_PASSWORD }}
+
       - uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: \${{ steps.task-def.outputs.task-definition }}

@@ -150,6 +150,13 @@ resource "aws_security_group" "ecs" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+ # ALB → ECS internal traffic
+    ingress {
+    from_port   = var.container_port
+    to_port     = var.container_port
+    protocol    = "tcp"
+    self        = true
+  }
 
   egress {
     from_port   = 0

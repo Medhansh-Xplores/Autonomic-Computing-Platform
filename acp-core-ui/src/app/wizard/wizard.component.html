@@ -461,6 +461,14 @@
                     </select>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <p><strong>Backend Port</strong></p>
+                </td>
+                <td>
+                    <input class="custominput" type="number" [(ngModel)]="backendPort" placeholder="4000">
+                </td>
+            </tr>
         </table>
 
         <div class="navbutton">
@@ -548,6 +556,14 @@
                 </td>
                 <td>
                     {{memory}}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <p><strong>Backend Port</strong></p>
+                </td>
+                <td>
+                    {{backendPort}}
                 </td>
             </tr>
 

@@ -165,7 +165,8 @@ exports.createECS = (data) => {
     !data.vpcId ||
     !data.cpu ||
     !data.memory ||
-    !data.zoneName
+    !data.zoneName ||
+    !data.backendPort
   ) {
     throw new Error("Missing required ECS parameters");
   }
@@ -226,7 +227,7 @@ created_by   = "ACP-Portal"
 role_arn     = "${roleArn}"
 
 # Default values (can override later)
-container_port    = 5000
+container_port    = ${data.backendPort}
 listener_priority = 100
 path_patterns     = ["/api/*"]
 
@@ -342,7 +343,10 @@ exports.deployAwsRds = (data) => {
     region: data.region,
     account: data.accountID,
     status: "Creating",
-    cloud: "AWS"
+    cloud: "AWS",
+    dbUsername: data.username,
+    dbPassword: data.password,
+    dbName: data.initialDbName || ''
   };
 
   fs.writeFileSync(
@@ -422,8 +426,24 @@ terraform apply -auto-approve
         fs.readFileSync(metadataPath)
       );
 
-      metadata.status =
-        code === 0 ? "Active" : "Failed";
+      metadata.status = code === 0 ? "Active" : "Failed";
+
+      // ADD: capture RDS endpoint from terraform output
+      if (code === 0) {
+        try {
+          const { execSync } = require("child_process");
+          const outputs = JSON.parse(
+            execSync("terraform output -json", { cwd: deploymentPath }).toString()
+          );
+          if (outputs.rds_endpoint?.value) {
+            const [host, port] = outputs.rds_endpoint.value.split(":");
+            metadata.rdsEndpoint = host;
+            metadata.rdsPort = port || "5432";
+          }
+        } catch (e) {
+          console.error("Could not capture RDS endpoint:", e.message);
+        }
+      }
 
       fs.writeFileSync(
         metadataPath,
