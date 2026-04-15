@@ -103,14 +103,14 @@ td {
     margin: 30px auto 15px;
     /* center horizontally */
     padding: 12px;
-    background: #bfcaf6;
+    background: #d2d2e0;
     border-radius: 10px;
-    border-left: 4px solid #2C5CC5;
+    border-left: 4px solid #003160;
     text-align: center;
 }
 
 .create-header-title {
     font-size: 20px;
-    font-weight: 600;
-    color: #1c3b57;
+    font-weight: 750;
+    color: #003160;
 }
