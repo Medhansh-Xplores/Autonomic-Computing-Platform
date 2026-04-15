@@ -26,3 +26,19 @@
         gap: 30px;
     }
 }
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}

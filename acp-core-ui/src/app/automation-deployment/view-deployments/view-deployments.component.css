@@ -1,5 +1,6 @@
 .container {
     padding: 30px;
+    min-height: calc(100vh - 290px);
 }
 
 /* Title */
@@ -165,4 +166,30 @@ h2 {
 .table-row>div:nth-child(3),
 .table-header>th:nth-child(3) {
     margin-left: -60px;
+}
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: #6b6b6b;
+    /* subtle gray */
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
 }
