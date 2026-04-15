@@ -223,7 +223,7 @@ resource "aws_lb_target_group" "backend" {
 }
 
     health_check {
-    path                = "/api/health"
+    path                = "/health"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2

@@ -7,5 +7,6 @@ router.post('/workflows/trigger', githubController.triggerWorkflow);
 router.post('/deploy-ecs', githubController.deployToEcs);
 
 router.get('/workflows/logs', githubController.getLogs);
+router.get("/listener-rules", githubController.getListenerRules);
 
 module.exports = router;

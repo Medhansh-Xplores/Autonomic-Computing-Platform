@@ -1,6 +1,15 @@
 const githubService = require('../services/github.service');
 const axios = require("axios");
 const { connectEcsToRds } = require('../services/aws.service');
+const {
+    ElasticLoadBalancingV2Client,
+    ModifyTargetGroupCommand,
+    CreateRuleCommand,
+    DescribeListenersCommand,
+    DescribeTargetGroupsCommand,
+    DescribeRulesCommand 
+} = require("@aws-sdk/client-elastic-load-balancing-v2");
+const { STSClient, AssumeRoleCommand } = require("@aws-sdk/client-sts");
 
 exports.getWorkflows = async (req, res) => {
     try {
@@ -264,6 +273,20 @@ exports.deployToEcs = async (req, res) => {
             console.error("RDS connection failed:", err);
         }
 
+        // Step 3.6: Configure ALB
+        try {
+            await configureAlb({
+                region,
+                ecsCluster,
+                healthCheckPath: req.body.healthCheckPath || "/health",
+                apiPath: req.body.apiPath || "/api/*",
+                priority: req.body.priority || 100,
+                credentials: creds
+            });
+        } catch (err) {
+            console.error("ALB config failed:", err);
+        }
+
         // Step 4: Trigger the workflow
         const workflowId = 'deploy-to-ecs.yml';
         const workflowInputs = {
@@ -466,3 +489,120 @@ jobs:
           wait-for-service-stability: true
 `;
 }
+
+async function configureAlb({
+    region,
+    ecsCluster,
+    healthCheckPath,
+    apiPath,
+    priority,
+    credentials
+}) {
+    const elb = new ElasticLoadBalancingV2Client({
+        region,
+        credentials: {
+            accessKeyId: credentials.AccessKeyId,
+            secretAccessKey: credentials.SecretAccessKey,
+            sessionToken: credentials.SessionToken
+        }
+    });
+
+    // ✅ Get Target Group
+    const tgResp = await elb.send(new DescribeTargetGroupsCommand({
+        Names: [`${ecsCluster}-backend`]
+    }));
+
+    const targetGroup = tgResp.TargetGroups[0];
+    const targetGroupArn = targetGroup.TargetGroupArn;
+
+    // ✅ Update health check
+    await elb.send(new ModifyTargetGroupCommand({
+        TargetGroupArn: targetGroupArn,
+        HealthCheckPath: healthCheckPath
+    }));
+
+    // ✅ Get ALB
+    const lbArn = targetGroup.LoadBalancerArns[0];
+
+    // ✅ Get listener (port 80)
+    const listeners = await elb.send(new DescribeListenersCommand({
+        LoadBalancerArn: lbArn
+    }));
+
+    const listener = listeners.Listeners.find(l => l.Port === 80);
+
+    if (!listener) {
+        throw new Error("No HTTP listener (port 80) found on ALB");
+    }
+    const listenerArn = listener.ListenerArn;
+
+    // ✅ Create rule
+    await elb.send(new CreateRuleCommand({
+        ListenerArn: listenerArn,
+        Priority: priority,
+        Conditions: [
+            {
+                Field: "path-pattern",
+                Values: [apiPath]
+            }
+        ],
+        Actions: [
+            {
+                Type: "forward",
+                TargetGroupArn: targetGroupArn
+            }
+        ]
+    }));
+
+    console.log("ALB configured successfully");
+}
+
+exports.getListenerRules = async (req, res) => {
+    const { region, ecsCluster, account } = req.query;
+
+    try {
+        const sts = new STSClient({ region });
+        const assumeRole = await sts.send(new AssumeRoleCommand({
+            RoleArn: `arn:aws:iam::${account}:role/ACPDeploymentRole`,
+            RoleSessionName: "acp-alb-rules"
+        }));
+
+        const creds = {
+            accessKeyId: assumeRole.Credentials.AccessKeyId,
+            secretAccessKey: assumeRole.Credentials.SecretAccessKey,
+            sessionToken: assumeRole.Credentials.SessionToken
+        };
+
+        const elb = new ElasticLoadBalancingV2Client({ region, credentials: creds });
+
+        // Get target group for this cluster
+        const tgResp = await elb.send(new DescribeTargetGroupsCommand({
+            Names: [`${ecsCluster}-backend`]
+        }));
+        const lbArn = tgResp.TargetGroups[0].LoadBalancerArns[0];
+
+        // Get listener
+        const listeners = await elb.send(new DescribeListenersCommand({
+            LoadBalancerArn: lbArn
+        }));
+        const listener = listeners.Listeners.find(l => l.Port === 80);
+
+        // Get all rules
+        const rulesResp = await elb.send(new DescribeRulesCommand({
+            ListenerArn: listener.ListenerArn
+        }));
+
+        const takenPriorities = rulesResp.Rules
+            .filter(r => r.Priority !== 'default')
+            .map(r => ({
+                priority: parseInt(r.Priority),
+                path: r.Conditions?.[0]?.Values?.[0] || 'unknown'
+            }));
+
+        res.json(takenPriorities);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};

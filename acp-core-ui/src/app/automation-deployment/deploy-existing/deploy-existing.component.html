@@ -3,7 +3,7 @@
         Deploy Existing Application
     </div>
 </div>
-<div class="title">Deploy Existing Application</div>
+
 <div class="form-page" [hidden]="divToShow != 1">
 
     <div class="landing">
@@ -213,7 +213,8 @@
                 <div class="section-left">ECS Cluster</div>
                 <div class="section-right dropdown-with-loader">
 
-                    <select class="customdropdown" [(ngModel)]="ecsCluster" [disabled]="loadingEcs || !region">
+                    <select class="customdropdown" [(ngModel)]="ecsCluster" (ngModelChange)="loadListenerRules()"
+                        [disabled]="loadingEcs || !region">
 
                         <option value="">
                             {{ loadingEcs ? 'Loading ECS clusters...' : 'Select ECS Cluster' }}
@@ -606,6 +607,54 @@
                 </div>
             </div>
 
+            <div class="section-row">
+                <div class="section-left">Frontend Base Path</div>
+                <div class="section-right">
+                    <input class="custominput" [(ngModel)]="frontendBasePath" placeholder="/tasks">
+                </div>
+            </div>
+
+            <!-- Health Check Path -->
+            <div class="section-row">
+                <div class="section-left">Health Check Path</div>
+                <div class="section-right">
+                    <input class="custominput" [(ngModel)]="healthCheckPath" placeholder="/health">
+                </div>
+            </div>
+
+            <!-- API Path -->
+            <div class="section-row">
+                <div class="section-left">API Path</div>
+                <div class="section-right">
+                    <input class="custominput" [(ngModel)]="apiPath" placeholder="/api/*">
+                </div>
+            </div>
+
+            <!-- Listener Priority -->
+            <div class="section-row">
+                <div class="section-left">Listener Priority</div>
+                <div class="section-right">
+
+                    <!-- INPUT -->
+                    <input class="custominput" type="number" [(ngModel)]="priority"
+                        [class.is-invalid]="isPriorityTaken()" placeholder="100">
+
+                    <!-- SHOW TAKEN PRIORITIES -->
+                    <small *ngIf="takenPriorities.length > 0">
+                        Already taken:
+                        <span *ngFor="let r of takenPriorities">
+                            <strong>{{ r.priority }}</strong> ({{ r.path }})&nbsp;
+                        </span>
+                    </small>
+
+                    <!-- ERROR MESSAGE -->
+                    <div *ngIf="isPriorityTaken()" style="color: red;">
+                        Priority {{ priority }} is already in use for path {{ getTakenPath() }}.
+                    </div>
+
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -692,6 +741,26 @@
                 <div class="section-right">
                     {{ isAcpAwsEcsFlow() ? backendPort : port }}
                 </div>
+            </div>
+
+            <div class="section-row" *ngIf="frontendBasePath">
+                <div class="section-left">Frontend Base Path</div>
+                <div class="section-right">{{ frontendBasePath }}</div>
+            </div>
+
+            <div class="section-row">
+                <div class="section-left">Health Check Path</div>
+                <div class="section-right">{{ healthCheckPath }}</div>
+            </div>
+
+            <div class="section-row">
+                <div class="section-left">API Path</div>
+                <div class="section-right">{{ apiPath }}</div>
+            </div>
+
+            <div class="section-row">
+                <div class="section-left">Listener Priority</div>
+                <div class="section-right">{{ priority }}</div>
             </div>
 
             <div class="section-row" *ngIf="isAcpAwsEcsFlow()">

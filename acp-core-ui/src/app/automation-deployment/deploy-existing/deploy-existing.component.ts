@@ -78,6 +78,11 @@ export class DeployExistingComponent implements OnInit {
     loadingRds = false;
     useRds = false;
     backendPort: any = '3000';
+    healthCheckPath: string = '/health';
+    apiPath: string = '/api/*';
+    priority: number = 100;
+    takenPriorities: { priority: number, path: string }[] = [];
+    frontendBasePath: string = '';
 
     isAcpAwsEcsFlow(): boolean {
         return this.source === 'GitHub'
@@ -137,10 +142,23 @@ export class DeployExistingComponent implements OnInit {
             }
 
             if (this.divToShow === 4) {
+
                 if (!this.appName || !this.backendPort) {
                     alert('Please fill application configuration');
                     return;
                 }
+
+                if (this.frontendBasePath && !this.frontendBasePath.startsWith('/')) {
+                    alert('Frontend base path must start with /');
+                    return;
+                }
+
+                // ✅ ADD THIS BLOCK
+                if (this.isPriorityTaken()) {
+                    alert(`Priority ${this.priority} is already taken. Please choose a different one.`);
+                    return;
+                }
+
                 this.divToShow++;
                 return;
             }
@@ -290,7 +308,12 @@ export class DeployExistingComponent implements OnInit {
                 rdsInstance: this.useRds ? this.rdsInstance : null,
                 useRds: this.useRds,
                 appName: this.appName,
-                backendPort: this.backendPort
+                backendPort: this.backendPort,
+                healthCheckPath: this.healthCheckPath,
+                apiPath: this.apiPath,
+                priority: this.priority,
+                frontendBasePath: this.frontendBasePath,
+
             };
 
             this.http.post(this.apiBase + 'github/deploy-ecs', payload)
@@ -512,6 +535,27 @@ export class DeployExistingComponent implements OnInit {
                 this.loadingRds = false;
             }
         });
+    }
+
+    loadListenerRules() {
+        if (!this.account || !this.region || !this.ecsCluster) return;
+
+        this.http.get(
+            this.apiBase + `github/listener-rules?account=${this.account}&region=${this.region}&ecsCluster=${this.ecsCluster}`
+        ).subscribe({
+            next: (res: any) => {
+                this.takenPriorities = res;
+            },
+            error: (err) => console.error('Failed to load listener rules', err)
+        });
+    }
+
+    isPriorityTaken(): boolean {
+        return this.takenPriorities.some(r => r.priority === +this.priority);
+    }
+
+    getTakenPath(): string {
+        return this.takenPriorities.find(r => r.priority === +this.priority)?.path || '';
     }
 
 }

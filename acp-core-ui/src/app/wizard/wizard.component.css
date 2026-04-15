@@ -98,18 +98,19 @@ td {
 }
 
 .create-header-box {
-    position: absolute;
-    left: 10px;
-    top: 110px;
-    padding: 10px 40px;
+    width: 50%;
+    /* SAME as .landing */
+    margin: 30px auto 15px;
+    /* center horizontally */
+    padding: 12px;
     background: #bfcaf6;
-    border-radius: 8px;
+    border-radius: 10px;
     border-left: 4px solid #2C5CC5;
-    z-index: 10;
+    text-align: center;
 }
 
 .create-header-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #1c3b57;
 }

@@ -57,3 +57,31 @@
   }
 
 }
+
+.footer-icons-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 50px; 
+  background-color: #003160;
+  padding: 10px 400px;
+}
+
+.footer-item {
+  text-align: center;
+  color: white;
+  width: 120px;
+  /* fixed width */
+}
+
+.footer-item img {
+  width: 100px;
+  height: 100px;
+  /* 🔥 force uniform size */
+  object-fit: contain;
+}
+
+.footer-item p {
+  font-size: 13px;
+  letter-spacing: 1px;
+}

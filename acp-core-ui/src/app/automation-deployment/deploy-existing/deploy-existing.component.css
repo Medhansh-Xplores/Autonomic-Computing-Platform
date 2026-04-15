@@ -22,7 +22,7 @@
 .landing {
     width: 900px;
     margin: 0 auto;
-    background-color: #060d56;
+    background-color: #003160;
     border-radius: 30px;
     padding: 25px 50px 15px 50px;
     color: white;
@@ -230,20 +230,17 @@
 }
 
 .create-header-box {
-    position: absolute;
-    left: 10px;
-    top: 110px;
-    padding: 10px 40px;
+    width: 50%;
+    margin: 30px auto 20px;
+    padding: 12px;
     background: #bfcaf6;
-    border-radius: 8px;
+    border-radius: 10px;
     border-left: 4px solid #2C5CC5;
-    z-index: 10;
-    pointer-events: none;
+    text-align: center;
 }
 
-
 .create-header-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
     color: #1c3b57;
 }
