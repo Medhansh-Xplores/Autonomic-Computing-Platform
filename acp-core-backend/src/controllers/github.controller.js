@@ -7,7 +7,7 @@ const {
     CreateRuleCommand,
     DescribeListenersCommand,
     DescribeTargetGroupsCommand,
-    DescribeRulesCommand 
+    DescribeRulesCommand
 } = require("@aws-sdk/client-elastic-load-balancing-v2");
 const { STSClient, AssumeRoleCommand } = require("@aws-sdk/client-sts");
 
@@ -177,16 +177,58 @@ exports.deployToEcs = async (req, res) => {
             appName
         });
 
+        // Step 1.5: Run ecs-app Terraform (creates ECR repos, task defs, services, ALB rules)
+        const terraformService = require('../services/terraform.service');
+        const { execSync } = require('child_process');
+        const path = require('path');
+        const fs = require('fs');
+
+        // Read ECS cluster terraform outputs
+        const ecsDeployPath = path.join(__dirname, `../../terraform/deployments/ecs/${ecsCluster}`);
+        let clusterOutputs = {};
+        try {
+            const raw = execSync('terraform output -json', { cwd: ecsDeployPath }).toString();
+            clusterOutputs = JSON.parse(raw);
+        } catch (e) {
+            return res.status(500).json({ message: 'Could not read ECS cluster outputs. Has the ECS cluster been created?', error: e.message });
+        }
+        console.log("CLUSTER OUTPUTS:", clusterOutputs);
+
+        // Read ECS cluster metadata to get vpcId
+        const ecsMetaPath = path.join(__dirname, `../../terraform/deployments/ecs/${ecsCluster}/metadata.json`);
+        const ecsMeta = JSON.parse(fs.readFileSync(ecsMetaPath));
+        const vpcId = ecsMeta.vpcId;
+
+        await terraformService.createECSApp({
+            account,
+            region,
+            appName: appName || ecsCluster,
+            zoneName: ecsCluster,
+            vpcId: vpcId,                          // add vpcId to frontend payload
+            clusterId: clusterOutputs.cluster_id?.value,
+            executionRoleArn: clusterOutputs.execution_role_arn?.value,
+            logGroupName: clusterOutputs.log_group_name?.value,
+            httpListenerArn: clusterOutputs.http_listener_arn?.value,
+            securityGroupId: clusterOutputs.security_group_id?.value,
+            privateSubnetIds: clusterOutputs.private_subnet_ids?.value,
+            cpu: req.body.cpu || 256,
+            memory: req.body.memory || 512,
+            containerPort: req.body.backendPort || 3000,
+            listenerPriority: req.body.priority || 100,
+            pathPatterns: [req.body.apiPath || '/api/*'],
+            frontendListenerPriority: (req.body.priority || 100) + 1,
+        });
+
         // Derive names from Terraform naming convention
         // Your Terraform uses: cluster_name-frontend / cluster_name-backend
         // ECR uses: zone_name-frontend / zone_name-backend
         // Since portal knows cluster_name, we derive zone_name from it or use cluster_name
-        const ecsServiceFrontend = `${ecsCluster}-frontend`;
-        const ecsServiceBackend = `${ecsCluster}-backend`;
-        const ecsTaskDefFrontend = `${ecsCluster}-frontend`;
-        const ecsTaskDefBackend = `${ecsCluster}-backend`;
-        const ecrRepoFrontend = `${ecsCluster}-frontend`;
-        const ecrRepoBackend = `${ecsCluster}-backend`;
+        const ecsServiceFrontend = `${appName}-frontend`;
+        const ecsServiceBackend = `${appName}-backend`;
+        const ecsTaskDefFrontend = `${appName}-frontend`;
+        const ecsTaskDefBackend = `${appName}-backend`;
+        const ecrRepoFrontend = `${appName}-frontend`;
+        const ecrRepoBackend = `${appName}-backend`;
         const containerNameFrontend = 'frontend';   // hardcoded in your Terraform
         const containerNameBackend = 'backend';    // hardcoded in your Terraform
 
@@ -278,6 +320,7 @@ exports.deployToEcs = async (req, res) => {
             await configureAlb({
                 region,
                 ecsCluster,
+                appName,
                 healthCheckPath: req.body.healthCheckPath || "/health",
                 apiPath: req.body.apiPath || "/api/*",
                 priority: req.body.priority || 100,
@@ -509,7 +552,7 @@ async function configureAlb({
 
     // ✅ Get Target Group
     const tgResp = await elb.send(new DescribeTargetGroupsCommand({
-        Names: [`${ecsCluster}-backend`]
+        Names: [`${appName}-backend`]
     }));
 
     const targetGroup = tgResp.TargetGroups[0];
@@ -576,10 +619,25 @@ exports.getListenerRules = async (req, res) => {
         const elb = new ElasticLoadBalancingV2Client({ region, credentials: creds });
 
         // Get target group for this cluster
-        const tgResp = await elb.send(new DescribeTargetGroupsCommand({
-            Names: [`${ecsCluster}-backend`]
-        }));
-        const lbArn = tgResp.TargetGroups[0].LoadBalancerArns[0];
+        let lbArn;
+
+        try {
+            const tgResp = await elb.send(new DescribeTargetGroupsCommand({
+                Names: [`${ecsCluster}-backend`]  // we’ll improve this later
+            }));
+
+            lbArn = tgResp.TargetGroups[0].LoadBalancerArns[0];
+
+        } catch (err) {
+            if (err.name === 'TargetGroupNotFoundException' || err.Code === 'TargetGroupNotFound') {
+                console.log("No target groups yet - first deployment");
+
+                // 👇 RETURN EMPTY STATE
+                return res.json([]);
+            }
+
+            throw err; // real error
+        }
 
         // Get listener
         const listeners = await elb.send(new DescribeListenersCommand({

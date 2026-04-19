@@ -103,10 +103,12 @@ td {
     /* SAME as .landing */
     margin: 30px auto 15px;
     /* center horizontally */
+    height: 30%;
     padding: 12px;
     background: #eaeaea;
     border-radius: 10px;
     border-left: 4px solid #003160;
+    border-right: 4px solid #003160;
     text-align: center;
 }
 
@@ -117,9 +119,9 @@ td {
 }
 
 .header-subtitle {
-    font-size: 12px;
+    font-size: 20px;
     letter-spacing: 1px;
-    color: #6b6b6b;
+    color: #003160;
     /* subtle gray */
     margin-bottom: 4px;
     text-transform: uppercase;

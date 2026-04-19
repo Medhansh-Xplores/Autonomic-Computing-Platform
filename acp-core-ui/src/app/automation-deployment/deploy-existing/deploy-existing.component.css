@@ -16,7 +16,8 @@
 .form-page {
     width: 100%;
     margin: 5px auto 0px auto;
-    margin-bottom: 90px; /* pushes footer down only on this page */
+    margin-bottom: 90px;
+    /* pushes footer down only on this page */
 }
 
 /* Main Blue Container */
@@ -247,9 +248,9 @@
 }
 
 .header-subtitle {
-    font-size: 12px;
+    font-size: 20px;
     letter-spacing: 1px;
-    color: #6b6b6b;
+    color: #003160;
     /* subtle gray */
     margin-bottom: 4px;
     text-transform: uppercase;

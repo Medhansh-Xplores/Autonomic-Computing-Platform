@@ -1,6 +1,7 @@
 const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const deploymentService = require("./deployments.service");
 
 let logs = [];
 
@@ -196,7 +197,8 @@ exports.createECS = (data) => {
     region: data.region,
     account: data.account,
     status: "Creating",
-    cloud: "AWS"
+    cloud: "AWS",
+    vpcId: data.vpcId
   };
 
   fs.writeFileSync(
@@ -217,21 +219,8 @@ exports.createECS = (data) => {
 cluster_name = "${data.clusterName}"
 region       = "${data.region}"
 vpc_id       = "${data.vpcId}"
-
-cpu          = ${data.cpu}
-memory       = ${data.memory}
-
-zone_name    = "${data.zoneName}"
 created_by   = "ACP-Portal"
-
 role_arn     = "${roleArn}"
-
-# Default values (can override later)
-container_port    = ${data.backendPort}
-listener_priority = 100
-path_patterns     = ["/api/*"]
-
-environment_variables = []
 `;
 
   fs.writeFileSync(
@@ -459,4 +448,72 @@ terraform apply -auto-approve
 
   });
 
+};
+
+exports.createECSApp = (data) => {
+  return new Promise((resolve, reject) => {
+
+    const deploymentName = `${data.zoneName}-${data.appName}`;
+
+    const templatePath = path.join(__dirname, "../../terraform/templates/ecs-app");
+    const deploymentPath = path.join(__dirname, `../../terraform/deployments/ecs-app/${deploymentName}`);
+
+    fs.mkdirSync(deploymentPath, { recursive: true });
+    fs.cpSync(templatePath, deploymentPath, { recursive: true });
+
+    const roleArn = `arn:aws:iam::${data.account}:role/ACPDeploymentRole`;
+
+    const tfvars = `
+region     = "${data.region}"
+role_arn   = "${roleArn}"
+
+app_name   = "${data.appName}"
+zone_name  = "${data.zoneName}"
+vpc_id     = "${data.vpcId}"
+
+cluster_id         = "${data.clusterId}"
+execution_role_arn = "${data.executionRoleArn}"
+log_group_name     = "${data.logGroupName}"
+http_listener_arn  = "${data.httpListenerArn}"
+security_group_id  = "${data.securityGroupId}"
+private_subnet_ids = ${JSON.stringify(data.privateSubnetIds)}
+
+cpu            = ${data.cpu || 256}
+memory         = ${data.memory || 512}
+container_port = ${data.containerPort || 3000}
+
+listener_priority          = ${data.listenerPriority || 100}
+path_patterns              = ${JSON.stringify(data.pathPatterns || ["/api/*"])}
+frontend_listener_priority = ${data.frontendListenerPriority || 101}
+frontend_path_patterns     = ${JSON.stringify(data.frontendPathPatterns || ["/*"])}
+
+environment_variables = []
+`;
+
+    fs.writeFileSync(path.join(deploymentPath, "terraform.tfvars"), tfvars);
+
+    const command = `terraform init && terraform apply -auto-approve`;
+    const child = exec(command, { cwd: deploymentPath });
+
+    child.stdout.on("data", d => logs.push(d.toString()));
+    child.stderr.on("data", d => logs.push(d.toString()));
+
+    child.on("close", (code) => {
+      if (code !== 0) return reject(new Error("ecs-app terraform failed"));
+
+      // Capture ECR URLs from outputs
+      try {
+        const { execSync } = require("child_process");
+        const outputs = JSON.parse(
+          execSync("terraform output -json", { cwd: deploymentPath }).toString()
+        );
+        resolve({
+          frontendEcrUrl: outputs.frontend_ecr_url?.value,
+          backendEcrUrl: outputs.backend_ecr_url?.value,
+        });
+      } catch (e) {
+        resolve({});
+      }
+    });
+  });
 };

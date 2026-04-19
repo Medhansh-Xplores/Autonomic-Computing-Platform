@@ -1,3 +1,13 @@
+# ============================================================
+# COMMON / CLUSTER INFRA
+# Provisions once per environment. All app stacks reference
+# outputs from this layer via remote_state or passed variables.
+# ============================================================
+
+# -----------------------------
+# Subnet data sources
+# -----------------------------
+
 data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
@@ -23,7 +33,7 @@ data "aws_subnets" "private" {
 }
 
 # -----------------------------
-# NAT Gateway (for private subnet outbound access)
+# NAT Gateway
 # -----------------------------
 
 resource "aws_eip" "nat" {
@@ -65,26 +75,6 @@ resource "aws_route_table_association" "private" {
 }
 
 # -----------------------------
-# ECR Repositories
-# -----------------------------
-
-resource "aws_ecr_repository" "frontend" {
-  name = "${var.zone_name}-frontend"
-  force_delete = true
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-resource "aws_ecr_repository" "backend" {
-  name = "${var.zone_name}-backend"
-  force_delete = true
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-# -----------------------------
 # ECS Cluster
 # -----------------------------
 
@@ -97,7 +87,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 # -----------------------------
-# CloudWatch Logs
+# CloudWatch Log Group
 # -----------------------------
 
 resource "aws_cloudwatch_log_group" "ecs" {
@@ -109,7 +99,7 @@ resource "aws_cloudwatch_log_group" "ecs" {
 }
 
 # -----------------------------
-# IAM Role
+# IAM Task Execution Role
 # -----------------------------
 
 resource "aws_iam_role" "ecs_task_execution_role" {
@@ -137,7 +127,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
 }
 
 # -----------------------------
-# Security Group
+# Shared Security Group
 # -----------------------------
 
 resource "aws_security_group" "ecs" {
@@ -150,12 +140,13 @@ resource "aws_security_group" "ecs" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
- # ALB → ECS internal traffic
-    ingress {
-    from_port   = var.container_port
-    to_port     = var.container_port
-    protocol    = "tcp"
-    self        = true
+
+  # ALB → ECS internal traffic (self-referencing; apps override container_port via their own SG rules if needed)
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
   }
 
   egress {
@@ -171,7 +162,7 @@ resource "aws_security_group" "ecs" {
 }
 
 # -----------------------------
-# ALB
+# ALB (shared across apps)
 # -----------------------------
 
 resource "aws_lb" "ecs" {
@@ -186,218 +177,21 @@ resource "aws_lb" "ecs" {
   }
 }
 
-# -----------------------------
-# Target Groups
-# -----------------------------
-
-resource "aws_lb_target_group" "frontend" {
-  name        = "${var.cluster_name}-frontend"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "ip"
-
-  health_check {
-    path                = "/"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-resource "aws_lb_target_group" "backend" {
-  name        = "${var.cluster_name}-backend"
-  port = var.container_port
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "ip"
-
-  lifecycle {
-  create_before_destroy = true
-}
-
-    health_check {
-    path                = "/health"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-# -----------------------------
-# Listener
-# -----------------------------
-
-resource "aws_lb_listener" "frontend" {
+# Default HTTP listener — forwards to a placeholder / first app target group.
+# Individual app stacks add listener rules via aws_lb_listener_rule pointing
+# at this listener's ARN (exposed via output).
+resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.ecs.arn
   port              = 80
   protocol          = "HTTP"
 
+  # Default action returns 404 until an app registers a rule.
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.frontend.arn
-  }
-}
-
-# -----------------------------
-# Listener Rule Backend
-# -----------------------------
-
-resource "aws_lb_listener_rule" "backend" {
-  listener_arn = aws_lb_listener.frontend.arn
-  priority = var.listener_priority
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.backend.arn
-  }
-
-  condition {
-    path_pattern {
-      values = var.path_patterns
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "No route matched"
+      status_code  = "404"
     }
-  }
-}
-
-# -----------------------------
-# ECS Task Definitions
-# -----------------------------
-
-resource "aws_ecs_task_definition" "frontend" {
-  family                   = "${var.cluster_name}-frontend"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.cpu
-  memory                   = var.memory
-
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = jsonencode([
-    {
-      name  = "frontend"
-      image = "${aws_ecr_repository.frontend.repository_url}:${var.frontend_image_tag}"
-
-      portMappings = [
-        {
-          containerPort = 80
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.ecs.name
-          awslogs-region        = var.region
-          awslogs-stream-prefix = "frontend"
-        }
-      }
-    }
-  ])
-}
-
-resource "aws_ecs_task_definition" "backend" {
-  family                   = "${var.cluster_name}-backend"
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.cpu
-  memory                   = var.memory
-
-  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-
-  container_definitions = jsonencode([
-    {
-      name  = "backend"
-      image = "${aws_ecr_repository.backend.repository_url}:${var.backend_image_tag}"
-
-      portMappings = [
-        {
-          containerPort = var.container_port
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.ecs.name
-          awslogs-region        = var.region
-          awslogs-stream-prefix = "backend"
-        }
-      }
-      environment = var.environment_variables
-    }
-  ])
-}
-
-# -----------------------------
-# ECS Services
-# -----------------------------
-
-resource "aws_ecs_service" "frontend" {
-  name            = "${var.cluster_name}-frontend"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.frontend.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = data.aws_subnets.private.ids
-    security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.frontend.arn
-    container_name   = "frontend"
-    container_port   = 80
-  }
-
-  depends_on = [aws_lb_listener.frontend,
-  aws_lb_target_group.frontend,
-  aws_ecs_task_definition.frontend]
-
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-resource "aws_ecs_service" "backend" {
-  name            = "${var.cluster_name}-backend"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.backend.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    subnets          = data.aws_subnets.private.ids
-    security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = false
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.backend.arn
-    container_name   = "backend"
-    container_port   = var.container_port
-  }
-
-  depends_on = [
-  aws_lb_listener.frontend,
-  aws_lb_target_group.backend,
-  aws_ecs_task_definition.backend
-]
-
-  tags = {
-    CreatedBy = var.created_by
   }
 }

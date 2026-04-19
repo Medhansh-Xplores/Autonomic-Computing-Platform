@@ -1,39 +1,49 @@
-output "frontend_repo" {
-  value = aws_ecr_repository.frontend.repository_url
+output "cluster_id" {
+  description = "ECS cluster ID"
+  value       = aws_ecs_cluster.main.id
 }
 
-output "backend_repo" {
-  value = aws_ecr_repository.backend.repository_url
-}
-
-output "alb_dns" {
-  value = aws_lb.ecs.dns_name
-}
-
-# -----------------------------
-# Add These (Required for reuse)
-# -----------------------------
-
-output "ecs_cluster_id" {
-  value = aws_ecs_cluster.main.id
+output "cluster_arn" {
+  description = "ECS cluster ARN"
+  value       = aws_ecs_cluster.main.arn
 }
 
 output "execution_role_arn" {
-  value = aws_iam_role.ecs_task_execution_role.arn
+  description = "ARN of the shared ECS task execution IAM role"
+  value       = aws_iam_role.ecs_task_execution_role.arn
 }
 
-output "alb_listener_arn" {
-  value = aws_lb_listener.frontend.arn
+output "log_group_name" {
+  description = "CloudWatch log group name shared by all services in this cluster"
+  value       = aws_cloudwatch_log_group.ecs.name
 }
 
-output "ecs_sg_id" {
-  value = aws_security_group.ecs.id
+output "alb_arn" {
+  description = "ARN of the shared ALB"
+  value       = aws_lb.ecs.arn
 }
 
-output "vpc_id" {
-  value = var.vpc_id
+output "alb_dns_name" {
+  description = "DNS name of the shared ALB"
+  value       = aws_lb.ecs.dns_name
 }
 
-output "private_subnets" {
-  value = data.aws_subnets.private.ids
+output "http_listener_arn" {
+  description = "ARN of the shared HTTP listener — app stacks attach rules to this"
+  value       = aws_lb_listener.http.arn
+}
+
+output "security_group_id" {
+  description = "Shared ECS security group ID"
+  value       = aws_security_group.ecs.id
+}
+
+output "public_subnet_ids" {
+  description = "Public subnet IDs"
+  value       = data.aws_subnets.public.ids
+}
+
+output "private_subnet_ids" {
+  description = "Private subnet IDs"
+  value       = data.aws_subnets.private.ids
 }
