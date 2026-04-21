@@ -43,7 +43,7 @@ exports.createDeployment = async (data) => {
     return { id };
 };
 
-// ─── GET ALL ─────────────────────────────────────────────────────────────────
+// ─── GET ALL ──────────────────────────────────────────────────────────────────
 
 exports.getDeployments = async () => {
     if (USE_DB) {
@@ -71,7 +71,6 @@ exports.updateStatus = async (id, payload) => {
     if (USE_DB) {
         const db = require('../config/db');
 
-        // fetch existing data blob, patch it, write it back
         const existing = await db.query('SELECT data FROM deployments WHERE id = $1', [id]);
         if (!existing.rows.length) return;
 

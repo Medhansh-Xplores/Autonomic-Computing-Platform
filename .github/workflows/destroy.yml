@@ -1,0 +1,52 @@
+name: Destroy ACP Portal Infra
+
+on:
+  workflow_dispatch:    # only runs when you manually trigger it from GitHub UI
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ACP-terraform
+        run: terraform init
+
+      - name: Empty ECR repositories before destroy
+        run: |
+          aws ecr batch-delete-image \
+            --repository-name acp-backend \
+            --image-ids "$(aws ecr list-images --repository-name acp-backend --query 'imageIds[*]' --output json)" \
+            --region ${{ env.AWS_REGION }} || true
+
+          aws ecr batch-delete-image \
+            --repository-name acp-frontend \
+            --image-ids "$(aws ecr list-images --repository-name acp-frontend --query 'imageIds[*]' --output json)" \
+            --region ${{ env.AWS_REGION }} || true
+
+      - name: Terraform Destroy
+        working-directory: ACP-terraform
+        run: |
+          terraform destroy -auto-approve \
+            -var="backend_image=nginx" \
+            -var="frontend_image=nginx"

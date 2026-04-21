@@ -34,14 +34,21 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 8080;
 
+// Init DB schema if running in ECS (USE_DB=true), then start server
 if (process.env.USE_DB === 'true') {
   const db = require('./config/db');
-  db.initSchema().catch(err => {
-    console.error('DB init failed:', err.message);
-    process.exit(1);
+  db.initSchema()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`ACP Backend running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('DB init failed:', err.message);
+      process.exit(1);
+    });
+} else {
+  app.listen(PORT, () => {
+    console.log(`ACP Backend running on port ${PORT}`);
   });
 }
-
-app.listen(PORT, () => {
-  console.log(`ACP Backend running on port ${PORT}`);
-});
