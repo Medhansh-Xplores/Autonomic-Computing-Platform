@@ -29,7 +29,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: ACP-terraform
+        working-directory: acp-terraform
         run: terraform init
 
       - name: Empty ECR repositories before destroy
@@ -45,7 +45,7 @@ jobs:
             --region ${{ env.AWS_REGION }} || true
 
       - name: Terraform Destroy
-        working-directory: ACP-terraform
+        working-directory: acp-terraform
         run: |
           terraform destroy -auto-approve \
             -var="backend_image=nginx" \

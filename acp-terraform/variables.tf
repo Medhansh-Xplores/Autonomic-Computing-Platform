@@ -75,7 +75,7 @@ variable "db_username" {
 }
 
 variable "db_password" {
- default     = "ACP@1234"
+ default     = "ACP1234strong!"
 }
 
 variable "db_name" {
