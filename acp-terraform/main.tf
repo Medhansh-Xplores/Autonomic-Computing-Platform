@@ -175,6 +175,7 @@ resource "aws_security_group" "acp_efs" {
 resource "aws_ecr_repository" "acp_backend" {
   name                 = "acp-backend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
@@ -186,6 +187,7 @@ resource "aws_ecr_repository" "acp_backend" {
 resource "aws_ecr_repository" "acp_frontend" {
   name                 = "acp-frontend"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
