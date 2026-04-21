@@ -193,3 +193,13 @@ h2 {
     text-transform: uppercase;
     font-weight: 700;
 }
+
+.repo-link {
+    color: #1a73e8;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.repo-link:hover {
+    text-decoration: underline;
+}

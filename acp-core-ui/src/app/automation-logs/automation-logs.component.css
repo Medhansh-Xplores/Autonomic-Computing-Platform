@@ -163,3 +163,29 @@ pre {
 .step-logs::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+.phase-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #a8cce8;
+    margin: 16px 0 8px 0;
+}
+
+.terminal-box {
+    background: #000;
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #222;
+    margin-bottom: 20px;
+}
+
+.terminal-box pre {
+    color: #00ff88;
+    margin: 0;
+    font-family: monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}

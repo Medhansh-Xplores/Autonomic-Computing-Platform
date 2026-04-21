@@ -1,9 +1,0 @@
-{
-  "name": "dev-ecs",
-  "type": "ECS",
-  "region": "us-east-1",
-  "account": "377122171982",
-  "status": "Active",
-  "cloud": "AWS",
-  "vpcId": "vpc-06b22515da0c9f0d7"
-}

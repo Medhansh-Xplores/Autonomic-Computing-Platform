@@ -11,31 +11,57 @@
             Running...
         </div>
     </div>
+    <!-- ADD: Terraform logs section — only shows during provisioning/waiting -->
+    <div *ngIf="phase === 'provisioning' || phase === 'waiting' || terraformDone">
 
+        <div class="phase-label">
+            <span *ngIf="!terraformDone">⏳ Creating AWS Services...</span>
+            <span *ngIf="terraformDone && !terraformFailed">✅ Services Created</span>
+            <span *ngIf="terraformDone && terraformFailed">❌ Service Creation Failed</span>
+        </div>
+
+        <div class="terminal-box" #terminalBox>
+            <pre>{{ terraformLogs.join('') || 'Waiting for logs...' }}</pre>
+        </div>
+
+        <div *ngIf="phase === 'waiting'"
+            style="color: #a8cce8; font-size: 14px; margin: 12px 0; display:flex; align-items:center; gap:8px;">
+            <span class="spinner"></span> Setting up GitHub Actions...
+        </div>
+
+    </div>
+
+    <!-- EXISTING html stays exactly as is below this -->
     <div class="steps-container">
-        <div *ngFor="let step of steps" class="step-box">
-            <div class="step-header">
-                <span *ngIf="step.status === 'completed' && step.conclusion === 'success'">✅</span>
-                <span *ngIf="step.status === 'completed' && step.conclusion === 'failure'">❌</span>
-                <span *ngIf="step.status !== 'completed'">⏳</span>
+        ...
 
-                {{ step.name }}
-            </div>
+        <div class="steps-container">
+            <div *ngFor="let step of steps" class="step-box">
+                <div class="step-header">
+                    <span *ngIf="step.status === 'completed' && step.conclusion === 'success'">✅</span>
+                    <span *ngIf="step.status === 'completed' && step.conclusion === 'failure'">❌</span>
+                    <span *ngIf="step.status !== 'completed'">⏳</span>
 
-            <div class="step-logs" *ngIf="step.logs?.length">
-                <pre>{{ step.logs.join('\n') }}</pre>
-            </div>
+                    {{ step.name }}
+                </div>
 
-            <div class="step-logs" *ngIf="step.logs && step.logs.length === 0">
-                <pre>No logs found for this step yet.</pre>
+                <div class="step-logs" *ngIf="step.logs?.length">
+                    <pre>{{ step.logs.join('\n') }}</pre>
+                </div>
+
+                <div class="step-logs" *ngIf="step.logs && step.logs.length === 0">
+                    <pre>No logs found for this step yet.</pre>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="actions" *ngIf="isComplete">
-        <button class="back-btn" (click)="goBack()">
-            ← Back to Workflows
-        </button>
-    </div>
+        <div class="actions" *ngIf="isComplete">
+            <button *ngIf="deploymentMode !== 'acp'" class="back-btn" (click)="goBack()">
+                ← Back to Workflows
+            </button>
+            <button *ngIf="deploymentMode === 'acp'" class="back-btn" (click)="goToDeployments()">
+                View Deployments →
+            </button>
+        </div>
 
-</div>
+    </div>

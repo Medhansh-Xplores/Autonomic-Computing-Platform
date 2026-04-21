@@ -320,20 +320,36 @@ export class DeployExistingComponent implements OnInit {
                 .subscribe({
                     next: (res: any) => {
                         this.loading = false;
-                        const { runId, deploymentId } = res;
 
-                        this.router.navigate(['/automation-logs'], {
-                            state: {
-                                repoUrl: this.repoUrl,
-                                workflow: 'deploy-to-ecs.yml',
-                                branch: this.branch,
-                                token: this.githubToken,
-                                deploymentId: deploymentId,
-                                runId: runId,
-                                appName: this.appName,
-                                cloud: 'AWS'
-                            }
-                        });
+                        if (res.provisioning) {
+                            this.router.navigate(['/automation-logs'], {
+                                state: {
+                                    phase: 'provisioning',
+                                    appName: this.appName,
+                                    repoUrl: this.repoUrl,
+                                    branch: this.branch,
+                                    token: this.githubToken,
+                                    cloud: 'AWS',
+                                    workflow: 'deploy-to-ecs.yml',
+                                    deploymentMode: 'acp' 
+                                }
+                            });
+                        } else {
+                            const { runId, deploymentId } = res;
+                            this.router.navigate(['/automation-logs'], {
+                                state: {
+                                    phase: 'github',
+                                    repoUrl: this.repoUrl,
+                                    workflow: 'deploy-to-ecs.yml',
+                                    branch: this.branch,
+                                    token: this.githubToken,
+                                    deploymentId: deploymentId,
+                                    runId: runId,
+                                    appName: this.appName,
+                                    cloud: 'AWS'
+                                }
+                            });
+                        }
                     },
                     error: (err: any) => {
                         this.loading = false;

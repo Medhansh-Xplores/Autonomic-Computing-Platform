@@ -68,7 +68,7 @@ exports.updateStatus = (id, payload) => {
 
             if (data.id === id) {
                 if (status) data.status = status;
-                if (typeof url !== 'undefined') data.url = url; // allow null too
+                if (url != null) data.url = url;
                 const normalizedStatus = (status || '').toLowerCase();
                 if (['deployed', 'completed', 'active'].includes(normalizedStatus)) {
                     data.deployedAt = new Date().toISOString();

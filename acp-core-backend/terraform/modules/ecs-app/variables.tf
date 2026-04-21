@@ -119,7 +119,6 @@ variable "frontend_listener_priority" {
 variable "frontend_path_patterns" {
   description = "Path patterns that route to the frontend (e.g. [\"/*\"])"
   type        = list(string)
-  default     = ["/*"]
 }
 
 # ---- Tags ----

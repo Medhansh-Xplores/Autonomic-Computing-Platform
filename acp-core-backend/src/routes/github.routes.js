@@ -8,5 +8,7 @@ router.post('/deploy-ecs', githubController.deployToEcs);
 
 router.get('/workflows/logs', githubController.getLogs);
 router.get("/listener-rules", githubController.getListenerRules);
+router.get('/terraform-logs', githubController.getTerraformLogs);
+router.get('/pending-deployment', githubController.getPendingDeployment);
 
 module.exports = router;

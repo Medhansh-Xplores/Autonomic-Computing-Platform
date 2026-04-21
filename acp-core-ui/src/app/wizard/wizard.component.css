@@ -24,7 +24,8 @@ td {
     width: 100%;
     padding: 18px;
     border-radius: 5px;
-    margin-bottom: 35px; /* pushes footer down only on this page */
+    margin-bottom: 35px;
+    /* pushes footer down only on this page */
 }
 
 .landing {
@@ -100,11 +101,9 @@ td {
 
 .create-header-box {
     width: 50%;
-    /* SAME as .landing */
     margin: 30px auto 15px;
-    /* center horizontally */
-    height: 30%;
-    padding: 12px;
+    padding: 6px 12px;
+    /* 🔽 reduce vertical padding */
     background: #eaeaea;
     border-radius: 10px;
     border-left: 4px solid #003160;

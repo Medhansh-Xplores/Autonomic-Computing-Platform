@@ -21,6 +21,4 @@ variable "subnet_ids" {
   type = list(string)
 }
 
-variable "db_port" {
-  default = 5432
-}
+variable "db_port" {}

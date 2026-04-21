@@ -52,7 +52,19 @@
                     </div>
 
                     <div class="deployment-sub">
-                        {{ d.repoName || '—' }}<span *ngIf="d.repoName"> /</span>
+
+                        <a *ngIf="d.repoUrl" [href]="d.repoUrl" target="_blank" rel="noopener" class="repo-link">
+
+                            {{ d.repoName || '—' }}
+
+                        </a>
+
+                        <span *ngIf="!d.repoUrl">
+                            {{ d.repoName || '—' }}
+                        </span>
+
+                        <span *ngIf="d.repoName"> /</span>
+
                     </div>
 
                     <div class="deployment-sub">

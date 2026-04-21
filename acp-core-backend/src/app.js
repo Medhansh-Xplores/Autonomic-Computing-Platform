@@ -34,6 +34,14 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 8080;
 
+if (process.env.USE_DB === 'true') {
+  const db = require('./config/db');
+  db.initSchema().catch(err => {
+    console.error('DB init failed:', err.message);
+    process.exit(1);
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`ACP Backend running on port ${PORT}`);
 });

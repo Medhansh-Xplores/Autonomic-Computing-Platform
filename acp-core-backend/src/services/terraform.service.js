@@ -352,6 +352,8 @@ exports.deployAwsRds = (data) => {
   // -------------------------------
   // Terraform tfvars
   // -------------------------------
+  const dbPort = data.dbEngine === 'mysql' ? 3306 : 5432;
+
   const tfvars = `
 region          = "${data.region}"
 rds_identifier  = "${data.rdsIdentifier}"
@@ -368,6 +370,7 @@ initial_db_name = "${data.initialDbName || ""}"
 
 zone_name       = "${data.zoneName}"
 role_arn        = "${roleArn}"
+db_port         = ${dbPort}
 `;
 
   fs.writeFileSync(
@@ -427,7 +430,10 @@ terraform apply -auto-approve
           if (outputs.rds_endpoint?.value) {
             const [host, port] = outputs.rds_endpoint.value.split(":");
             metadata.rdsEndpoint = host;
-            metadata.rdsPort = port || "5432";
+            const enginePortMap = { mysql: '3306', postgres: '5432', aurora: '3306' };
+            const engineKey = (data.dbEngine || '').toLowerCase();
+            const matchedKey = Object.keys(enginePortMap).find(k => engineKey.includes(k));
+            metadata.rdsPort = port || enginePortMap[matchedKey] || '3306';
           }
         } catch (e) {
           console.error("Could not capture RDS endpoint:", e.message);
@@ -452,6 +458,7 @@ terraform apply -auto-approve
 
 exports.createECSApp = (data) => {
   return new Promise((resolve, reject) => {
+    logs = [];
 
     const deploymentName = `${data.zoneName}-${data.appName}`;
 
@@ -499,19 +506,32 @@ environment_variables = []
     child.stderr.on("data", d => logs.push(d.toString()));
 
     child.on("close", (code) => {
-      if (code !== 0) return reject(new Error("ecs-app terraform failed"));
 
-      // Capture ECR URLs from outputs
+      // ❌ Terraform failed
+      if (code !== 0) {
+        logs.push("INFRA_FAILED");   // 🚀 ADD THIS
+        return reject(new Error("ecs-app terraform failed"));
+      }
+
       try {
         const { execSync } = require("child_process");
+
         const outputs = JSON.parse(
           execSync("terraform output -json", { cwd: deploymentPath }).toString()
         );
+
+        logs.push("INFRA_CREATED");  // 🚀 ADD THIS
+
         resolve({
           frontendEcrUrl: outputs.frontend_ecr_url?.value,
           backendEcrUrl: outputs.backend_ecr_url?.value,
         });
+
       } catch (e) {
+
+        // ⚠️ Even if outputs fail, infra is created
+        logs.push("INFRA_CREATED");  // 🚀 ADD THIS
+
         resolve({});
       }
     });

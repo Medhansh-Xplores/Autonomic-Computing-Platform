@@ -27,6 +27,7 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "libsodium-wrappers": "^0.8.3",
+    "pg": "^8.20.0",
     "tweetsodium": "^0.0.6"
   }
 }

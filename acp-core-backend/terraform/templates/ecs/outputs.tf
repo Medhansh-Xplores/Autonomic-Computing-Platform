@@ -21,3 +21,7 @@ output "security_group_id" {
 output "private_subnet_ids" {
   value = module.ecs_cluster.private_subnet_ids
 }
+
+output "alb_dns_name" {
+  value = module.ecs_cluster.alb_dns_name
+}
