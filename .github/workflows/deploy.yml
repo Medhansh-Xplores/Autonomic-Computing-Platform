@@ -1,6 +1,7 @@
 name: Deploy ACP Portal
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
