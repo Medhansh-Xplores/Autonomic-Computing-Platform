@@ -1,4 +1,4 @@
-name: Deploy ACP Portal
+name: Deploy ACP Portal - AWS ECS
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Destroy ACP Portal Infra
+name: Destroy ACP Portal - AWS ECS
 
 on:
   workflow_dispatch:    # only runs when you manually trigger it from GitHub UI

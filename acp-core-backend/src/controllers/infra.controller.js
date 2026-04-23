@@ -32,13 +32,10 @@ exports.getLogs = (req, res) => {
 };
 
 
-exports.getDeployments = (req, res) => {
+exports.getDeployments = async (req, res) => {
   try {
-
-    const deployments = terraformService.getDeployments();
-
+    const deployments = await terraformService.getDeployments();
     res.json(deployments);
-
   } catch (err) {
     res.status(500).send(err);
   }

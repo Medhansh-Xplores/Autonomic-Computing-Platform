@@ -193,7 +193,15 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
 
                     this.runId = data.runId;
                     this.deploymentId = data.deploymentId;
-                    this.workflow = 'deploy-to-ecs.yml'; // ADD
+
+                    const safeAppName = (this.appName || 'app')
+                        .toLowerCase()
+                        .replace(/\s+/g, '-')
+                        .replace(/[^a-z0-9-]/g, '');
+
+                    const workflowName = `deploy-${safeAppName}.yml`;
+
+                    this.workflow = workflowName; // ADD
                     this.phase = 'github';
                     this.status = 'Deployment Running...';
 

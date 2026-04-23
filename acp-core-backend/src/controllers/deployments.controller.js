@@ -1,4 +1,4 @@
-const deploymentService = require('../services/deployments.service');
+const deploymentService = require('../models/deployment.model');
 
 exports.createDeployment = async (req, res) => {
     try {

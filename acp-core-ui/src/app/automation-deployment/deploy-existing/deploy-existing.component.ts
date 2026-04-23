@@ -305,7 +305,7 @@ export class DeployExistingComponent implements OnInit {
                 account: this.account,
                 region: this.region,
                 ecsCluster: this.ecsCluster,
-                rdsInstance: this.useRds ? this.rdsInstance : null,
+                rdsName: this.useRds ? this.rdsInstance : null,
                 useRds: this.useRds,
                 appName: this.appName,
                 backendPort: this.backendPort,
@@ -315,6 +315,13 @@ export class DeployExistingComponent implements OnInit {
                 frontendBasePath: this.frontendBasePath,
 
             };
+
+            const safeAppName = (this.appName || 'app')
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '');
+
+            const workflowName = `deploy-${safeAppName}.yml`;
 
             this.http.post(this.apiBase + 'github/deploy-ecs', payload)
                 .subscribe({
@@ -330,8 +337,8 @@ export class DeployExistingComponent implements OnInit {
                                     branch: this.branch,
                                     token: this.githubToken,
                                     cloud: 'AWS',
-                                    workflow: 'deploy-to-ecs.yml',
-                                    deploymentMode: 'acp' 
+                                    workflow: workflowName,
+                                    deploymentMode: 'acp'
                                 }
                             });
                         } else {
@@ -340,7 +347,7 @@ export class DeployExistingComponent implements OnInit {
                                 state: {
                                     phase: 'github',
                                     repoUrl: this.repoUrl,
-                                    workflow: 'deploy-to-ecs.yml',
+                                    workflow: workflowName,
                                     branch: this.branch,
                                     token: this.githubToken,
                                     deploymentId: deploymentId,

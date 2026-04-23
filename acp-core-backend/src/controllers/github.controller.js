@@ -227,6 +227,11 @@ exports.deployToEcs = async (req, res) => {
         // The order is IDENTICAL to the original, just now properly awaited after Terraform
         try {
 
+            const safeAppName = (appName || 'app')
+                .toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '');
+
             // STEP 1: Terraform (the slow part - frontend polls /github/terraform-logs)
             await terraformService.createECSApp({
                 account,
@@ -263,11 +268,14 @@ exports.deployToEcs = async (req, res) => {
                 frontendPath: frontendPath || 'frontend',
                 backendPath: backendPath || 'backend',
                 backendPort: req.body.backendPort || '3000'
-            });
+            }, appName);
 
             await githubService.commitWorkflowFile({
-                repoUrl, branch, token,
-                workflowContent
+                repoUrl,
+                branch,
+                token,
+                workflowContent,
+                appName
             });
 
             // STEP 3: Assume role and set AWS secrets (same as before)
@@ -328,7 +336,9 @@ exports.deployToEcs = async (req, res) => {
             }
 
             // STEP 4: Trigger GitHub Actions workflow (same as before)
-            const workflowId = 'deploy-to-ecs.yml';
+
+            const workflowId = `deploy-${safeAppName}.yml`;
+
             const workflowInputs = {
                 aws_region: region,
                 ecr_registry: ecrRegistry,
@@ -347,17 +357,17 @@ exports.deployToEcs = async (req, res) => {
             };
 
             // Small delay to let GitHub index the newly committed workflow file (same as before)
-            await new Promise(r => setTimeout(r, 3000));
+            await new Promise(r => setTimeout(r, 12000)); 
 
             const { runId } = await githubService.triggerWorkflow({
                 repoUrl, branch, token,
                 workflowId,
-                inputs: workflowInputs
+                inputs: workflowInputs      
             });
 
             if (!runId) {
                 throw new Error("GitHub workflow triggered but runId could not be resolved. Try again.");
-            }
+            }   
 
             // STEP 5: Save deployment record (same as before)
             const deploymentService = require('../services/deployments.service');
@@ -374,7 +384,7 @@ exports.deployToEcs = async (req, res) => {
                 repoUrl,
                 repoName: repoParts[1] || '',          // ← parsed repo name
                 account: repoParts[0] || account,      // ← parsed GitHub account (org/user), not AWS account
-                workflow: 'deploy-to-ecs.yml',         // ← known for ACP flow
+                workflow: `deploy-${safeAppName}.yml`,       // ← known for ACP flow
                 branch,
                 ecsCluster,
                 region,
@@ -415,8 +425,9 @@ exports.deployToEcs = async (req, res) => {
 };
 
 // ─── YAML GENERATOR HELPER ────────────────────────────────────────────────────
-function generateEcsWorkflowYaml(cfg) {
-    return `name: Deploy to ECS (Blue/Green)
+function generateEcsWorkflowYaml(cfg, appName) {
+
+    return `name: Deploy ${appName} to ECS
 
 on:
   workflow_dispatch:
@@ -568,6 +579,7 @@ async function configureAlb({
     region,
     ecsCluster,
     healthCheckPath,
+    appName,
     apiPath,
     priority,
     credentials

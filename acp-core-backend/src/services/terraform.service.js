@@ -2,7 +2,7 @@ const { exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const deploymentService = require("./deployments.service");
-
+const USE_DB = process.env.USE_DB === 'true';
 let logs = [];
 
 exports.createVPC = (data) => {
@@ -77,7 +77,7 @@ exports.createVPC = (data) => {
     console.error(data.toString());
   });
 
-  child.on("close", () => {
+  child.on("close", async () => {
 
     const metadataPath = path.join(terraformDir, "metadata.json");
 
@@ -92,6 +92,22 @@ exports.createVPC = (data) => {
         metadataPath,
         JSON.stringify(metadata, null, 2)
       );
+
+      if (USE_DB) {
+        try {
+          const db = require('../config/db');
+          const { v4: uuidv4 } = require('uuid');
+          await db.query(
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+          );
+        } catch (e) {
+          console.error('Failed to save VPC to DB:', e.message);
+        }
+      }
     }
 
     logs.push("INFRA_CREATED");
@@ -109,7 +125,15 @@ exports.getLogs = () => {
   }
 };
 
-exports.getDeployments = () => {
+exports.getDeployments = async () => {
+
+  if (USE_DB) {
+    const db = require('../config/db');
+    const result = await db.query(
+      'SELECT data FROM infra_deployments ORDER BY created_at DESC'
+    );
+    return result.rows.map(row => row.data);
+  }
 
   const deployments = [];
 
@@ -255,7 +279,7 @@ terraform apply -auto-approve
     console.error(data.toString());
   });
 
-  child.on("close", (code) => {
+  child.on("close", async (code) => {
 
     const metadataPath = path.join(
       deploymentPath,
@@ -275,6 +299,22 @@ terraform apply -auto-approve
         metadataPath,
         JSON.stringify(metadata, null, 2)
       );
+
+      if (USE_DB) {
+        try {
+          const db = require('../config/db');
+          const { v4: uuidv4 } = require('uuid');
+          await db.query(
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+          );
+        } catch (e) {
+          console.error('Failed to save ECS to DB:', e.message);
+        }
+      }
     }
 
     logs.push(
@@ -333,6 +373,7 @@ exports.deployAwsRds = (data) => {
     account: data.accountID,
     status: "Creating",
     cloud: "AWS",
+    rdsIdentifier: data.rdsIdentifier,
     dbUsername: data.username,
     dbPassword: data.password,
     dbName: data.initialDbName || ''
@@ -405,7 +446,7 @@ terraform apply -auto-approve
     console.error(data.toString());
   });
 
-  child.on("close", (code) => {
+  child.on("close", async (code) => {
 
     const metadataPath = path.join(
       deploymentPath,
@@ -444,6 +485,22 @@ terraform apply -auto-approve
         metadataPath,
         JSON.stringify(metadata, null, 2)
       );
+
+      if (USE_DB) {
+        try {
+          const db = require('../config/db');
+          const { v4: uuidv4 } = require('uuid');
+          await db.query(
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+          );
+        } catch (e) {
+          console.error('Failed to save RDS to DB:', e.message);
+        }
+      }
     }
 
     logs.push(
@@ -456,8 +513,8 @@ terraform apply -auto-approve
 
 };
 
-exports.createECSApp = (data) => {
-  return new Promise((resolve, reject) => {
+exports.createECSApp = async (data) => {
+  return new Promise(async (resolve, reject) => {
     logs = [];
 
     const deploymentName = `${data.zoneName}-${data.appName}`;
@@ -469,6 +526,27 @@ exports.createECSApp = (data) => {
     fs.cpSync(templatePath, deploymentPath, { recursive: true });
 
     const roleArn = `arn:aws:iam::${data.account}:role/ACPDeploymentRole`;
+    let dbHost = '', dbPort = '5432', dbUser = '', dbPassword = '', dbName = '';
+
+    if (data.rdsName && USE_DB) {
+      try {
+        const db = require('../config/db');
+        const result = await db.query(
+          `SELECT data FROM infra_deployments WHERE data->>'rdsIdentifier' = $1 AND type = 'RDS' LIMIT 1`,
+          [data.rdsName]
+        );
+        if (result.rows.length) {
+          const rds = result.rows[0].data;
+          dbHost = rds.rdsEndpoint || '';
+          dbPort = rds.rdsPort || '5432';
+          dbUser = rds.dbUsername || '';
+          dbPassword = rds.dbPassword || '';
+          dbName = rds.dbName || '';
+        }
+      } catch (e) {
+        console.error('Failed to fetch RDS metadata:', e.message);
+      }
+    }
 
     const tfvars = `
 region     = "${data.region}"
@@ -494,7 +572,14 @@ path_patterns              = ${JSON.stringify(data.pathPatterns || ["/api/*"])}
 frontend_listener_priority = ${data.frontendListenerPriority || 101}
 frontend_path_patterns     = ${JSON.stringify(data.frontendPathPatterns || ["/*"])}
 
-environment_variables = []
+environment_variables = [
+  { name = "USE_DB",      value = "true" },
+  { name = "DB_HOST",     value = "${dbHost}" },
+  { name = "DB_PORT",     value = "${dbPort}" },
+  { name = "DB_USER",     value = "${dbUser}" },
+  { name = "DB_PASSWORD", value = "${dbPassword}" },
+  { name = "DB_NAME",     value = "${dbName}" }
+]
 `;
 
     fs.writeFileSync(path.join(deploymentPath, "terraform.tfvars"), tfvars);

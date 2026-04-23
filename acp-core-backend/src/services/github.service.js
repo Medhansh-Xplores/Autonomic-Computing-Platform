@@ -77,9 +77,14 @@ exports.triggerWorkflow = async (data) => {
 
 // ─── NEW FUNCTION 1 ───────────────────────────────────────────────────────────
 // Commit GitHub workflow file
-exports.commitWorkflowFile = async ({ repoUrl, branch, token, workflowContent }) => {
+exports.commitWorkflowFile = async ({ repoUrl, branch, token, workflowContent, appName }) => {
     const { owner, repo } = parseRepo(repoUrl);
-    const filePath = '.github/workflows/deploy-to-ecs.yml';
+    const safeAppName = appName
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
+    const filePath = `.github/workflows/deploy-${safeAppName}.yml`;
 
     const headers = {
         Accept: 'application/vnd.github+json',
