@@ -4,10 +4,11 @@ import { AuthServiceService } from '../services/auth-service.service';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
-import {MatDialog, MatDialogRef, MAT_DIALOG_DATA} from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 // import { ModalDialogConceptComponent } from '../modal-dialog-concept/modal-dialog-concept.component';
 // import { ModalDialogPlaybookComponent } from '../modal-dialog-playbook/modal-dialog-playbook.component';
 import { faUserCircle, faSignOutAlt, faHome, faFolderOpen, faSitemap, faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCloud } from '@fortawesome/free-solid-svg-icons';
 
 
 @Component({
@@ -23,14 +24,15 @@ export class HeaderComponent implements OnInit {
   faUserCircle = faUserCircle;
   faSignOutAlt = faSignOutAlt;
   faHome = faHome;
-  authSub : Subscription;
-  curUser : IUser | undefined;
-  ResourceSubMenuOpen : boolean = false;
+  authSub: Subscription;
+  curUser: IUser | undefined;
+  ResourceSubMenuOpen: boolean = false;
+  faCloud = faCloud;
 
-  constructor( private authService: AuthServiceService,
-               private router: Router,
-               public dialog: MatDialog
-             ) { 
+  constructor(private authService: AuthServiceService,
+    private router: Router,
+    public dialog: MatDialog
+  ) {
 
     this.authSub = authService.currentUser.subscribe(
       userAuth => {
@@ -66,13 +68,11 @@ export class HeaderComponent implements OnInit {
 
   // }
 
-  resourceSubmenu(){
-    if(this.ResourceSubMenuOpen == true)
-    {
+  resourceSubmenu() {
+    if (this.ResourceSubMenuOpen == true) {
       this.ResourceSubMenuOpen = false;
     }
-    else if(this.ResourceSubMenuOpen == false)
-    {
+    else if (this.ResourceSubMenuOpen == false) {
       this.ResourceSubMenuOpen = true;
     }
   }

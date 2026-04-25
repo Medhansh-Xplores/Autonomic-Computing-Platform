@@ -2,6 +2,22 @@ const terraformService = require("../services/terraform.service");
 const { EC2Client, DescribeVpcsCommand } = require("@aws-sdk/client-ec2");
 const { STSClient, AssumeRoleCommand } = require("@aws-sdk/client-sts");
 const { DescribeSubnetsCommand } = require("@aws-sdk/client-ec2");
+const db = require("../config/db");
+
+async function getAccountCredentials(accountId, userId) {
+
+  const result = await db.query(
+    'SELECT role_arn, external_id, region FROM cloud_accounts WHERE account_id = $1 AND user_id = $2 AND is_default = TRUE',
+    [accountId, userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("No configured cloud account found");
+  }
+
+  return result.rows[0]; // { role_arn, external_id, region }
+
+}
 
 exports.createVPC = async (req, res) => {
 
@@ -48,27 +64,18 @@ exports.getDeployments = async (req, res) => {
 ================================= */
 
 exports.getVpcs = async (req, res) => {
-
   try {
-
     const { accountId, region } = req.query;
+    const userId = req.user?.username;
 
-    if (!accountId || !region) {
-      return res.status(400).json({
-        error: "accountId and region required"
-      });
-    }
+    const account = await getAccountCredentials(accountId, userId);
 
-
-    // Assume role into target account
     const sts = new STSClient({ region });
-
-    const assumeRole = await sts.send(
-      new AssumeRoleCommand({
-        RoleArn: `arn:aws:iam::${accountId}:role/ACPDeploymentRole`,
-        RoleSessionName: "acp-vpc-list"
-      })
-    );
+    const assumeRole = await sts.send(new AssumeRoleCommand({
+      RoleArn: account.role_arn,        // from DB
+      ExternalId: account.external_id,  // from DB
+      RoleSessionName: "acp-vpc-list"
+    }));
 
 
     const credentials = {
@@ -123,10 +130,40 @@ exports.getSubnets = async (req, res) => {
 
   try {
 
-    const { vpcId, region } = req.query;
+    const { accountId, vpcId, region } = req.query;
 
+    if (!accountId || !vpcId || !region) {
+      return res.status(400).json({
+        error: "accountId, vpcId and region are required"
+      });
+    }
+
+    const userId = req.user?.username;
+
+    // 🔐 Get credentials from DB
+    const account = await getAccountCredentials(accountId, userId);
+
+    // 🔐 Assume role
+    const sts = new STSClient({ region });
+
+    const assumeRole = await sts.send(
+      new AssumeRoleCommand({
+        RoleArn: account.role_arn,
+        ExternalId: account.external_id,
+        RoleSessionName: "acp-subnet-list"
+      })
+    );
+
+    const credentials = {
+      accessKeyId: assumeRole.Credentials.AccessKeyId,
+      secretAccessKey: assumeRole.Credentials.SecretAccessKey,
+      sessionToken: assumeRole.Credentials.SessionToken
+    };
+
+    // ✅ Use assumed credentials
     const ec2 = new EC2Client({
-      region
+      region,
+      credentials
     });
 
     const response = await ec2.send(
@@ -195,11 +232,16 @@ exports.deployAwsRds = async (req, res) => {
     const { accountID, region, vpcId } = data;
 
     // Assume role
+    const userId = req.user?.username;
+
+    const account = await getAccountCredentials(accountID, userId);
+
     const sts = new STSClient({ region });
 
     const assumeRole = await sts.send(
       new AssumeRoleCommand({
-        RoleArn: `arn:aws:iam::${accountID}:role/ACPDeploymentRole`,
+        RoleArn: account.role_arn,
+        ExternalId: account.external_id,
         RoleSessionName: "acp-rds-subnet"
       })
     );

@@ -1,0 +1,52 @@
+<section class="usa-hero" style="background-image:url('../../assets/img/login_background.png');
+         background-position:left top; min-height:500px;" aria-label="Confirm Account">
+
+    <div class="content">
+        <div class="main-text-login" style="float:left">
+            <h1>Autonomic Computing <br> Platform (ACP)</h1>
+            <p class="par">Patterned on the human body's self healing autonomic nervous system</p>
+        </div>
+
+        <div id="form-container-2" class="usa-hero__callout"
+            style="width:100%; background-color:rgba(0,49,96,.5); margin-right:auto;">
+
+            <div class="form-container">
+                <form class="usa-form">
+                    <fieldset class="usa-fieldset">
+
+                        <legend class="usa-legend" style="color:#fff;">Confirm your account</legend>
+                        <p class="sub-legend">Check your email for the 6-digit code we sent you.</p>
+
+                        <div class="error-msg" *ngIf="error">{{ error }}</div>
+                        <div class="success-msg" *ngIf="success">{{ success }}</div>
+
+                        <label class="usa-label" style="color:#fff;" for="username">Username</label>
+                        <input class="usa-input" id="username" name="username" type="text"
+                            placeholder="enter your username" [(ngModel)]="username" [readonly]="!!username" required>
+
+                        <label class="usa-label" style="color:#fff;" for="confirmationCode">Confirmation Code</label>
+                        <input class="usa-input" id="confirmationCode" name="confirmationCode" type="text"
+                            placeholder="enter 6-digit code" [(ngModel)]="confirmationCode" maxlength="6" required>
+
+                        <button class="usa-button" type="button" (click)="confirm()" [disabled]="loading">
+                            <span *ngIf="loading">Verifying...</span>
+                            <span *ngIf="!loading">Confirm Account</span>
+                        </button>
+
+                        <p class="resend-link">
+                            Didn't receive a code?
+                            <span (click)="resendCode()" style="color:#fff; cursor:pointer; text-decoration:underline;">
+                                Resend code
+                            </span>
+                        </p>
+
+                        <p style="margin-top:12px;">
+                            <a routerLink="/login" style="color:#fff;">Back to login</a>
+                        </p>
+
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

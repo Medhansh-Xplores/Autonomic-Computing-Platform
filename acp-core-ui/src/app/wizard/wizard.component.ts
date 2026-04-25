@@ -203,10 +203,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
     private el: ElementRef,
     private envService: EnvService
   ) {
-    if (this.authService.currentUserValue) {
-      this.curUser = this.authService.currentUserValue;
-      this.router.navigate(['']);
-    }
+    this.curUser = this.authService.currentUserValue;
   }
 
 

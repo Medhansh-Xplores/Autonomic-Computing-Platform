@@ -1,0 +1,207 @@
+<section class="usa-hero"
+    style="background-image:url('../../assets/img/login_background.png'); background-position:left top; min-height:500px;"
+    aria-label="Cloud Setup">
+    <div class="content">
+
+        <!-- LEFT SIDE -->
+        <div class="main-text-login">
+            <h1>Autonomic Computing <br> Platform (ACP)</h1>
+            <p class="par">Connect your AWS account to get started with cloud infrastructure management.</p>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div id="form-container-2" class="usa-hero__callout">
+            <div class="form-container">
+
+                <!-- FIRST SETUP HEADER -->
+                <div *ngIf="isFirstSetup && accounts.length === 0" class="setup-header">
+                    <legend class="usa-legend" style="color:#fff;">Welcome! Set up your cloud</legend>
+                    <span style="color:#e0e0e0; font-size:14px;">Connect your AWS account to continue.</span>
+                </div>
+
+                <!-- SETTINGS HEADER (returning user) -->
+                <div *ngIf="!isFirstSetup || accounts.length > 0">
+                    <legend class="usa-legend" style="color:#fff;">☁️ Cloud Accounts</legend>
+                    <span style="color:#e0e0e0; font-size:14px;">Manage your connected AWS accounts.</span>
+                </div>
+
+                <!-- SUCCESS / ERROR MESSAGES -->
+                <div class="success-msg" *ngIf="success">{{ success }}</div>
+                <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+                <!-- EXISTING ACCOUNTS LIST -->
+                <div *ngIf="accounts.length > 0" class="accounts-list">
+                    <div *ngFor="let acc of accounts" class="account-card" [class.default-card]="acc.isDefault">
+                        <div class="account-info">
+                            <div class="account-name">
+                                <span class="aws-badge">AWS</span>
+                                {{ acc.accountName }}
+                                <span *ngIf="acc.isDefault" class="default-badge">Default</span>
+                            </div>
+                            <div class="account-detail">Account ID: {{ acc.accountId }}</div>
+                            <div class="account-detail">Region: {{ acc.region }}</div>
+                            <div class="account-detail" *ngIf="acc.roleArn">Role: {{ acc.roleArn }}</div>
+                            <div *ngIf="acc.externalId" style="margin-top:8px;">
+                                <label class="usa-label" style="color:#aaa; font-size:12px;">
+                                    External ID (put this in your IAM trust policy)
+                                </label>
+                                <div style="
+        font-family:monospace;
+        color:#e6bb00;
+        font-size:12px;
+        background:rgba(0,0,0,0.3);
+        padding:6px 10px;
+        border-radius:4px;
+        word-break: break-all;
+    ">
+                                    {{ acc.externalId }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="account-actions">
+                            <button class="btn-action" (click)="verify(acc.id!)" title="Test connection"
+                                [disabled]="verifyStatus === 'verifying'">
+                                <span *ngIf="verifyStatus !== 'verifying'">🔗</span>
+                                <span *ngIf="verifyStatus === 'verifying'">...</span>
+                            </button>
+                            <span *ngIf="verifyStatus === 'ok'" style="color:#2ecc71; font-size:12px;">✓
+                                Connected</span>
+                            <span *ngIf="verifyStatus === 'error'" style="color:#e74c3c; font-size:12px;">✗ {{
+                                verifyMessage }}</span>
+                            <button class="btn-action btn-edit" (click)="openEdit(acc)" title="Edit">✏️</button>
+                            <button class="btn-action btn-default" *ngIf="!acc.isDefault" (click)="setDefault(acc.id!)"
+                                title="Set as default">⭐</button>
+                            <button class="btn-action btn-delete" (click)="delete(acc.id!)" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+
+                    <!-- ADD ANOTHER -->
+                    <button class="btn-add" (click)="openAdd()" *ngIf="!showForm">
+                        + Add Another Account
+                    </button>
+                </div>
+
+                <!-- ADD / EDIT FORM -->
+                <form class="usa-form" *ngIf="showForm">
+                    <fieldset class="usa-fieldset">
+                        <legend class="form-section-title" style="color:#e6bb00; font-size:15px; margin-top:12px;">
+                            {{ editingId ? 'Edit Account' : 'Add AWS Account' }}
+                        </legend>
+                        <!-- ✅ External ID instruction block (ONLY for ADD, not edit) -->
+                        <div *ngIf="!editingId && pendingExternalId"
+                            style="margin-bottom:16px; background:rgba(0,0,0,0.3); padding:12px; border-radius:6px; border-left: 3px solid #e6bb00;">
+
+                            <p style="color:#e6bb00; font-size:13px; font-weight:bold; margin-bottom:8px;">
+                                ⚠️ Complete these steps in AWS before saving:
+                            </p>
+
+                            <!-- STEP 1 -->
+                            <p style="color:#fff; font-size:12px; margin-bottom:4px;"><strong
+                                    style="color:#e6bb00;">Step 1</strong> — Copy your External ID:</p>
+                            <div
+                                style="font-family:monospace; background:rgba(0,0,0,0.4); color:#2ecc71; padding:8px 12px; border-radius:4px; font-size:13px; word-break:break-all;">
+                                {{ pendingExternalId }}
+                            </div>
+                            <button type="button" (click)="copyExternalId()"
+                                style="margin-top:6px; font-size:12px; cursor:pointer;">
+                                📋 {{ copied ? 'Copied!' : 'Copy External ID' }}
+                            </button>
+
+                            <!-- STEP 2 -->
+                            <p style="color:#fff; font-size:12px; margin-top:12px; margin-bottom:4px;">
+                                <strong style="color:#e6bb00;">Step 2</strong> — Go to <a
+                                    href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
+                                    style="color:#5dade2;">AWS IAM → Roles → Create Role</a> and choose <strong>Another
+                                    AWS Account</strong>.
+                            </p>
+                            <p style="color:#aaa; font-size:12px; margin-bottom:4px;">Paste this as the <strong>Trust
+                                    Policy</strong>:</p>
+                            <div
+                                style="font-family:monospace; background:rgba(0,0,0,0.5); color:#2ecc71; padding:10px 12px; border-radius:4px; font-size:12px; white-space:pre; overflow-x:auto;">
+                                {{ getTrustPolicy() }}</div>
+                            <button type="button" (click)="copyTrustPolicy()"
+                                style="margin-top:6px; font-size:12px; cursor:pointer;">
+                                📋 {{ copiedPolicy ? 'Copied!' : 'Copy Trust Policy' }}
+                            </button>
+
+                            <!-- STEP 3 -->
+                            <p style="color:#fff; font-size:12px; margin-top:12px; margin-bottom:4px;">
+                                <strong style="color:#e6bb00;">Step 3</strong> — Attach the
+                                <strong>AdministratorAccess</strong> policy (or a scoped policy) to the role.
+                            </p>
+
+                            <!-- STEP 4 -->
+                            <p style="color:#fff; font-size:12px; margin-top:8px; margin-bottom:4px;">
+                                <strong style="color:#e6bb00;">Step 4</strong> — Name the role (e.g. <code
+                                    style="color:#e6bb00;">ACPDeploymentRole</code>), finish creating it, then copy the
+                                <strong>Role ARN</strong> and paste it below.
+                            </p>
+
+                            <p style="color:#aaa; font-size:11px; margin-top:10px;">
+                                ℹ️ The External ID is unique to your account and ensures only ACP can assume this role.
+                            </p>
+
+                        </div>
+
+                        <label class="usa-label" style="color:#fff;" for="accountName">Account Name</label>
+                        <input class="usa-input" id="accountName" name="accountName" type="text"
+                            placeholder="e.g. Production, Dev" [(ngModel)]="form.accountName">
+
+                        <label class="usa-label" style="color:#fff;" for="accountId">AWS Account ID</label>
+                        <input class="usa-input" id="accountId" name="accountId" type="text"
+                            placeholder="12-digit account ID" [(ngModel)]="form.accountId" maxlength="12">
+
+                        <label class="usa-label" style="color:#fff;" for="region">Default Region</label>
+                        <select class="usa-select" id="region" name="region" [(ngModel)]="form.region">
+                            <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}</option>
+                        </select>
+
+                        <label class="usa-label" style="color:#fff;" for="roleArn">
+                            IAM Role ARN <span style="color:#e74c3c; font-size:12px;">*required</span>
+                        </label>
+                        <input class="usa-input" id="roleArn" name="roleArn" type="text"
+                            placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole" [(ngModel)]="form.roleArn"
+                            required>
+
+
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="isDefault" name="isDefault" [(ngModel)]="form.isDefault">
+                            <label for="isDefault" style="color:#fff; margin-left:8px; cursor:pointer;">
+                                Set as default account
+                            </label>
+                        </div>
+
+                        <div class="btn-row">
+                            <button class="usa-button" type="button" (click)="save()" [disabled]="loading">
+                                <span *ngIf="loading">Saving...</span>
+                                <span *ngIf="!loading">{{ editingId ? 'Update' : 'Save Account' }}</span>
+                            </button>
+                            <button class="btn-cancel" type="button" (click)="showForm = false"
+                                *ngIf="accounts.length > 0">
+                                Cancel
+                            </button>
+                        </div>
+
+                    </fieldset>
+                </form>
+
+                <!-- SKIP (first setup only) -->
+                <div *ngIf="isFirstSetup && !showForm && accounts.length === 0" style="margin-top:12px;">
+                    <span (click)="skip()"
+                        style="color:#aaa; font-size:13px; cursor:pointer; text-decoration:underline;">
+                        Skip for now
+                    </span>
+                </div>
+
+                <!-- BACK TO HOME (settings mode) -->
+                <div *ngIf="!isFirstSetup && accounts.length > 0 && !showForm" style="margin-top:16px;">
+                    <a routerLink="/services" style="color:#e6bb00; font-size:13px; text-decoration:underline;">
+                        ← Back to Home
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>

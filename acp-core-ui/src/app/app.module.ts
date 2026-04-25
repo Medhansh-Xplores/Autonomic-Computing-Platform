@@ -7,6 +7,10 @@ import { CommonModule, HashLocationStrategy, LocationStrategy } from '@angular/c
 import { FontAwesomeModule, FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { faCoffee, fas } from '@fortawesome/free-solid-svg-icons';
 import { MatTabsModule } from '@angular/material/tabs'
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { AuthInterceptorService } from './helpers/auth-interceptor.service';
+// ADD also this missing component (referenced in login but route missing):
+import { SecurityComplianceComponent } from './security-compliance/security-compliance.component';
 
 
 // current components
@@ -32,6 +36,9 @@ import { AutomationDeploymentComponent } from './automation-deployment/automatio
 import { DeployExistingComponent } from './automation-deployment/deploy-existing/deploy-existing.component';
 import { AutomationLogsComponent } from './automation-logs/automation-logs.component';
 import { ViewDeploymentsComponent } from './automation-deployment/view-deployments/view-deployments.component';
+import { NewuserComponent } from './newuser/newuser.component';
+import { ConfirmComponent } from './confirm/confirm.component';
+import { CloudSetupComponent } from './cloud-setup/cloud-setup.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +60,10 @@ import { ViewDeploymentsComponent } from './automation-deployment/view-deploymen
     DeployExistingComponent,
     AutomationLogsComponent,
     ViewDeploymentsComponent,
+    NewuserComponent,
+    ConfirmComponent,
+    SecurityComplianceComponent,
+    CloudSetupComponent,
   ],
   imports: [
     BrowserModule,
@@ -68,7 +79,8 @@ import { ViewDeploymentsComponent } from './automation-deployment/view-deploymen
   ],
   providers: [
     { provide: LocationStrategy, useClass: HashLocationStrategy },
-    { provide: APP_INITIALIZER, useFactory: (envService: EnvService) => () => envService.init(), deps: [EnvService], multi: true }
+    { provide: APP_INITIALIZER, useFactory: (envService: EnvService) => () => envService.init(), deps: [EnvService], multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true },
   ],
   entryComponents: [],
   bootstrap: [AppComponent]

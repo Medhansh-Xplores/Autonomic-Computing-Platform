@@ -23,9 +23,9 @@ exports.getAwsRegions = async (req, res) => {
 
     try {
 
-        const account = req.query.account;
+        const { roleArn, externalId, region } = req.query;
 
-        const regions = await awsService.getAwsRegions(account);
+        const regions = await awsService.getAwsRegions(roleArn, externalId, region);
 
         res.json(regions);
 
@@ -38,15 +38,13 @@ exports.getAwsRegions = async (req, res) => {
 
 };
 
-
 exports.getAwsEcsClusters = async (req, res) => {
 
     try {
 
-        const account = req.query.account;
-        const region = req.query.region;
+        const { roleArn, externalId, region } = req.query;
 
-        const clusters = await awsService.getAwsEcsClusters(account, region);
+        const clusters = await awsService.getAwsEcsClusters(roleArn, externalId, region);
 
         res.json(clusters);
 
@@ -63,10 +61,9 @@ exports.getAwsRdsInstances = async (req, res) => {
 
     try {
 
-        const account = req.query.account;
-        const region = req.query.region;
+        const { roleArn, externalId, region } = req.query;
 
-        const rds = await awsService.getAwsRdsInstances(account, region);
+        const rds = await awsService.getAwsRdsInstances(roleArn, externalId, region);
 
         res.json(rds);
 

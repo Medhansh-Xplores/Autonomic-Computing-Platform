@@ -5,19 +5,15 @@ const { RDSClient, DescribeDBInstancesCommand } = require("@aws-sdk/client-rds")
 
 
 // Assume role helper
-async function assumeRole(accountId) {
-
-    const sts = new STSClient({ region: "us-east-1" });
-
-    const roleArn = `arn:aws:iam::${accountId}:role/ACPDeploymentRole`;
-
+async function assumeRole(roleArn, externalId, region = "us-east-1") {
+    const sts = new STSClient({ region });
     const command = new AssumeRoleCommand({
         RoleArn: roleArn,
-        RoleSessionName: "ACPDeploySession"
+        ExternalId: externalId,
+        RoleSessionName: "ACPDeploySession",
+        DurationSeconds: 3600
     });
-
     const response = await sts.send(command);
-
     return {
         accessKeyId: response.Credentials.AccessKeyId,
         secretAccessKey: response.Credentials.SecretAccessKey,
@@ -26,26 +22,13 @@ async function assumeRole(accountId) {
 }
 
 
-// Get Accounts (temporary static — we can later connect DB)
-exports.getAwsAccounts = async () => {
-
-    return [
-        {
-            accountID: "377122171982",
-            accountName: "Autonomic Root Account"
-        }
-    ];
-
-};
-
-
 // Get Regions
-exports.getAwsRegions = async (account) => {
+exports.getAwsRegions = async (roleArn, externalId, region) => {
 
-    const credentials = await assumeRole(account);
+    const credentials = await assumeRole(roleArn, externalId, region);
 
     const ec2 = new EC2Client({
-        region: "us-east-1",
+        region,
         credentials
     });
 
@@ -59,9 +42,9 @@ exports.getAwsRegions = async (account) => {
 
 
 // Get ECS Clusters
-exports.getAwsEcsClusters = async (account, region) => {
+exports.getAwsEcsClusters = async (roleArn, externalId, region) => {
 
-    const credentials = await assumeRole(account);
+    const credentials = await assumeRole(roleArn, externalId, region);
 
     const ecs = new ECSClient({
         region,
@@ -77,9 +60,9 @@ exports.getAwsEcsClusters = async (account, region) => {
 };
 
 // Get RDS Instances
-exports.getAwsRdsInstances = async (account, region) => {
+exports.getAwsRdsInstances = async (roleArn, externalId, region) => {
 
-    const credentials = await assumeRole(account);
+    const credentials = await assumeRole(roleArn, externalId, region);
 
     const rds = new RDSClient({
         region,
@@ -94,8 +77,9 @@ exports.getAwsRdsInstances = async (account, region) => {
 
 };
 
-exports.getRdsDetails = async (account, region, rdsIdentifier) => {
-    const credentials = await assumeRole(account);
+exports.getRdsDetails = async (roleArn, externalId, region, rdsIdentifier) => {
+
+    const credentials = await assumeRole(roleArn, externalId, region);
     const rds = new RDSClient({ region, credentials });
     const response = await rds.send(
         new DescribeDBInstancesCommand({ DBInstanceIdentifier: rdsIdentifier })
@@ -110,13 +94,14 @@ exports.getRdsDetails = async (account, region, rdsIdentifier) => {
 };
 
 exports.connectEcsToRds = async function ({
-    account,
+    roleArn,
+    externalId,
     region,
     ecsCluster,
     rdsInstance
 }) {
 
-    const credentials = await assumeRole(account);
+    const credentials = await assumeRole(roleArn, externalId, region);
 
     const ecs = new ECSClient({ region, credentials });
     const rds = new RDSClient({ region, credentials });

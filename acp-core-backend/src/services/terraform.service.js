@@ -5,7 +5,7 @@ const deploymentService = require("./deployments.service");
 const USE_DB = process.env.USE_DB === 'true';
 let logs = [];
 
-exports.createVPC = (data) => {
+exports.createVPC = (data, credentials) => {
 
   logs = [];
 
@@ -56,13 +56,21 @@ exports.createVPC = (data) => {
   -var="region=${data.region}" \
   -var="az_1=${data.az_1}" \
   -var="az_2=${data.az_2}" \
-  -var="role_arn=${roleArn}"
   `;
 
   let child;
 
   try {
-    child = exec(command, { cwd: terraformDir });
+    child = exec(command, {
+      cwd: terraformDir,
+      env: {
+        ...process.env,
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        AWS_DEFAULT_REGION: data.region
+      }
+    });
   } catch (error) {
     console.error("Exec error:", error);
   }
@@ -176,7 +184,7 @@ exports.getDeployments = async () => {
 
 };
 
-exports.createECS = (data) => {
+exports.createECS = (data, credentials) => {
 
   logs = [];
 
@@ -244,7 +252,6 @@ cluster_name = "${data.clusterName}"
 region       = "${data.region}"
 vpc_id       = "${data.vpcId}"
 created_by   = "ACP-Portal"
-role_arn     = "${roleArn}"
 `;
 
   fs.writeFileSync(
@@ -263,7 +270,16 @@ terraform apply -auto-approve
   let child;
 
   try {
-    child = exec(command, { cwd: deploymentPath });
+    child = exec(command, {
+      cwd: terraformDir,
+      env: {
+        ...process.env,
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        AWS_DEFAULT_REGION: data.region
+      }
+    });
   } catch (error) {
     console.error("ECS Exec Error:", error);
     throw error;
@@ -327,7 +343,7 @@ terraform apply -auto-approve
 
 };
 
-exports.deployAwsRds = (data) => {
+exports.deployAwsRds = (data, credentials) => {
 
   logs = [];
 
@@ -410,7 +426,6 @@ create_db       = ${data.createInitialDb || false}
 initial_db_name = "${data.initialDbName || ""}"
 
 zone_name       = "${data.zoneName}"
-role_arn        = "${roleArn}"
 db_port         = ${dbPort}
 `;
 
@@ -430,7 +445,16 @@ terraform apply -auto-approve
   let child;
 
   try {
-    child = exec(command, { cwd: deploymentPath });
+    child = exec(command, {
+      cwd: terraformDir,
+      env: {
+        ...process.env,
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        AWS_DEFAULT_REGION: data.region
+      }
+    });
   } catch (error) {
     console.error("RDS Exec Error:", error);
     throw error;
@@ -550,7 +574,6 @@ exports.createECSApp = async (data) => {
 
     const tfvars = `
 region     = "${data.region}"
-role_arn   = "${roleArn}"
 
 app_name   = "${data.appName}"
 zone_name  = "${data.zoneName}"

@@ -24,14 +24,14 @@
         </div> -->
       </div>
     </div>
-      <!-- Ask Vinay what he wants to do with this menu -->
-      <!--<p id="subtitle" style="text-align:right" *ngIf="this.curUser">
+    <!-- Ask Vinay what he wants to do with this menu -->
+    <!--<p id="subtitle" style="text-align:right" *ngIf="this.curUser">
        <div class="usa-cocap-menu">
             <a (click)="clickConcept();" style="cursor:pointer;">Concept Overview</a>
             |
             <a (click)="clickPlaybook();" style="cursor:pointer;">Cloud Adoption Playbook</a>
           </div> -->
-      <!--
+    <!--
             |
             <a target="_blank" href="http://coe.aceinfosolutions.com">
             AceInfo Centers of Excellence
@@ -41,18 +41,18 @@
   </div>
 
   <div *ngIf="this.curUser" class="usa-nav">
-      <ul class="usa-nav__primary">
-        <li class="usa-nav__primary-item">
-          <a class="usa-nav__link" routerLink="services" style="color:white;font-size:18px">
-            <span class="home__logo"><fa-icon [icon]="faHome"></fa-icon> Home</span>
-          </a>
-        </li>
-        <!--<li class="usa-nav__primary-item">
+    <ul class="usa-nav__primary">
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__link" routerLink="services" style="color:white;font-size:18px">
+          <span class="home__logo"><fa-icon [icon]="faHome"></fa-icon> Home</span>
+        </a>
+      </li>
+      <!--<li class="usa-nav__primary-item">
             <a class="usa-nav__link" href="javascript:void(0)">
             <span>Resources</span>
             </a>
             </li>-->
-        <!-- <li class="usa-nav__primary-item">
+      <!-- <li class="usa-nav__primary-item">
           <button (click)="resourceSubmenu()" class="usa-accordion__button usa-nav__link" aria-expanded="false"
             aria-controls="basic-nav-section-two">
             <span class="resources__logo"
@@ -75,18 +75,24 @@
             </li>
           </ul>
         </li> -->
-        <li class="usa-nav__primary-item">
-          <a class="usa-nav__link" href="javascript:void(0)" style="color:white;font-size:18px">
-            <span class="userName__logo"><fa-icon [icon]="faUserCircle"></fa-icon> {{curUser.userName}} </span>
-          </a>
-        </li>
-        <li class="usa-nav__logout">
-          <a class="usa-nav__logout__link" (click)="logOutUser();" href="javascript:void(0)"
-            style="color:white;font-size:18px">
-            <span class="logout__logo"><fa-icon [icon]="faSignOutAlt"></fa-icon> Logout</span>
-          </a>
-        </li>
-      </ul>
+
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__link" routerLink="/cloud-setup" style="color:white;font-size:18px">
+          <span><fa-icon [icon]="faCloud"></fa-icon> Cloud Accounts</span>
+        </a>
+      </li>
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__link" href="javascript:void(0)" style="color:white;font-size:18px">
+          <span class="userName__logo"><fa-icon [icon]="faUserCircle"></fa-icon> {{curUser.userName}} </span>
+        </a>
+      </li>
+      <li class="usa-nav__logout">
+        <a class="usa-nav__logout__link" (click)="logOutUser();" href="javascript:void(0)"
+          style="color:white;font-size:18px">
+          <span class="logout__logo"><fa-icon [icon]="faSignOutAlt"></fa-icon> Logout</span>
+        </a>
+      </li>
+    </ul>
   </div>
   <!--</div -->
 </header>

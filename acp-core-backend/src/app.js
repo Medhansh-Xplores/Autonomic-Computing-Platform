@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const db = require('./config/db');
 
 const app = express();
 
@@ -16,6 +17,8 @@ const accountRoutes = require("./routes/account.routes");
 const infraRoutes = require("./routes/infra.routes");
 const vpcRoutes = require("./routes/vpc.routes");
 const githubRoutes = require('./routes/github.routes');
+const authRoutes = require('./routes/auth.routes');
+const cloudAccountRoutes = require('./routes/cloudAccount.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -26,6 +29,8 @@ app.use("/api/v1", accountRoutes);
 app.use("/api/v1", infraRoutes);
 app.use("/api/v1", vpcRoutes);
 app.use('/api/v1/github', githubRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/cloud-accounts', cloudAccountRoutes);
 
 // Health
 app.get("/health", (req, res) => {
@@ -36,7 +41,6 @@ const PORT = process.env.PORT || 8080;
 
 // Init DB schema if running in ECS (USE_DB=true), then start server
 if (process.env.USE_DB === 'true') {
-  const db = require('./config/db');
   db.initSchema()
     .then(() => {
       app.listen(PORT, () => {
@@ -49,6 +53,6 @@ if (process.env.USE_DB === 'true') {
     });
 } else {
   app.listen(PORT, () => {
-    console.log(`ACP Backend running on port ${PORT}`);
+    console.log(`ACP Backend running on port ${PORT} (DB skipped)`);
   });
 }

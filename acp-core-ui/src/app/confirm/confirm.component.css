@@ -1,0 +1,92 @@
+/* Container */
+.content {
+    width: 100%;
+    min-height: 100vh;
+    margin: auto;
+    color: #ffffff;
+    background-color: #003160;
+    display: flex;
+    /* ✅ key */
+    justify-content: space-between;
+    align-items: center;
+    padding: 60px 80px;
+    box-sizing: border-box;
+}
+
+.main-text-login {
+    max-width: 60%;
+}
+
+/* Heading */
+.content h1 {
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    text-align: left;
+}
+
+/* Subtitle */
+.content .par {
+    line-height: 28px;
+    font-size: 18px;
+    color: whitesmoke;
+    margin-bottom: 30px;
+}
+
+/* Form container */
+.usa-form {
+    width: 350px;
+    padding-left: 20px;
+    border-left: solid 3px #e6bb00;
+    font-family: Arial, Helvetica, sans-serif;
+    position: relative;
+    /* ❌ remove absolute */
+    left: 0;
+    /* reset */
+}
+
+/* Button */
+.usa-button {
+    width: 100%;
+    margin-top: 15px;
+}
+
+/* Messages */
+.error-msg {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: rgba(255, 0, 0, 0.15);
+    border-radius: 4px;
+}
+
+.success-msg {
+    color: #6bffb8;
+    font-size: 14px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: rgba(0, 255, 128, 0.15);
+    border-radius: 4px;
+}
+
+.resend-link {
+    font-size: 13px;
+    color: #ccd9e8;
+    margin-top: 10px;
+}
+
+/* Mobile */
+@media only screen and (max-width: 600px) {
+    .content h1 {
+        font-size: 28px;
+    }
+
+    .content .par {
+        font-size: 16px;
+    }
+
+    .usa-form {
+        padding: 20px;
+    }
+}

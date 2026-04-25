@@ -8,19 +8,19 @@ import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from
 export class AuthGuardService implements CanActivate {
 
   constructor(
-              private router: Router,
-              private authService: AuthServiceService,
+    private router: Router,
+    private authService: AuthServiceService,
   ) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
     const currentUser = this.authService.currentUserValue;
-    if (currentUser){
-      //logged in so return true
+    const token = this.authService.getToken();   // ADD this line
+
+    if (currentUser && token) {                  // CHANGE: check token too
       return true;
     }
 
-    //not logged in, redirect to login page.
-    // // console.log('redirecting to login');
+    this.authService.logOut();                   // ADD: clean up stale user object
     this.router.navigate(['login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
