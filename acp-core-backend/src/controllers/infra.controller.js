@@ -5,9 +5,10 @@ const { DescribeSubnetsCommand } = require("@aws-sdk/client-ec2");
 const db = require("../config/db");
 
 async function getAccountCredentials(accountId, userId) {
+  console.log("accountId received:", accountId, "userId received:", userId);
 
   const result = await db.query(
-    'SELECT role_arn, external_id, region FROM cloud_accounts WHERE account_id = $1 AND user_id = $2 AND is_default = TRUE',
+    'SELECT role_arn, external_id, region FROM cloud_accounts WHERE account_id = $1 AND user_id = $2',
     [accountId, userId]
   );
 
@@ -20,21 +21,35 @@ async function getAccountCredentials(accountId, userId) {
 }
 
 exports.createVPC = async (req, res) => {
-
   try {
-
     const data = req.body;
+    const userId = req.user?.username;
 
-    await terraformService.createVPC(data);
+    // Get role credentials from DB
+    const account = await getAccountCredentials(data.accountID, userId);
 
-    res.send({
-      message: "VPC deployment started"
-    });
+    const sts = new STSClient({ region: data.region });
+    const assumed = await sts.send(new AssumeRoleCommand({
+      RoleArn: account.role_arn,
+      ExternalId: account.external_id,
+      RoleSessionName: 'acp-vpc-deploy'
+    }));
+
+    const credentials = {
+      accessKeyId: assumed.Credentials.AccessKeyId,
+      secretAccessKey: assumed.Credentials.SecretAccessKey,
+      sessionToken: assumed.Credentials.SessionToken
+    };
+    
+    data.roleArn = account.role_arn;
+    await terraformService.createVPC(data, credentials);
+
+    res.send({ message: "VPC deployment started" });
 
   } catch (err) {
+    console.error(err);
     res.status(500).send(err);
   }
-
 };
 
 

@@ -45,16 +45,19 @@ exports.initSchema = async () => {
 
   // 🔥 NEW: Infra deployments table
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS infra_deployments (
-      id          SERIAL PRIMARY KEY,
-      name        TEXT UNIQUE,
-      type        TEXT,              -- vpc | ecs | rds
-      status      TEXT,
-      created_at  TIMESTAMPTZ DEFAULT NOW(),
-      updated_at  TIMESTAMPTZ DEFAULT NOW(),
-      data        JSONB
-    )
-  `);
+  CREATE TABLE IF NOT EXISTS infra_deployments (
+    id          TEXT PRIMARY KEY,
+    name        TEXT UNIQUE,
+    type        TEXT,
+    status      TEXT,
+    region      TEXT,
+    account     TEXT,
+    cloud       TEXT,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW(),
+    data        JSONB
+  )
+`);
 
   console.log('DB schema ready');
 };

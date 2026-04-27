@@ -5,16 +5,19 @@ const router = express.Router();
 
 const infraController = require("../controllers/infra.controller");
 const deploymentController = require("../controllers/deployments.controller");
+const authMiddleware = require('../middleware/auth.middleware');
 
-router.post("/aws-vpc", infraController.createVPC);
+router.post("/aws-vpc", authMiddleware, infraController.createVPC);
 
 router.post(
   "/aws-ecs",
+  authMiddleware, 
   infraController.createECS
 );
 
 router.post(
   "/aws-rds",
+  authMiddleware,
   infraController.deployAwsRds
 );
 

@@ -19,12 +19,16 @@ export class CloudSetupComponent implements OnInit {
     verifyMessage = '';
     isFirstSetup = false;
     pendingExternalId: string = '';
+    selectedCloud: string = 'aws';
+    authType: 'role' | 'keys' = 'role';
 
-    form: CloudAccount = {
+    form: any = {
         accountId: '',
         accountName: '',
         region: 'us-east-1',
         roleArn: '',
+        accessKeyId: '',
+        secretAccessKey: '',
         isDefault: true,
         provider: 'AWS'
     };
@@ -92,7 +96,17 @@ export class CloudSetupComponent implements OnInit {
     }
 
     resetForm() {
-        this.form = { accountId: '', accountName: '', region: 'us-east-1', roleArn: '', isDefault: false, provider: 'AWS' };
+        this.form = {
+            accountId: '',
+            accountName: '',
+            region: 'us-east-1',
+            roleArn: '',
+            accessKeyId: '',
+            secretAccessKey: '',
+            isDefault: false,
+            provider: 'AWS'
+        };
+        this.authType = 'role';
         this.editingId = null;
         this.error = '';
         this.success = '';
@@ -116,6 +130,7 @@ export class CloudSetupComponent implements OnInit {
     openEdit(account: CloudAccount) {
         this.editingId = account.id!;
         this.form = { ...account };
+        this.authType = account.roleArn ? 'role' : 'keys';
         this.showForm = true;
         this.error = '';
         this.success = '';
@@ -133,6 +148,10 @@ export class CloudSetupComponent implements OnInit {
 
         this.copied = true;
         setTimeout(() => this.copied = false, 2000); // resets after 2s
+    }
+
+    copyAccountId() {
+        navigator.clipboard.writeText('377122171982');
     }
 
     copiedPolicy = false;
@@ -170,24 +189,50 @@ export class CloudSetupComponent implements OnInit {
 
     save() {
         this.error = '';
-        if (!this.form.accountId || !this.form.accountName || !this.form.region || !this.form.roleArn) {
-            this.error = 'Account ID, Name, Region, and Role ARN are required.';
+
+        // ✅ Common validation
+        if (!this.form.accountId || !this.form.accountName || !this.form.region) {
+            this.error = 'Account ID, Name, and Region are required.';
             return;
         }
-        // Validate AWS Account ID format (12 digits)
+
+        // ✅ Role vs Keys validation
+        if (this.authType === 'role' && !this.form.roleArn) {
+            this.error = 'Role ARN is required.';
+            return;
+        }
+
+        if (this.authType === 'keys' && (!this.form.accessKeyId || !this.form.secretAccessKey)) {
+            this.error = 'Access Key ID and Secret Access Key are required.';
+            return;
+        }
+
+        // ✅ Validate AWS Account ID format (12 digits)
         if (!/^\d{12}$/.test(this.form.accountId)) {
             this.error = 'AWS Account ID must be exactly 12 digits.';
             return;
         }
 
+        // ✅ Clean unused fields (VERY IMPORTANT)
+        if (this.authType === 'role') {
+            this.form.accessKeyId = '';
+            this.form.secretAccessKey = '';
+        } else {
+            this.form.roleArn = '';
+        }
+
         this.loading = true;
+
+        // ✅ Payload (include authType)
         const payload = {
             ...this.form,
-            externalId: this.pendingExternalId
+            externalId: this.pendingExternalId,
+            authType: this.authType
         };
 
+        // ✅ Use payload for BOTH add & update
         const request = this.editingId
-            ? this.cloudService.updateAccount(this.editingId, this.form)
+            ? this.cloudService.updateAccount(this.editingId, payload)
             : this.cloudService.addAccount(payload);
 
         request.subscribe({
@@ -197,7 +242,7 @@ export class CloudSetupComponent implements OnInit {
                 this.showForm = false;
                 this.loadAccounts();
 
-                // If first setup, redirect to home after saving
+                // First-time user redirect
                 if (this.isFirstSetup) {
                     setTimeout(() => this.router.navigate(['/services']), 1000);
                 }

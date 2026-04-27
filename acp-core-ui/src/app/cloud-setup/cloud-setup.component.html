@@ -36,7 +36,6 @@
                             <div class="account-name">
                                 <span class="aws-badge">AWS</span>
                                 {{ acc.accountName }}
-                                <span *ngIf="acc.isDefault" class="default-badge">Default</span>
                             </div>
                             <div class="account-detail">Account ID: {{ acc.accountId }}</div>
                             <div class="account-detail">Region: {{ acc.region }}</div>
@@ -69,8 +68,6 @@
                             <span *ngIf="verifyStatus === 'error'" style="color:#e74c3c; font-size:12px;">✗ {{
                                 verifyMessage }}</span>
                             <button class="btn-action btn-edit" (click)="openEdit(acc)" title="Edit">✏️</button>
-                            <button class="btn-action btn-default" *ngIf="!acc.isDefault" (click)="setDefault(acc.id!)"
-                                title="Set as default">⭐</button>
                             <button class="btn-action btn-delete" (click)="delete(acc.id!)" title="Delete">🗑️</button>
                         </div>
                     </div>
@@ -84,65 +81,35 @@
                 <!-- ADD / EDIT FORM -->
                 <form class="usa-form" *ngIf="showForm">
                     <fieldset class="usa-fieldset">
+                        <!-- STEP 0: SELECT CLOUD PROVIDER -->
+                        <div style="margin-bottom:16px;">
+                            <label class="usa-label" style="color:#fff;">Select Cloud Provider</label>
+                            <div style="display:flex; gap:10px; margin-top:6px;">
+                                <button type="button" class="usa-button" [class.active-btn]="selectedCloud === 'aws'"
+                                    (click)="selectedCloud = 'aws'">
+                                    AWS
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- STEP 1: SELECT AUTH METHOD (ONLY IF AWS SELECTED) -->
+                        <div *ngIf="selectedCloud === 'aws'" style="margin-bottom:16px;">
+                            <label class="usa-label" style="color:#fff;">Choose Authentication Method</label>
+                            <div style="display:flex; gap:10px; margin-top:6px;">
+                                <button type="button" class="usa-button" [class.active-btn]="authType === 'role'"
+                                    (click)="authType = 'role'">
+                                    Use IAM Role
+                                </button>
+
+                                <button type="button" class="usa-button" [class.active-btn]="authType === 'keys'"
+                                    (click)="authType = 'keys'">
+                                    Use Access Keys
+                                </button>
+                            </div>
+                        </div>
                         <legend class="form-section-title" style="color:#e6bb00; font-size:15px; margin-top:12px;">
                             {{ editingId ? 'Edit Account' : 'Add AWS Account' }}
                         </legend>
-                        <!-- ✅ External ID instruction block (ONLY for ADD, not edit) -->
-                        <div *ngIf="!editingId && pendingExternalId"
-                            style="margin-bottom:16px; background:rgba(0,0,0,0.3); padding:12px; border-radius:6px; border-left: 3px solid #e6bb00;">
-
-                            <p style="color:#e6bb00; font-size:13px; font-weight:bold; margin-bottom:8px;">
-                                ⚠️ Complete these steps in AWS before saving:
-                            </p>
-
-                            <!-- STEP 1 -->
-                            <p style="color:#fff; font-size:12px; margin-bottom:4px;"><strong
-                                    style="color:#e6bb00;">Step 1</strong> — Copy your External ID:</p>
-                            <div
-                                style="font-family:monospace; background:rgba(0,0,0,0.4); color:#2ecc71; padding:8px 12px; border-radius:4px; font-size:13px; word-break:break-all;">
-                                {{ pendingExternalId }}
-                            </div>
-                            <button type="button" (click)="copyExternalId()"
-                                style="margin-top:6px; font-size:12px; cursor:pointer;">
-                                📋 {{ copied ? 'Copied!' : 'Copy External ID' }}
-                            </button>
-
-                            <!-- STEP 2 -->
-                            <p style="color:#fff; font-size:12px; margin-top:12px; margin-bottom:4px;">
-                                <strong style="color:#e6bb00;">Step 2</strong> — Go to <a
-                                    href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
-                                    style="color:#5dade2;">AWS IAM → Roles → Create Role</a> and choose <strong>Another
-                                    AWS Account</strong>.
-                            </p>
-                            <p style="color:#aaa; font-size:12px; margin-bottom:4px;">Paste this as the <strong>Trust
-                                    Policy</strong>:</p>
-                            <div
-                                style="font-family:monospace; background:rgba(0,0,0,0.5); color:#2ecc71; padding:10px 12px; border-radius:4px; font-size:12px; white-space:pre; overflow-x:auto;">
-                                {{ getTrustPolicy() }}</div>
-                            <button type="button" (click)="copyTrustPolicy()"
-                                style="margin-top:6px; font-size:12px; cursor:pointer;">
-                                📋 {{ copiedPolicy ? 'Copied!' : 'Copy Trust Policy' }}
-                            </button>
-
-                            <!-- STEP 3 -->
-                            <p style="color:#fff; font-size:12px; margin-top:12px; margin-bottom:4px;">
-                                <strong style="color:#e6bb00;">Step 3</strong> — Attach the
-                                <strong>AdministratorAccess</strong> policy (or a scoped policy) to the role.
-                            </p>
-
-                            <!-- STEP 4 -->
-                            <p style="color:#fff; font-size:12px; margin-top:8px; margin-bottom:4px;">
-                                <strong style="color:#e6bb00;">Step 4</strong> — Name the role (e.g. <code
-                                    style="color:#e6bb00;">ACPDeploymentRole</code>), finish creating it, then copy the
-                                <strong>Role ARN</strong> and paste it below.
-                            </p>
-
-                            <p style="color:#aaa; font-size:11px; margin-top:10px;">
-                                ℹ️ The External ID is unique to your account and ensures only ACP can assume this role.
-                            </p>
-
-                        </div>
-
                         <label class="usa-label" style="color:#fff;" for="accountName">Account Name</label>
                         <input class="usa-input" id="accountName" name="accountName" type="text"
                             placeholder="e.g. Production, Dev" [(ngModel)]="form.accountName">
@@ -153,23 +120,115 @@
 
                         <label class="usa-label" style="color:#fff;" for="region">Default Region</label>
                         <select class="usa-select" id="region" name="region" [(ngModel)]="form.region">
-                            <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}</option>
+                            <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}
+                            </option>
                         </select>
+                        <!-- ✅ External ID instruction block (ONLY for ADD, not edit) -->
+                        <div *ngIf="authType === 'role'">
+                            <div *ngIf="!editingId && pendingExternalId"
+                                style="margin-bottom:16px; background:rgba(0,0,0,0.25); padding:16px; border-radius:8px; border:0.5px solid rgba(230,187,0,0.4);">
 
-                        <label class="usa-label" style="color:#fff;" for="roleArn">
-                            IAM Role ARN <span style="color:#e74c3c; font-size:12px;">*required</span>
-                        </label>
-                        <input class="usa-input" id="roleArn" name="roleArn" type="text"
-                            placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole" [(ngModel)]="form.roleArn"
-                            required>
+                                <p style="color:#e6bb00; font-size:13px; font-weight:bold; margin-bottom:16px;">
+                                    Complete these 4 steps in AWS, then paste the Role ARN below.
+                                </p>
 
+                                <!-- STEP 1 -->
+                                <div style="display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;">
+                                    <div
+                                        style="width:22px;height:22px;border-radius:50%;background:#e6bb00;color:#000;font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        1</div>
+                                    <div>
+                                        <p style="color:#fff;font-size:13px;margin:0 0 6px;">Go to <a
+                                                href="https://console.aws.amazon.com/iam/home#/roles/create"
+                                                target="_blank" style="color:#5dade2;">AWS IAM → Roles → Create
+                                                role</a>. Under <strong>Trusted entity type</strong>, choose <strong>AWS
+                                                account</strong>, then select <strong>Another AWS account</strong>.</p>
+                                        <p style="color:#aaa;font-size:12px;margin:0 0 4px;">Enter this as the Account
+                                            ID:</p>
+                                        <div
+                                            style="font-family:monospace;background:rgba(0,0,0,0.4);color:#2ecc71;padding:6px 10px;border-radius:4px;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+                                            <span>377122171982</span>
+                                            <button type="button" (click)="copyAccountId()"
+                                                style="font-size:11px;cursor:pointer;background:none;border:0.5px solid #2ecc71;color:#2ecc71;border-radius:4px;padding:2px 8px;">Copy</button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <div class="checkbox-row">
-                            <input type="checkbox" id="isDefault" name="isDefault" [(ngModel)]="form.isDefault">
-                            <label for="isDefault" style="color:#fff; margin-left:8px; cursor:pointer;">
-                                Set as default account
+                                <!-- STEP 2 -->
+                                <div style="display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;">
+                                    <div
+                                        style="width:22px;height:22px;border-radius:50%;background:#e6bb00;color:#000;font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        2</div>
+                                    <div style="flex:1;">
+                                        <p style="color:#fff;font-size:13px;margin:0 0 6px;">Under
+                                            <strong>Options</strong>, check <strong>Require external ID</strong>, then
+                                            paste this External ID:</p>
+                                        <div
+                                            style="font-family:monospace;background:rgba(0,0,0,0.4);color:#2ecc71;padding:6px 10px;border-radius:4px;font-size:12px;word-break:break-all;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                                            <span>{{ pendingExternalId }}</span>
+                                            <button type="button" (click)="copyExternalId()"
+                                                style="font-size:11px;cursor:pointer;background:none;border:0.5px solid #2ecc71;color:#2ecc71;border-radius:4px;padding:2px 8px;white-space:nowrap;">
+                                                {{ copied ? 'Copied!' : 'Copy' }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 3 -->
+                                <div style="display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;">
+                                    <div
+                                        style="width:22px;height:22px;border-radius:50%;background:#e6bb00;color:#000;font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        3</div>
+                                    <div>
+                                        <p style="color:#fff;font-size:13px;margin:0;">On the next screen, search for
+                                            and attach <strong>AdministratorAccess</strong> policy (or a scoped policy).
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- STEP 4 -->
+                                <div style="display:flex; gap:10px; align-items:flex-start;">
+                                    <div
+                                        style="width:22px;height:22px;border-radius:50%;background:#e6bb00;color:#000;font-size:11px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        4</div>
+                                    <div style="flex:1;">
+                                        <p style="color:#fff;font-size:13px;margin:0 0 6px;">Name the role exactly <code
+                                                style="color:#e6bb00;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">ACPDeploymentRole</code>,
+                                            finish creating it, then open the role and copy its <strong>Role
+                                                ARN</strong> — paste it in the field below.</p>
+                                    </div>
+                                </div>
+
+                                <p style="color:#aaa;font-size:11px;margin-top:12px;margin-bottom:0;">
+                                    The External ID is unique to your account and ensures only ACP can assume this role.
+                                </p>
+                            </div>
+
+                            <label class="usa-label" style="color:#fff;" for="roleArn">
+                                IAM Role ARN <span *ngIf="authType === 'role'"
+                                    style="color:#e74c3c; font-size:12px;">*required</span>
                             </label>
+                            <input class="usa-input" id="roleArn" name="roleArn" type="text"
+                                placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole"
+                                [(ngModel)]="form.roleArn" [required]="authType === 'role'">
                         </div>
+                        <div *ngIf="authType === 'keys'">
+
+                            <label class="usa-label" style="color:#fff;">Access Key ID</label>
+                            <input class="usa-input" type="text" [(ngModel)]="form.accessKeyId"
+                                [required]="authType === 'keys'" placeholder="AKIAxxxxxxxxxxxx">
+
+                            <label class="usa-label" style="color:#fff;">Secret Access Key</label>
+                            <input class="usa-input" type="password" [(ngModel)]="form.secretAccessKey"
+                                [required]="authType === 'keys'" placeholder="Enter your secret key">
+
+                            <p style="color:#aaa; font-size:11px; margin-top:8px;">
+                                ⚠️ Make sure this IAM user has sufficient permissions (e.g., AdministratorAccess or
+                                scoped policies).
+                            </p>
+
+                        </div>
+
 
                         <div class="btn-row">
                             <button class="usa-button" type="button" (click)="save()" [disabled]="loading">

@@ -1,5 +1,4 @@
 variable "region" {}
-variable "role_arn" {}
 
 variable "vpc_name" {}
 variable "cidr" {}
