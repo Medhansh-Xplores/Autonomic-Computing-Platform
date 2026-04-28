@@ -40,7 +40,7 @@ exports.createVPC = async (req, res) => {
       secretAccessKey: assumed.Credentials.SecretAccessKey,
       sessionToken: assumed.Credentials.SessionToken
     };
-    
+
     data.roleArn = account.role_arn;
     await terraformService.createVPC(data, credentials);
 
@@ -221,21 +221,32 @@ exports.getSubnets = async (req, res) => {
 };
 
 exports.createECS = async (req, res) => {
-
   try {
+    const data = req.body;
+    const userId = req.user?.username;
 
-    await terraformService.createECS(req.body);
+    const account = await getAccountCredentials(data.account, userId);
 
-    res.send({
-      message: "ECS deployment started"
-    });
+    const sts = new STSClient({ region: data.region });
+    const assumed = await sts.send(new AssumeRoleCommand({
+      RoleArn: account.role_arn,
+      ExternalId: account.external_id,
+      RoleSessionName: 'acp-ecs-deploy'
+    }));
 
+    const credentials = {
+      accessKeyId: assumed.Credentials.AccessKeyId,
+      secretAccessKey: assumed.Credentials.SecretAccessKey,
+      sessionToken: assumed.Credentials.SessionToken
+    };
+
+    await terraformService.createECS(data, credentials);
+
+    res.send({ message: "ECS deployment started" });
   } catch (err) {
-
+    console.error(err);
     res.status(500).send(err);
-
   }
-
 };
 
 exports.deployAwsRds = async (req, res) => {
@@ -290,7 +301,7 @@ exports.deployAwsRds = async (req, res) => {
 
     data.subnet_ids = subnetIds;
 
-    await terraformService.deployAwsRds(data);
+    await terraformService.deployAwsRds(data, credentials);
 
     res.send({
       message: "RDS deployment started"

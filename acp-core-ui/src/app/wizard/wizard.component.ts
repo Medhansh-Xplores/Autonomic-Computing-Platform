@@ -48,8 +48,8 @@ export class WizardComponent implements OnInit, AfterViewInit {
   publicSubnet2: string = '';
   privateSubnet1: string = '';
   privateSubnet2: string = '';
-  cpu: string = "";
-  memory: string = "";
+  cpu: string = "256";
+  memory: string = "512";
   containerName: string = "";
   containerPort: string = "";
   subnets: any[] = [];
@@ -68,7 +68,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
   rdsIdentifier: string = '';
   initialDbName: string = '';
   createInitialDb: boolean = false;
-  backendPort: string = "4000";
 
   awsregionlist = [
     { code: "us-east-2", name: "US East (Ohio)" },
@@ -369,7 +368,9 @@ export class WizardComponent implements OnInit, AfterViewInit {
         !this.accountNum ||
         !this.region ||
         !this.ClusterName ||
-        !this.backendPort
+        !this.vpcId ||
+        !this.cpu ||
+        !this.memory
       ) {
         alert("Please fill all required fields");
         return;
@@ -487,18 +488,18 @@ export class WizardComponent implements OnInit, AfterViewInit {
     }
 
     this.http.get<any[]>(
-      this.apiBase + "subnets?vpcId=" + this.vpcId + "&region=" + this.region
-    ).subscribe({
+      this.apiBase + "subnets?accountId=" + this.accountNum + "&vpcId=" + this.vpcId + "&region=" + this.region)
+      .subscribe({
 
-      next: (data) => {
-        this.subnets = data;
-      },
+        next: (data) => {
+          this.subnets = data;
+        },
 
-      error: (err) => {
-        console.error(err);
-      }
+        error: (err) => {
+          console.error(err);
+        }
 
-    });
+      });
 
   }
 
@@ -624,7 +625,6 @@ export class WizardComponent implements OnInit, AfterViewInit {
         cpu: this.cpu,
         memory: this.memory,
         zoneName: this.zoneName,
-        backendPort: this.backendPort
 
       };
 

@@ -198,8 +198,7 @@ exports.createECS = (data, credentials) => {
     !data.vpcId ||
     !data.cpu ||
     !data.memory ||
-    !data.zoneName ||
-    !data.backendPort
+    !data.zoneName
   ) {
     throw new Error("Missing required ECS parameters");
   }
@@ -230,7 +229,10 @@ exports.createECS = (data, credentials) => {
     account: data.account,
     status: "Creating",
     cloud: "AWS",
-    vpcId: data.vpcId
+    vpcId: data.vpcId,
+    clusterName: data.clusterName,
+    cpu: data.cpu,
+    memory: data.memory
   };
 
   fs.writeFileSync(
@@ -251,6 +253,7 @@ exports.createECS = (data, credentials) => {
 cluster_name = "${data.clusterName}"
 region       = "${data.region}"
 vpc_id       = "${data.vpcId}"
+role_arn     = "arn:aws:iam::${data.account}:role/ACPDeploymentRole"
 created_by   = "ACP-Portal"
 `;
 
@@ -271,7 +274,7 @@ terraform apply -auto-approve
 
   try {
     child = exec(command, {
-      cwd: terraformDir,
+      cwd: deploymentPath,
       env: {
         ...process.env,
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,
@@ -390,6 +393,8 @@ exports.deployAwsRds = (data, credentials) => {
     status: "Creating",
     cloud: "AWS",
     rdsIdentifier: data.rdsIdentifier,
+    dbEngine: data.dbEngine,          // ← add
+    vpcId: data.vpcId,                // ← add
     dbUsername: data.username,
     dbPassword: data.password,
     dbName: data.initialDbName || ''
@@ -446,7 +451,7 @@ terraform apply -auto-approve
 
   try {
     child = exec(command, {
-      cwd: terraformDir,
+      cwd: deploymentPath,
       env: {
         ...process.env,
         AWS_ACCESS_KEY_ID: credentials.accessKeyId,

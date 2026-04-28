@@ -1,0 +1,16 @@
+{
+  "name": "rds",
+  "type": "RDS",
+  "region": "us-east-1",
+  "account": "997053010568",
+  "status": "Active",
+  "cloud": "AWS",
+  "rdsIdentifier": "rds",
+  "dbEngine": "postgres",
+  "vpcId": "vpc-064609c2ed2671e27",
+  "dbUsername": "hi",
+  "dbPassword": "hiiiiiii",
+  "dbName": "hi",
+  "rdsEndpoint": "rds.cqxemo4ma19c.us-east-1.rds.amazonaws.com",
+  "rdsPort": "5432"
+}

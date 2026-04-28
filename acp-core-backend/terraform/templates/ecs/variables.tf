@@ -3,11 +3,6 @@ variable "region" {
   type        = string
 }
 
-variable "role_arn" {
-  description = "IAM role ARN to assume for deployment"
-  type        = string
-}
-
 variable "cluster_name" {
   description = "Name of the ECS cluster"
   type        = string
