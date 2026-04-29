@@ -1,0 +1,8 @@
+{
+  "name": "access-vpc",
+  "type": "VPC",
+  "region": "us-east-1",
+  "account": "997053010568",
+  "status": "Active",
+  "cloud": "AWS"
+}

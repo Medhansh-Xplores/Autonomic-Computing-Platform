@@ -7,8 +7,11 @@ export interface CloudAccount {
     accountId: string;
     accountName: string;
     region: string;
+    authType?: 'role' | 'keys';
     roleArn?: string;
     externalId?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
     isDefault?: boolean;
     provider?: string;
 }

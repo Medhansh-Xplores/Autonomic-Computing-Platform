@@ -4,20 +4,41 @@ const { STSClient, AssumeRoleCommand } = require("@aws-sdk/client-sts");
 const { DescribeSubnetsCommand } = require("@aws-sdk/client-ec2");
 const db = require("../config/db");
 
-async function getAccountCredentials(accountId, userId) {
-  console.log("accountId received:", accountId, "userId received:", userId);
-
+async function getAccountRow(accountId, userId) {
   const result = await db.query(
-    'SELECT role_arn, external_id, region FROM cloud_accounts WHERE account_id = $1 AND user_id = $2',
+    `SELECT auth_type, role_arn, external_id, region,
+            access_key_id, secret_access_key
+     FROM cloud_accounts WHERE account_id = $1 AND user_id = $2`,
     [accountId, userId]
   );
+  if (result.rows.length === 0) throw new Error("No configured cloud account found");
+  return result.rows[0];
+}
 
-  if (result.rows.length === 0) {
-    throw new Error("No configured cloud account found");
+async function resolveCredentials(accountId, userId, region) {
+  const account = await getAccountRow(accountId, userId);
+
+  if (account.auth_type === 'keys') {
+    // Direct access key path — no STS needed
+    return {
+      accessKeyId: account.access_key_id,
+      secretAccessKey: account.secret_access_key,
+      sessionToken: undefined          // no session token for static keys
+    };
   }
 
-  return result.rows[0]; // { role_arn, external_id, region }
-
+  // Role-based path — STS AssumeRole
+  const sts = new STSClient({ region });
+  const assumed = await sts.send(new AssumeRoleCommand({
+    RoleArn: account.role_arn,
+    ExternalId: account.external_id,
+    RoleSessionName: 'acp-deploy'
+  }));
+  return {
+    accessKeyId: assumed.Credentials.AccessKeyId,
+    secretAccessKey: assumed.Credentials.SecretAccessKey,
+    sessionToken: assumed.Credentials.SessionToken
+  };
 }
 
 exports.createVPC = async (req, res) => {
@@ -25,23 +46,7 @@ exports.createVPC = async (req, res) => {
     const data = req.body;
     const userId = req.user?.username;
 
-    // Get role credentials from DB
-    const account = await getAccountCredentials(data.accountID, userId);
-
-    const sts = new STSClient({ region: data.region });
-    const assumed = await sts.send(new AssumeRoleCommand({
-      RoleArn: account.role_arn,
-      ExternalId: account.external_id,
-      RoleSessionName: 'acp-vpc-deploy'
-    }));
-
-    const credentials = {
-      accessKeyId: assumed.Credentials.AccessKeyId,
-      secretAccessKey: assumed.Credentials.SecretAccessKey,
-      sessionToken: assumed.Credentials.SessionToken
-    };
-
-    data.roleArn = account.role_arn;
+    const credentials = await resolveCredentials(data.accountID, userId, data.region);
     await terraformService.createVPC(data, credentials);
 
     res.send({ message: "VPC deployment started" });
@@ -83,23 +88,7 @@ exports.getVpcs = async (req, res) => {
     const { accountId, region } = req.query;
     const userId = req.user?.username;
 
-    const account = await getAccountCredentials(accountId, userId);
-
-    const sts = new STSClient({ region });
-    const assumeRole = await sts.send(new AssumeRoleCommand({
-      RoleArn: account.role_arn,        // from DB
-      ExternalId: account.external_id,  // from DB
-      RoleSessionName: "acp-vpc-list"
-    }));
-
-
-    const credentials = {
-      accessKeyId: assumeRole.Credentials.AccessKeyId,
-      secretAccessKey: assumeRole.Credentials.SecretAccessKey,
-      sessionToken: assumeRole.Credentials.SessionToken
-    };
-
-
+    const credentials = await resolveCredentials(accountId, userId, region);
     const ec2 = new EC2Client({
       region,
       credentials
@@ -155,25 +144,7 @@ exports.getSubnets = async (req, res) => {
 
     const userId = req.user?.username;
 
-    // 🔐 Get credentials from DB
-    const account = await getAccountCredentials(accountId, userId);
-
-    // 🔐 Assume role
-    const sts = new STSClient({ region });
-
-    const assumeRole = await sts.send(
-      new AssumeRoleCommand({
-        RoleArn: account.role_arn,
-        ExternalId: account.external_id,
-        RoleSessionName: "acp-subnet-list"
-      })
-    );
-
-    const credentials = {
-      accessKeyId: assumeRole.Credentials.AccessKeyId,
-      secretAccessKey: assumeRole.Credentials.SecretAccessKey,
-      sessionToken: assumeRole.Credentials.SessionToken
-    };
+    const credentials = await resolveCredentials(accountId, userId, region);
 
     // ✅ Use assumed credentials
     const ec2 = new EC2Client({
@@ -225,20 +196,7 @@ exports.createECS = async (req, res) => {
     const data = req.body;
     const userId = req.user?.username;
 
-    const account = await getAccountCredentials(data.account, userId);
-
-    const sts = new STSClient({ region: data.region });
-    const assumed = await sts.send(new AssumeRoleCommand({
-      RoleArn: account.role_arn,
-      ExternalId: account.external_id,
-      RoleSessionName: 'acp-ecs-deploy'
-    }));
-
-    const credentials = {
-      accessKeyId: assumed.Credentials.AccessKeyId,
-      secretAccessKey: assumed.Credentials.SecretAccessKey,
-      sessionToken: assumed.Credentials.SessionToken
-    };
+    const credentials = await resolveCredentials(data.accountID, userId, data.region);
 
     await terraformService.createECS(data, credentials);
 
@@ -260,23 +218,7 @@ exports.deployAwsRds = async (req, res) => {
     // Assume role
     const userId = req.user?.username;
 
-    const account = await getAccountCredentials(accountID, userId);
-
-    const sts = new STSClient({ region });
-
-    const assumeRole = await sts.send(
-      new AssumeRoleCommand({
-        RoleArn: account.role_arn,
-        ExternalId: account.external_id,
-        RoleSessionName: "acp-rds-subnet"
-      })
-    );
-
-    const credentials = {
-      accessKeyId: assumeRole.Credentials.AccessKeyId,
-      secretAccessKey: assumeRole.Credentials.SecretAccessKey,
-      sessionToken: assumeRole.Credentials.SessionToken
-    };
+    const credentials = await resolveCredentials(accountID, userId, region);
 
     const ec2 = new EC2Client({
       region,

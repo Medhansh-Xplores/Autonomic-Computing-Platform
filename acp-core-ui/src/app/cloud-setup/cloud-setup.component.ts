@@ -16,6 +16,7 @@ export class CloudSetupComponent implements OnInit {
     error = '';
     success = '';
     verifyStatus: 'idle' | 'verifying' | 'ok' | 'error' = 'idle';
+    verifyingId: number | null = null;
     verifyMessage = '';
     isFirstSetup = false;
     pendingExternalId: string = '';
@@ -82,6 +83,7 @@ export class CloudSetupComponent implements OnInit {
     }
 
     verify(id: number) {
+        this.verifyingId = id;
         this.verifyStatus = 'verifying';
         this.cloudService.verifyConnection(id).subscribe({
             next: (res) => {
@@ -137,6 +139,7 @@ export class CloudSetupComponent implements OnInit {
     }
 
     copied = false;
+    copiedRoleName = false;
 
     copyExternalId() {
         const el = document.createElement('textarea');
@@ -148,6 +151,12 @@ export class CloudSetupComponent implements OnInit {
 
         this.copied = true;
         setTimeout(() => this.copied = false, 2000); // resets after 2s
+    }
+
+    copyRoleName() {
+        navigator.clipboard.writeText('ACPDeploymentRole');
+        this.copiedRoleName = true;
+        setTimeout(() => this.copiedRoleName = false, 2000);
     }
 
     copyAccountId() {

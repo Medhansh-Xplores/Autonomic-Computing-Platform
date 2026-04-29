@@ -22,8 +22,11 @@ exports.initSchema = async () => {
         account_id   TEXT NOT NULL,
         account_name TEXT NOT NULL,
         region       TEXT NOT NULL,
-        role_arn     TEXT NOT NULL,
-        external_id  TEXT NOT NULL,
+        auth_type    TEXT NOT NULL DEFAULT 'role',
+        role_arn     TEXT,
+        external_id  TEXT,
+        access_key_id TEXT,
+        secret_access_key TEXT,
         is_default   BOOLEAN DEFAULT FALSE,
         created_at   TIMESTAMPTZ DEFAULT NOW(),
         updated_at   TIMESTAMPTZ DEFAULT NOW()
