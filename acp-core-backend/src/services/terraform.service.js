@@ -9,6 +9,9 @@ exports.createVPC = (data, credentials) => {
 
   logs = [];
 
+  const { v4: uuidv4 } = require('uuid');
+  const id = uuidv4();
+
   const deploymentName = data.vpcName;
 
   const templateDir = path.join(
@@ -27,7 +30,25 @@ exports.createVPC = (data, credentials) => {
 
   fs.cpSync(templateDir, terraformDir, { recursive: true });
 
+  const tfvars = `
+vpc_name         = "${data.vpcName}"
+cidr             = "${data.cidr}"
+public_subnet_1  = "${data.public_subnet_1}"
+public_subnet_2  = "${data.public_subnet_2}"
+private_subnet_1 = "${data.private_subnet_1}"
+private_subnet_2 = "${data.private_subnet_2}"
+region           = "${data.region}"
+az_1             = "${data.az_1}"
+az_2             = "${data.az_2}"
+`;
+
+  fs.writeFileSync(
+    path.join(terraformDir, "terraform.tfvars"),
+    tfvars
+  );
+
   const metadata = {
+    id,
     name: data.vpcName,
     type: "VPC",
     region: data.region,
@@ -41,22 +62,7 @@ exports.createVPC = (data, credentials) => {
     JSON.stringify(metadata, null, 2)
   );
 
-  const roleArn =
-    `arn:aws:iam::${data.accountID}:role/ACPDeploymentRole`;
-
-  const command = `
-  terraform init &&
-  terraform apply -auto-approve \
-  -var="vpc_name=${data.vpcName}" \
-  -var="cidr=${data.cidr}" \
-  -var="public_subnet_1=${data.public_subnet_1}" \
-  -var="public_subnet_2=${data.public_subnet_2}" \
-  -var="private_subnet_1=${data.private_subnet_1}" \
-  -var="private_subnet_2=${data.private_subnet_2}" \
-  -var="region=${data.region}" \
-  -var="az_1=${data.az_1}" \
-  -var="az_2=${data.az_2}" \
-  `;
+  const command = `terraform init && terraform apply -auto-approve`;
 
   let child;
 
@@ -75,17 +81,17 @@ exports.createVPC = (data, credentials) => {
     console.error("Exec error:", error);
   }
 
-  child.stdout.on("data", (data) => {
-    logs.push(data.toString());
-    console.log(data.toString());
+  child.stdout.on("data", (chunk) => {
+    logs.push(chunk.toString());
+    console.log(chunk.toString());
   });
 
-  child.stderr.on("data", (data) => {
-    logs.push(data.toString());
-    console.error(data.toString());
+  child.stderr.on("data", (chunk) => {
+    logs.push(chunk.toString());
+    console.error(chunk.toString());
   });
 
-  child.on("close", async () => {
+  child.on("close", async (code) => {
 
     const metadataPath = path.join(terraformDir, "metadata.json");
 
@@ -94,7 +100,7 @@ exports.createVPC = (data, credentials) => {
         fs.readFileSync(metadataPath)
       );
 
-      metadata.status = "Active";
+      metadata.status = code === 0 ? "Active" : "Failed";
 
       fs.writeFileSync(
         metadataPath,
@@ -104,12 +110,11 @@ exports.createVPC = (data, credentials) => {
       if (USE_DB) {
         try {
           const db = require('../config/db');
-          const { v4: uuidv4 } = require('uuid');
           await db.query(
             `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
-            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            [metadata.id, metadata.name, metadata.type, metadata.status,
             metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
           );
         } catch (e) {
@@ -118,7 +123,7 @@ exports.createVPC = (data, credentials) => {
       }
     }
 
-    logs.push("INFRA_CREATED");
+    logs.push(code === 0 ? "INFRA_CREATED" : "INFRA_FAILED");
 
   });
 
@@ -138,9 +143,9 @@ exports.getDeployments = async () => {
   if (USE_DB) {
     const db = require('../config/db');
     const result = await db.query(
-      'SELECT data FROM infra_deployments ORDER BY created_at DESC'
+      'SELECT id, data FROM infra_deployments ORDER BY created_at DESC'
     );
-    return result.rows.map(row => row.data);
+    return result.rows.map(row => ({ id: row.id, ...row.data }));
   }
 
   const deployments = [];
@@ -188,11 +193,8 @@ exports.createECS = (data, credentials) => {
 
   logs = [];
 
-  // -------------------------------
-  // Validate Request
-  // -------------------------------
+  // Validate FIRST
   if (
-    !data.account ||
     !data.region ||
     !data.clusterName ||
     !data.vpcId ||
@@ -203,30 +205,23 @@ exports.createECS = (data, credentials) => {
     throw new Error("Missing required ECS parameters");
   }
 
+  const { v4: uuidv4 } = require('uuid');
+  const id = uuidv4();
+
   const deploymentName = data.zoneName;
 
-  const templatePath = path.join(
-    __dirname,
-    "../../terraform/templates/ecs"
-  );
-
-  const deploymentPath = path.join(
-    __dirname,
-    `../../terraform/deployments/ecs/${deploymentName}`
-  );
+  const templatePath = path.join(__dirname, "../../terraform/templates/ecs");
+  const deploymentPath = path.join(__dirname, `../../terraform/deployments/ecs/${deploymentName}`);
 
   fs.mkdirSync(deploymentPath, { recursive: true });
-
   fs.cpSync(templatePath, deploymentPath, { recursive: true });
 
-  // -------------------------------
-  // Metadata
-  // -------------------------------
   const metadata = {
+    id,
     name: data.zoneName,
     type: "ECS",
     region: data.region,
-    account: data.account,
+    account: data.accountID || data.account,
     status: "Creating",
     cloud: "AWS",
     vpcId: data.vpcId,
@@ -240,20 +235,10 @@ exports.createECS = (data, credentials) => {
     JSON.stringify(metadata, null, 2)
   );
 
-  // -------------------------------
-  // Role ARN (FIXED POSITION)
-  // -------------------------------
-  const roleArn =
-    `arn:aws:iam::${data.account}:role/ACPDeploymentRole`;
-
-  // -------------------------------
-  // Auto create tfvars
-  // -------------------------------
   const tfvars = `
 cluster_name = "${data.clusterName}"
 region       = "${data.region}"
 vpc_id       = "${data.vpcId}"
-role_arn     = "arn:aws:iam::${data.account}:role/ACPDeploymentRole"
 created_by   = "ACP-Portal"
 `;
 
@@ -262,16 +247,9 @@ created_by   = "ACP-Portal"
     tfvars
   );
 
-  // -------------------------------
-  // Terraform Command
-  // -------------------------------
-  const command = `
-terraform init &&
-terraform apply -auto-approve
-`;
+  const command = `terraform init && terraform apply -auto-approve`;
 
   let child;
-
   try {
     child = exec(command, {
       cwd: deploymentPath,
@@ -288,46 +266,28 @@ terraform apply -auto-approve
     throw error;
   }
 
-  child.stdout.on("data", (data) => {
-    logs.push(data.toString());
-    console.log(data.toString());
-  });
-
-  child.stderr.on("data", (data) => {
-    logs.push(data.toString());
-    console.error(data.toString());
-  });
+  child.stdout.on("data", (chunk) => { logs.push(chunk.toString()); console.log(chunk.toString()); });
+  child.stderr.on("data", (chunk) => { logs.push(chunk.toString()); console.error(chunk.toString()); });
 
   child.on("close", async (code) => {
 
-    const metadataPath = path.join(
-      deploymentPath,
-      "metadata.json"
-    );
+    const metadataPath = path.join(deploymentPath, "metadata.json");
 
     if (fs.existsSync(metadataPath)) {
+      const metadata = JSON.parse(fs.readFileSync(metadataPath));
 
-      const metadata = JSON.parse(
-        fs.readFileSync(metadataPath)
-      );
+      metadata.status = code === 0 ? "Active" : "Failed";
 
-      metadata.status =
-        code === 0 ? "Active" : "Failed";
-
-      fs.writeFileSync(
-        metadataPath,
-        JSON.stringify(metadata, null, 2)
-      );
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
 
       if (USE_DB) {
         try {
           const db = require('../config/db');
-          const { v4: uuidv4 } = require('uuid');
           await db.query(
             `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
-            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            [metadata.id, metadata.name, metadata.type, metadata.status,
             metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
           );
         } catch (e) {
@@ -336,12 +296,7 @@ terraform apply -auto-approve
       }
     }
 
-    logs.push(
-      code === 0
-        ? "INFRA_CREATED"
-        : "INFRA_FAILED"
-    );
-
+    logs.push(code === 0 ? "INFRA_CREATED" : "INFRA_FAILED");
   });
 
 };
@@ -350,42 +305,27 @@ exports.deployAwsRds = (data, credentials) => {
 
   logs = [];
 
-  // -------------------------------
-  // Validate Request
-  // -------------------------------
   if (
-    !data.accountID ||
-    !data.region ||
-    !data.rdsIdentifier ||
-    !data.dbEngine ||
-    !data.username ||
-    !data.password ||
-    !data.vpcId ||
-    !data.zoneName
+    !data.accountID || !data.region || !data.rdsIdentifier ||
+    !data.dbEngine || !data.username || !data.password ||
+    !data.vpcId || !data.zoneName
   ) {
     throw new Error("Missing required RDS parameters");
   }
 
   const deploymentName = data.zoneName;
-
-  const templatePath = path.join(
-    __dirname,
-    "../../terraform/templates/rds"
-  );
-
-  const deploymentPath = path.join(
-    __dirname,
-    `../../terraform/deployments/rds/${deploymentName}`
-  );
+  const deploymentPath = path.join(__dirname, `../../terraform/deployments/rds/${deploymentName}`);
+  const templatePath = path.join(__dirname, "../../terraform/templates/rds");
 
   fs.mkdirSync(deploymentPath, { recursive: true });
-
   fs.cpSync(templatePath, deploymentPath, { recursive: true });
 
-  // -------------------------------
-  // Metadata
-  // -------------------------------
+  // Generate id ONCE here so it's reused in the DB insert
+  const { v4: uuidv4 } = require('uuid');
+  const id = uuidv4();
+
   const metadata = {
+    id,                                    // ← store id in metadata
     name: data.zoneName,
     type: "RDS",
     region: data.region,
@@ -393,8 +333,8 @@ exports.deployAwsRds = (data, credentials) => {
     status: "Creating",
     cloud: "AWS",
     rdsIdentifier: data.rdsIdentifier,
-    dbEngine: data.dbEngine,          // ← add
-    vpcId: data.vpcId,                // ← add
+    dbEngine: data.dbEngine,
+    vpcId: data.vpcId,
     dbUsername: data.username,
     dbPassword: data.password,
     dbName: data.initialDbName || ''
@@ -405,50 +345,29 @@ exports.deployAwsRds = (data, credentials) => {
     JSON.stringify(metadata, null, 2)
   );
 
-  // -------------------------------
-  // Role ARN
-  // -------------------------------
-  const roleArn =
-    `arn:aws:iam::${data.accountID}:role/ACPDeploymentRole`;
-
-  // -------------------------------
-  // Terraform tfvars
-  // -------------------------------
   const dbPort = data.dbEngine === 'mysql' ? 3306 : 5432;
+  const subnetList = data.subnet_ids.map(s => `"${s}"`).join(", ");
 
+  // No leading spaces in tfvars
   const tfvars = `
 region          = "${data.region}"
 rds_identifier  = "${data.rdsIdentifier}"
 db_engine       = "${data.dbEngine}"
-
 db_username     = "${data.username}"
 db_password     = "${data.password}"
-
 vpc_id          = "${data.vpcId}"
-subnet_ids      = ${JSON.stringify(data.subnet_ids)}
-
+subnet_ids      = [${subnetList}]
 create_db       = ${data.createInitialDb || false}
 initial_db_name = "${data.initialDbName || ""}"
-
 zone_name       = "${data.zoneName}"
 db_port         = ${dbPort}
 `;
 
-  fs.writeFileSync(
-    path.join(deploymentPath, "terraform.tfvars"),
-    tfvars
-  );
+  fs.writeFileSync(path.join(deploymentPath, "terraform.tfvars"), tfvars);
 
-  // -------------------------------
-  // Terraform Command
-  // -------------------------------
-  const command = `
-terraform init &&
-terraform apply -auto-approve
-`;
+  const command = `terraform init && terraform apply -auto-approve`;
 
   let child;
-
   try {
     child = exec(command, {
       cwd: deploymentPath,
@@ -465,32 +384,19 @@ terraform apply -auto-approve
     throw error;
   }
 
-  child.stdout.on("data", (data) => {
-    logs.push(data.toString());
-    console.log(data.toString());
-  });
-
-  child.stderr.on("data", (data) => {
-    logs.push(data.toString());
-    console.error(data.toString());
-  });
+  // Renamed to "chunk" to avoid shadowing outer "data"
+  child.stdout.on("data", (chunk) => { logs.push(chunk.toString()); console.log(chunk.toString()); });
+  child.stderr.on("data", (chunk) => { logs.push(chunk.toString()); console.error(chunk.toString()); });
 
   child.on("close", async (code) => {
 
-    const metadataPath = path.join(
-      deploymentPath,
-      "metadata.json"
-    );
+    const metadataPath = path.join(deploymentPath, "metadata.json");
 
     if (fs.existsSync(metadataPath)) {
-
-      const metadata = JSON.parse(
-        fs.readFileSync(metadataPath)
-      );
+      const metadata = JSON.parse(fs.readFileSync(metadataPath));
 
       metadata.status = code === 0 ? "Active" : "Failed";
 
-      // ADD: capture RDS endpoint from terraform output
       if (code === 0) {
         try {
           const { execSync } = require("child_process");
@@ -500,6 +406,7 @@ terraform apply -auto-approve
           if (outputs.rds_endpoint?.value) {
             const [host, port] = outputs.rds_endpoint.value.split(":");
             metadata.rdsEndpoint = host;
+            // "data" is now safely the outer request data (not shadowed)
             const enginePortMap = { mysql: '3306', postgres: '5432', aurora: '3306' };
             const engineKey = (data.dbEngine || '').toLowerCase();
             const matchedKey = Object.keys(enginePortMap).find(k => engineKey.includes(k));
@@ -510,20 +417,17 @@ terraform apply -auto-approve
         }
       }
 
-      fs.writeFileSync(
-        metadataPath,
-        JSON.stringify(metadata, null, 2)
-      );
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
 
       if (USE_DB) {
         try {
           const db = require('../config/db');
-          const { v4: uuidv4 } = require('uuid');
           await db.query(
             `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
-            [uuidv4(), metadata.name, metadata.type, metadata.status,
+            // Use metadata.id (fixed uuid) not uuidv4() (new uuid every time)
+            [metadata.id, metadata.name, metadata.type, metadata.status,
             metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
           );
         } catch (e) {
@@ -532,14 +436,8 @@ terraform apply -auto-approve
       }
     }
 
-    logs.push(
-      code === 0
-        ? "INFRA_CREATED"
-        : "INFRA_FAILED"
-    );
-
+    logs.push(code === 0 ? "INFRA_CREATED" : "INFRA_FAILED");
   });
-
 };
 
 exports.createECSApp = async (data) => {
@@ -647,6 +545,51 @@ environment_variables = [
 
         resolve({});
       }
+    });
+  });
+};
+
+// terraform.service.js
+exports.destroyInfra = async (deploymentName, type, credentials, region) => {
+  const typeDir = type.toLowerCase(); // "vpc", "rds", "ecs"
+  const deploymentPath = path.join(
+    __dirname,
+    `../../terraform/deployments/${typeDir}/${deploymentName}`
+  );
+
+  if (!fs.existsSync(deploymentPath)) {
+    throw new Error(`Terraform directory not found: ${deploymentPath}`);
+  }
+
+  return new Promise((resolve, reject) => {
+    logs = [];
+
+    const command = `terraform destroy -auto-approve`;
+
+    const child = exec(command, {
+      cwd: deploymentPath,
+      env: {
+        ...process.env,
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        AWS_DEFAULT_REGION: region,
+      },
+    });
+
+    child.stdout.on("data", (d) => { logs.push(d.toString()); console.log(d.toString()); });
+    child.stderr.on("data", (d) => { logs.push(d.toString()); console.error(d.toString()); });
+
+    child.on("close", async (code) => {
+      if (code !== 0) {
+        logs.push("INFRA_DESTROY_FAILED");
+        return reject(new Error("terraform destroy failed"));
+      }
+
+      // Clean up local terraform directory
+      fs.rmSync(deploymentPath, { recursive: true, force: true });
+      logs.push("INFRA_DESTROYED");
+      resolve();
     });
   });
 };

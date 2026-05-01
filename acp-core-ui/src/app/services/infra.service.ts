@@ -12,4 +12,8 @@ export class InfraService {
         return this.http.get<any[]>('http://localhost:8080/api/v1/deployments');
     }
 
+    deleteDeployment(id: string) {
+        return this.http.delete(`http://localhost:8080/api/v1/deployments/${id}`);
+    }
+
 }

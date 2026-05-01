@@ -618,7 +618,7 @@ export class WizardComponent implements OnInit, AfterViewInit {
 
         tenantID: this.licenseNum,
         blueprintID: this.blueprintID,
-        account: this.accountNum,
+        accountID: this.accountNum,
         region: this.region,
         clusterName: this.ClusterName,
         vpcId: this.vpcId,

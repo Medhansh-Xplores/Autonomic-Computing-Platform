@@ -15,7 +15,7 @@
 /* Header */
 .table-header {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr;
+  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr 1fr;
   padding: 16px;
   background: #1e4f86;
   color: white;
@@ -31,10 +31,16 @@
   overflow-y: auto;
 }
 
+.table-row div:last-child {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 /* Rows */
 .table-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr;
+  grid-template-columns: 0.8fr 1.5fr 1fr 1fr 1fr 1.5fr 1fr;
   padding: 14px 16px;
   color: #0b2545;
   /* darker text */
@@ -43,6 +49,20 @@
   border-bottom: 1px solid #e6e6e6;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.delete-btn {
+  padding: 6px 12px;
+  border: 1px solid #1e4f86;
+  background: white;
+  color: #1e4f86;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #1e4f86;
+  color: white;
 }
 
 /* Alternate Row Colors (Better contrast) */

@@ -41,4 +41,21 @@ export class InfrastructureResourcesComponent implements OnInit, OnDestroy {
     console.log("Opening deployment:", deployment);
   }
 
+  deleteDeployment(event: Event, deployment: any) {
+    event.stopPropagation(); // prevent row click from firing
+
+    if (!confirm(`Delete ${deployment.name}? This will destroy it from AWS.`)) return;
+
+    // Optimistically mark as Deleting in the UI
+    deployment.status = 'Deleting';
+
+    this.infraService.deleteDeployment(deployment.id).subscribe({
+      error: (err) => {
+        console.error('Delete failed', err);
+        deployment.status = 'Delete Failed';
+      }
+    });
+    // The 5s auto-refresh will eventually remove the row from the list
+  }
+
 }

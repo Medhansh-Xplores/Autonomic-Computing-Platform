@@ -429,7 +429,7 @@
 .copy-row {
     font-family: monospace;
     background: #0b2545;
-    color: #2ecc71;
+    color: #fdb610;
     padding: 6px 10px;
     border-radius: 4px;
     font-size: 13px;
@@ -448,8 +448,8 @@
     font-size: 11px;
     cursor: pointer;
     background: none;
-    border: 0.5px solid #2ecc71;
-    color: #2ecc71;
+    border: 0.5px solid #ffffff;
+    color: #fdb610;
     border-radius: 4px;
     padding: 2px 8px;
     white-space: nowrap;

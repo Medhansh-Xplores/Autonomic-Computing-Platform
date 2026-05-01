@@ -23,6 +23,7 @@
       <div>Status</div>
       <div>Region</div>
       <div>Account ID</div>
+      <div>Actions</div>
     </div>
 
     <!-- Rows -->
@@ -42,6 +43,12 @@
         <div class="status">{{ d.status }}</div>
         <div>{{ d.region }}</div>
         <div>{{ d.account }}</div>
+        <div>
+          <button class="delete-btn" [disabled]="d.status === 'Deleting' || d.status === 'Creating'"
+            (click)="deleteDeployment($event, d)">
+            {{ d.status === 'Deleting' ? 'Deleting...' : 'Delete' }}
+          </button>
+        </div>
       </div>
     </div>
 

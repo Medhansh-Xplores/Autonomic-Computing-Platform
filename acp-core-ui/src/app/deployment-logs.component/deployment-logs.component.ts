@@ -84,7 +84,7 @@ export class DeploymentLogsComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/services']);
+    this.router.navigate(['/infrastructure-resources']);
   }
 
   scrollToBottom() {

@@ -90,7 +90,7 @@
                     <div class="btn-group">
                         <button type="button" class="provider-btn" [class.active-btn]="authType === 'role'"
                             (click)="authType = 'role'">
-                            Use IAM Role
+                            Assume IAM Role
                         </button>
                         <button type="button" class="provider-btn" [class.active-btn]="authType === 'keys'"
                             (click)="authType = 'keys'">
@@ -122,7 +122,7 @@
                 <!-- IAM ROLE AUTH -->
                 <div *ngIf="authType === 'role'">
                     <div *ngIf="!editingId && pendingExternalId" class="iam-steps-block">
-                        <p class="iam-steps-title">Complete these 4 steps in AWS, then paste the Role ARN below.</p>
+                        <p class="iam-steps-title">Complete these 4 steps in AWS, then paste the ACPDeploymentRole ARN below.</p>
 
                         <div class="iam-step">
                             <div class="step-number">1</div>
@@ -152,6 +152,9 @@
                                         {{ copied ? 'Copied!' : 'Copy' }}
                                     </button>
                                 </div>
+                                <p class="iam-footnote">The External ID is unique to your account and ensures only ACP
+                                    can
+                                    assume this role.</p>
                             </div>
                         </div>
 
@@ -162,9 +165,6 @@
                                     (or a scoped policy).</p>
                             </div>
                         </div>
-
-                        <p class="iam-footnote">The External ID is unique to your account and ensures only ACP can
-                            assume this role.</p>
 
                         <div class="iam-step">
                             <div class="step-number">4</div>
@@ -184,7 +184,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="roleArn">
-                            IAM Role ARN <span class="required-marker">*required</span>
+                            ACPDeploymentRole ARN <span class="required-marker">*required</span>
                         </label>
                         <input class="usa-input" id="roleArn" name="roleArn" type="text"
                             placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole" [(ngModel)]="form.roleArn"

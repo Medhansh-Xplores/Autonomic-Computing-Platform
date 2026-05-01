@@ -11,5 +11,6 @@ router.get("/subnets", authMiddleware, infraController.getSubnets);
 router.post("/deployments/aws-vpc", authMiddleware, infraController.createVPC);
 router.post("/deployments/aws-ecs", authMiddleware, infraController.createECS);
 router.post("/deployments/aws-rds", authMiddleware, infraController.deployAwsRds);
+router.delete("/deployments/:id", authMiddleware, infraController.deleteInfra);
 
 module.exports = router;

@@ -203,7 +203,7 @@ exports.createECS = async (req, res) => {
     res.send({ message: "ECS deployment started" });
   } catch (err) {
     console.error(err);
-    res.status(500).send(err);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -256,4 +256,55 @@ exports.deployAwsRds = async (req, res) => {
 
   }
 
+};
+
+// infra.controller.js
+exports.deleteInfra = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user?.username;
+
+  try {
+    // 1. Fetch the record from DB
+    const result = await db.query(
+      `SELECT * FROM infra_deployments WHERE id = $1`,
+      [id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: "Deployment not found" });
+    }
+
+    const deployment = result.rows[0];
+    const { name, type, region, account } = deployment;
+
+    // 2. Update status to "Deleting" so the UI reflects it
+    await db.query(
+      `UPDATE infra_deployments SET status = 'Deleting', updated_at = NOW() WHERE id = $1`,
+      [id]
+    );
+
+    // 3. Resolve AWS credentials for this account
+    const credentials = await resolveCredentials(account, userId, region);
+
+    // 4. Run terraform destroy (async — respond immediately, destroy in background)
+    res.json({ message: "Destroy started", id });
+
+    try {
+      await terraformService.destroyInfra(name, type, credentials, region);
+
+      // 5. Delete RDS record only after successful destroy
+      await db.query(`DELETE FROM infra_deployments WHERE id = $1`, [id]);
+
+    } catch (err) {
+      console.error("Destroy failed:", err);
+      // Mark as failed so user can see it in the UI
+      await db.query(
+        `UPDATE infra_deployments SET status = 'Delete Failed', updated_at = NOW() WHERE id = $1`,
+        [id]
+      );
+    }
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 };
