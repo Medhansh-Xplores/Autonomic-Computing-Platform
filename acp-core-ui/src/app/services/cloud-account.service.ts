@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../environments/environment';
+import { EnvService } from '../../environments/env.service';
 
 export interface CloudAccount {
     id?: number;
@@ -18,9 +18,12 @@ export interface CloudAccount {
 
 @Injectable({ providedIn: 'root' })
 export class CloudAccountService {
-    private url = environment.apiUrl + '/cloud-accounts';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private envService: EnvService) { }
+
+    private get url(): string {
+        return this.envService.apiUrl + 'cloud-accounts';
+    }
 
     getNewExternalId() {
         return this.http.get<{ externalId: string }>(`${this.url}/new-external-id`);
