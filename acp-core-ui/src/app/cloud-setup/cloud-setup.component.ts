@@ -154,13 +154,31 @@ export class CloudSetupComponent implements OnInit {
     }
 
     copyRoleName() {
-        navigator.clipboard.writeText('ACPDeploymentRole');
-        this.copiedRoleName = true;
-        setTimeout(() => this.copiedRoleName = false, 2000);
+        this.copyToClipboard('ACPDeploymentRole');
     }
 
     copyAccountId() {
-        navigator.clipboard.writeText('377122171982');
+        this.copyToClipboard('377122171982');
+    }
+
+    private copyToClipboard(text: string): void {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            // HTTPS — use modern clipboard API
+            navigator.clipboard.writeText(text).catch(err => {
+                console.error('Clipboard write failed:', err);
+            });
+        } else {
+            // HTTP fallback — use deprecated execCommand
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
     }
 
     copiedPolicy = false;
