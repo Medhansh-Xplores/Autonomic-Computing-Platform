@@ -3,11 +3,6 @@ variable "region" {
   type        = string
 }
 
-variable "role_arn" {
-  description = "IAM role ARN to assume for deployment"
-  type        = string
-}
-
 # -----------------------------
 # Cluster references
 # (copy these from: terraform output in your ecs-cluster deployment)

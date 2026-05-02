@@ -74,7 +74,7 @@ ul {
 .usa-nav {
   width: 100%;
   background-color: #003160;
-  margin-bottom: 2%;
+  margin-bottom: 0;
 }
 
 /* MAIN FLEX ROW */
@@ -82,7 +82,7 @@ ul {
   display: flex;
   align-items: center;
   list-style: none;
-  padding: 10px 20px;
+  padding: 4px 20px;
   margin: 0;
 }
 
@@ -133,6 +133,27 @@ ul {
 
 .usa-nav__logout__link {
   color: white !important;
+}
+
+/* =========================
+   PLATFORM TITLE BANNER
+========================= */
+.platform-title-bar {
+  width: 100%;
+  background-color: #ffffff;
+  text-align: center;
+  padding: 10px 0;
+  /* controls height of this strip — adjust to taste */
+  font-size: 25px;
+  font-weight: bold;
+  color: #003160;
+  font-family: Arial, Helvetica, sans-serif;
+  border-bottom: 3px solid rgb(249, 185, 21);
+  display: flex;
+  align-items: center;
+  /* vertical centering */
+  justify-content: center;
+  /* horizontal centering */
 }
 
 /* =========================

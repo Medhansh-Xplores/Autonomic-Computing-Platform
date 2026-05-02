@@ -23,12 +23,10 @@ router.get("/tenants/:tenantid/accounts", authMiddleware, async (req, res) => {
   }
 });
 
-// AWS Regions
-router.get("/aws/regions", awsController.getAwsRegions);
+router.get("/aws/regions", authMiddleware, awsController.getAwsRegions);
+router.get("/aws/ecs-clusters", authMiddleware, awsController.getAwsEcsClusters);
+router.get("/aws/rds-instances", authMiddleware, awsController.getAwsRdsInstances);
 
-// AWS ECS Clusters
-router.get("/aws/ecs-clusters", awsController.getAwsEcsClusters);
-
-router.get("/aws/rds-instances", awsController.getAwsRdsInstances);
+router.get("/aws/accounts", authMiddleware, awsController.getAwsAccounts);
 
 module.exports = router;

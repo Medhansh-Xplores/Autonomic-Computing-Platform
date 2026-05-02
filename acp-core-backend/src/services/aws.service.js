@@ -93,15 +93,7 @@ exports.getRdsDetails = async (roleArn, externalId, region, rdsIdentifier) => {
     };
 };
 
-exports.connectEcsToRds = async function ({
-    roleArn,
-    externalId,
-    region,
-    ecsCluster,
-    rdsInstance
-}) {
-
-    const credentials = await assumeRole(roleArn, externalId, region);
+exports.connectEcsToRds = async function ({ credentials, region, ecsCluster, rdsInstance }) {
 
     const ecs = new ECSClient({ region, credentials });
     const rds = new RDSClient({ region, credentials });

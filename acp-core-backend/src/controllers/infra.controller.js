@@ -8,7 +8,9 @@ async function getAccountRow(accountId, userId) {
   const result = await db.query(
     `SELECT auth_type, role_arn, external_id, region,
             access_key_id, secret_access_key
-     FROM cloud_accounts WHERE account_id = $1 AND user_id = $2`,
+     FROM cloud_accounts
+     WHERE (account_id = $1 OR id::text = $1) AND user_id = $2
+     LIMIT 1`,
     [accountId, userId]
   );
   if (result.rows.length === 0) throw new Error("No configured cloud account found");
@@ -274,7 +276,7 @@ exports.deleteInfra = async (req, res) => {
     }
 
     const deployment = result.rows[0];
-    const { name, type, region, account } = deployment;
+    const { name, type, region, account, awsAccountId } = deployment;
 
     // 2. Update status to "Deleting" so the UI reflects it
     await db.query(
@@ -283,7 +285,7 @@ exports.deleteInfra = async (req, res) => {
     );
 
     // 3. Resolve AWS credentials for this account
-    const credentials = await resolveCredentials(account, userId, region);
+    const credentials = await resolveCredentials(awsAccountId || account, userId, region);
 
     // 4. Run terraform destroy (async — respond immediately, destroy in background)
     res.json({ message: "Destroy started", id });
@@ -308,3 +310,5 @@ exports.deleteInfra = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+exports.resolveCredentialsPublic = resolveCredentials;

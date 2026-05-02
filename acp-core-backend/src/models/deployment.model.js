@@ -112,3 +112,28 @@ exports.updateStatus = async (id, payload) => {
         }
     });
 };
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+
+exports.deleteDeployment = async (id) => {
+    if (USE_DB) {
+        const db = require('../config/db');
+        await db.query('DELETE FROM deployments WHERE id = $1', [id]);
+        return;
+    }
+
+    // ── local filesystem ──
+    if (!fs.existsSync(deploymentsPath)) return;
+
+    const folders = fs.readdirSync(deploymentsPath);
+    for (const folder of folders) {
+        const metadataPath = path.join(deploymentsPath, folder, 'metadata.json');
+        if (fs.existsSync(metadataPath)) {
+            const data = JSON.parse(fs.readFileSync(metadataPath));
+            if (data.id === id) {
+                fs.rmSync(path.join(deploymentsPath, folder), { recursive: true, force: true });
+                return;
+            }
+        }
+    }
+};

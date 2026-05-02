@@ -53,6 +53,7 @@ az_2             = "${data.az_2}"
     type: "VPC",
     region: data.region,
     account: data.accountID,
+    awsAccountId: data.awsAccountId || data.accountID,
     status: "Creating",
     cloud: data.cloud || "AWS"
   };
@@ -222,6 +223,7 @@ exports.createECS = (data, credentials) => {
     type: "ECS",
     region: data.region,
     account: data.accountID || data.account,
+    awsAccountId: data.awsAccountId || data.accountID,
     status: "Creating",
     cloud: "AWS",
     vpcId: data.vpcId,
@@ -330,6 +332,7 @@ exports.deployAwsRds = (data, credentials) => {
     type: "RDS",
     region: data.region,
     account: data.accountID,
+    awsAccountId: data.awsAccountId || data.accountID,
     status: "Creating",
     cloud: "AWS",
     rdsIdentifier: data.rdsIdentifier,
@@ -440,7 +443,7 @@ db_port         = ${dbPort}
   });
 };
 
-exports.createECSApp = async (data) => {
+exports.createECSApp = async (data, credentials) => {
   return new Promise(async (resolve, reject) => {
     logs = [];
 
@@ -511,7 +514,16 @@ environment_variables = [
     fs.writeFileSync(path.join(deploymentPath, "terraform.tfvars"), tfvars);
 
     const command = `terraform init && terraform apply -auto-approve`;
-    const child = exec(command, { cwd: deploymentPath });
+    const child = exec(command, {
+      cwd: deploymentPath,
+      env: {
+        ...process.env,
+        AWS_ACCESS_KEY_ID: credentials.accessKeyId,
+        AWS_SECRET_ACCESS_KEY: credentials.secretAccessKey,
+        AWS_SESSION_TOKEN: credentials.sessionToken,
+        AWS_DEFAULT_REGION: data.region
+      }
+    });
 
     child.stdout.on("data", d => logs.push(d.toString()));
     child.stderr.on("data", d => logs.push(d.toString()));

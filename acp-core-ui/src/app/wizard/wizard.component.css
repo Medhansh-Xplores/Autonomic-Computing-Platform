@@ -16,7 +16,11 @@
 th,
 td {
     padding: 12px 15px;
+    color: #003160;
+    font-size: 15px;
 }
+
+
 
 .form-page {
     position: relative;
@@ -29,12 +33,50 @@ td {
 }
 
 .landing {
-    background-color: #003160;
-    color: white;
-    border-radius: 25px;
+    background-color: #ffffff;
+    color: #003160;
+    border-radius: 10px;
     margin: auto;
     width: 50%;
-    box-shadow: 7px 7px linear-gradient(to bottom, #e6bb00, white);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    border: 2px solid #003160;
+}
+
+/* Radio button labels */
+.landing input[type="radio"] {
+    accent-color: #003160;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+/* Text inputs inside the box */
+.landing input[type="text"],
+.landing input[type="password"] {
+    border: 2px solid #003160;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #003160;
+    font-size: 14px;
+    width: 220px;
+    outline: none;
+}
+
+.landing input[type="text"]:focus,
+.landing input[type="password"]:focus {
+    border-color: #f0a500;
+    box-shadow: 0 0 0 2px rgba(240, 165, 0, 0.2);
+}
+
+/* Dropdowns inside the box */
+.landing select {
+    border: 2px solid #003160;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #003160;
+    font-size: 14px;
+    width: 220px;
 }
 
 .navbutton {
@@ -53,6 +95,12 @@ td {
 .logo {
     border-radius: 10%;
     width: 100px;
+}
+
+.landing td:last-child {
+    color: #003160;
+    font-weight: 500;
+    font-size: 15px;
 }
 
 .custombutton {
@@ -102,27 +150,25 @@ td {
 .create-header-box {
     width: 50%;
     margin: 30px auto 15px;
-    padding: 6px 12px;
-    /* 🔽 reduce vertical padding */
-    background: #eaeaea;
+    padding: 14px 12px;
+    background: #003160;
     border-radius: 10px;
-    border-left: 4px solid #003160;
-    border-right: 4px solid #003160;
+    border-left: 5px solid #f0a500;
+    border-right: 5px solid #f0a500;
     text-align: center;
 }
 
 .create-header-title {
     font-size: 20px;
     font-weight: 750;
-    color: #003160;
+    color: #f0a500;
 }
 
 .header-subtitle {
-    font-size: 20px;
+    font-size: 14px;
     letter-spacing: 1px;
-    color: #003160;
-    /* subtle gray */
+    color: #ffffff;
     margin-bottom: 4px;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 600;
 }

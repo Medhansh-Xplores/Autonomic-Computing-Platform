@@ -203,3 +203,18 @@ h2 {
 .repo-link:hover {
     text-decoration: underline;
 }
+
+.delete-btn {
+    background: #e53935;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+}

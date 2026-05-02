@@ -26,6 +26,7 @@
             <th>Status</th>
             <th>Deployed At</th>
             <th>App URL</th>
+            <th>Actions</th>
         </div>
 
         <!-- Rows -->
@@ -90,6 +91,12 @@
                     </a>
 
                     <span *ngIf="!d.url">—</span>
+                </div>
+                <div>
+                    <button class="delete-btn" [disabled]="d.status === 'Deleting' || d.status === 'running'"
+                        (click)="deleteDeployment($event, d)">
+                        {{ d.status === 'Deleting' ? 'Deleting...' : 'Delete' }}
+                    </button>
                 </div>
 
             </div>

@@ -11,7 +11,7 @@ router.post("/aws-vpc", authMiddleware, infraController.createVPC);
 
 router.post(
   "/aws-ecs",
-  authMiddleware, 
+  authMiddleware,
   infraController.createECS
 );
 
@@ -37,5 +37,6 @@ router.post("/GCP-VPC", (req, res) => {
 router.post("/create", deploymentController.createDeployment);
 router.get("/list", deploymentController.getDeployments);
 router.patch("/:id/status", deploymentController.updateStatus);
+router.delete("/record/:id", authMiddleware, deploymentController.deleteDeployment);
 
 module.exports = router;

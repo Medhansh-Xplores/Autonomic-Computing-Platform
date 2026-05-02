@@ -1,29 +1,65 @@
 /* Styling Service Boxes */
+
+.page-title {
+    margin-top: 10px;
+}
+
 .top-row {
-    margin-top: 100px;
+    margin-top: 50px;
     margin-bottom: 35px;
 }
+
 .bottom-row {
     margin-bottom: 100px;
 }
-.top-row, .bottom-row {
+
+.top-row,
+.bottom-row {
     width: 100%;
     display: flex;
     justify-content: center;
 }
+
 img {
     width: 250px;
     height: 250px;
     margin-left: 50px;
     margin-right: 50px;
 }
+
 .SCS img {
     width: 250px;
     height: 252px;
 }
+
 .AS img {
     width: 242px;
     height: 249px;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #0f237d;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 8px 12px;
+    background: #e3e3e3;
+    border-radius: 10px;
+    border-left: 5px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
 }
 
 @media only screen and (max-width: 600px) {
@@ -35,23 +71,28 @@ img {
         margin-top: 0px;
         background-color: transparent;
     }
+
     .menu-container {
         height: 70px;
         padding: 0%;
     }
+
     .top-row {
         margin: auto;
         margin-top: 70px;
         padding: 0px;
     }
+
     .bottom-row {
         margin: auto;
         margin-top: 45px;
         margin-bottom: 70px;
     }
+
     .services {
         width: 100%;
     }
+
     img {
         width: 150px;
         height: 150px;
@@ -60,18 +101,21 @@ img {
         margin-top: 0px;
         margin-bottom: 0px;
     }
+
     .SCS img {
         width: 150px;
         height: 151px;
     }
+
     .AS img {
         width: 150px;
         height: 150px;
     }
+
     .IS img {
         width: 150px;
         height: 151px;
-        margin-right: 5px;     
-        margin-top: 3px; 
+        margin-right: 5px;
+        margin-top: 3px;
     }
 }

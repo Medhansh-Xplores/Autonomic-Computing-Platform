@@ -171,7 +171,8 @@ exports.deployToEcs = async (req, res) => {
         const {
             repoUrl, branch, token,
             frontendPath, backendPath,
-            account, region, ecsCluster, rdsInstance,
+            account, region, ecsCluster,
+            rdsInstance = req.body.rdsName,   // frontend sends as rdsName
             appName,
             awsAccessKeyId, awsSecretAccessKey, frontendBasePath
         } = req.body;
@@ -232,6 +233,10 @@ exports.deployToEcs = async (req, res) => {
                 .replace(/\s+/g, '-')
                 .replace(/[^a-z0-9-]/g, '');
 
+            const infraController = require('../controllers/infra.controller');
+            const appCredentials = await infraController.resolveCredentialsPublic(
+                account, req.user?.username, region
+            );
             // STEP 1: Terraform (the slow part - frontend polls /github/terraform-logs)
             await terraformService.createECSApp({
                 account,
@@ -254,7 +259,7 @@ exports.deployToEcs = async (req, res) => {
                 frontendPathPatterns: frontendBasePath
                     ? [`/${frontendBasePath.replace(/^\/+/, '')}`, `/${frontendBasePath.replace(/^\/+/, '')}/*`]
                     : ['/*'],
-            });
+            }, appCredentials);
             // ✅ Terraform done — ECR repos, task defs, ECS services now exist
 
             // STEP 2: Generate and commit workflow YAML (same as before)
@@ -279,13 +284,11 @@ exports.deployToEcs = async (req, res) => {
             });
 
             // STEP 3: Assume role and set AWS secrets (same as before)
-            const { STSClient, AssumeRoleCommand } = require('@aws-sdk/client-sts');
-            const sts = new STSClient({ region: 'us-east-1' });
-            const roleResp = await sts.send(new AssumeRoleCommand({
-                RoleArn: `arn:aws:iam::${account}:role/ACPDeploymentRole`,
-                RoleSessionName: 'ACPDeploySession'
-            }));
-            const creds = roleResp.Credentials;
+            const creds = {
+                AccessKeyId: appCredentials.accessKeyId,
+                SecretAccessKey: appCredentials.secretAccessKey,
+                SessionToken: appCredentials.sessionToken
+            };
 
             await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_ACCESS_KEY_ID', secretValue: creds.AccessKeyId });
             await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_SECRET_ACCESS_KEY', secretValue: creds.SecretAccessKey });
@@ -313,7 +316,7 @@ exports.deployToEcs = async (req, res) => {
             try {
                 if (rdsInstance) {
                     console.log("Connecting ECS to RDS...");
-                    await connectEcsToRds({ account, region, ecsCluster, rdsInstance });
+                    await connectEcsToRds({ credentials: appCredentials, region, ecsCluster, rdsInstance });
                     console.log("ECS connected to RDS successfully");
                 }
             } catch (err) {
@@ -357,33 +360,35 @@ exports.deployToEcs = async (req, res) => {
             };
 
             // Small delay to let GitHub index the newly committed workflow file (same as before)
-            await new Promise(r => setTimeout(r, 12000)); 
+            await new Promise(r => setTimeout(r, 12000));
 
             const { runId } = await githubService.triggerWorkflow({
                 repoUrl, branch, token,
                 workflowId,
-                inputs: workflowInputs      
+                inputs: workflowInputs
             });
 
             if (!runId) {
                 throw new Error("GitHub workflow triggered but runId could not be resolved. Try again.");
-            }   
+            }
 
             // STEP 5: Save deployment record (same as before)
-            const deploymentService = require('../services/deployments.service');
+            const deploymentModel = require('../models/deployment.model');
             const repoParts = repoUrl
                 .replace(/\.git$/, '')
                 .replace(/^https?:\/\/github\.com\//, '')
                 .replace(/\/+$/, '')
                 .split('/');
 
-            const { id: deploymentId } = deploymentService.createDeployment({
+            const { id: deploymentId } = await deploymentModel.createDeployment({
                 name: appName || ecsCluster,
                 cloud: 'AWS',
                 deployment: 'ECS Fargate',
                 repoUrl,
                 repoName: repoParts[1] || '',          // ← parsed repo name
-                account: repoParts[0] || account,      // ← parsed GitHub account (org/user), not AWS account
+                account: repoParts[0] || account,
+                awsAccount: account,          // ← ADD: the real AWS account ID
+                userId: req.user?.username,     // ← parsed GitHub account (org/user), not AWS account
                 workflow: `deploy-${safeAppName}.yml`,       // ← known for ACP flow
                 branch,
                 ecsCluster,
@@ -401,7 +406,7 @@ exports.deployToEcs = async (req, res) => {
                 const suffix = frontendBasePath
                     ? '/' + frontendBasePath.replace(/^\/+/, '')
                     : '';
-                deploymentService.updateStatus(deploymentId, { url: base + suffix });
+                await deploymentModel.updateStatus(deploymentId, { url: base + suffix });
             }
 
             // STEP 6: Store runId + deploymentId for the frontend to pick up
@@ -645,19 +650,37 @@ async function configureAlb({
 
 exports.getListenerRules = async (req, res) => {
     const { region, ecsCluster, account } = req.query;
+    const db = require('../config/db');
+    const userId = req.user?.username;
 
     try {
-        const sts = new STSClient({ region });
-        const assumeRole = await sts.send(new AssumeRoleCommand({
-            RoleArn: `arn:aws:iam::${account}:role/ACPDeploymentRole`,
-            RoleSessionName: "acp-alb-rules"
-        }));
+        const dbResult = await db.query(
+            `SELECT auth_type, role_arn, external_id, access_key_id, secret_access_key
+             FROM cloud_accounts WHERE account_id = $1 AND user_id = $2`,
+            [account, userId]
+        );
+        if (!dbResult.rows.length) return res.status(404).json({ error: 'Cloud account not found' });
+        const cloudAccount = dbResult.rows[0];
 
-        const creds = {
-            accessKeyId: assumeRole.Credentials.AccessKeyId,
-            secretAccessKey: assumeRole.Credentials.SecretAccessKey,
-            sessionToken: assumeRole.Credentials.SessionToken
-        };
+        let creds;
+        if (cloudAccount.auth_type === 'keys') {
+            creds = {
+                accessKeyId: cloudAccount.access_key_id,
+                secretAccessKey: cloudAccount.secret_access_key
+            };
+        } else {
+            const sts = new STSClient({ region });
+            const assumeRole = await sts.send(new AssumeRoleCommand({
+                RoleArn: cloudAccount.role_arn,
+                ExternalId: cloudAccount.external_id,
+                RoleSessionName: "acp-alb-rules"
+            }));
+            creds = {
+                accessKeyId: assumeRole.Credentials.AccessKeyId,
+                secretAccessKey: assumeRole.Credentials.SecretAccessKey,
+                sessionToken: assumeRole.Credentials.SessionToken
+            };
+        }
 
         const elb = new ElasticLoadBalancingV2Client({ region, credentials: creds });
 
@@ -666,7 +689,7 @@ exports.getListenerRules = async (req, res) => {
 
         try {
             const tgResp = await elb.send(new DescribeTargetGroupsCommand({
-                Names: [`${ecsCluster}-backend`]  // we’ll improve this later
+                Names: [`${ecsCluster}-backend`]
             }));
 
             lbArn = tgResp.TargetGroups[0].LoadBalancerArns[0];
@@ -674,12 +697,10 @@ exports.getListenerRules = async (req, res) => {
         } catch (err) {
             if (err.name === 'TargetGroupNotFoundException' || err.Code === 'TargetGroupNotFound') {
                 console.log("No target groups yet - first deployment");
-
-                // 👇 RETURN EMPTY STATE
                 return res.json([]);
             }
 
-            throw err; // real error
+            throw err;
         }
 
         // Get listener

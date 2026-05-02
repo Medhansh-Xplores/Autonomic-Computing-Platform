@@ -419,16 +419,19 @@ resource "aws_ecs_task_definition" "acp_backend" {
       protocol      = "tcp"
     }]
 
-    environment = [
-      { name = "NODE_ENV",    value = "production" },
-      { name = "PORT",        value = "8080" },
-      { name = "USE_DB",      value = "true" },
-      { name = "DB_HOST",     value = aws_db_instance.acp.address },
-      { name = "DB_PORT",     value = "5432" },
-      { name = "DB_NAME",     value = var.db_name },
-      { name = "DB_USER",     value = var.db_username },
-      { name = "DB_PASSWORD", value = var.db_password }
-    ]
+      environment = [
+    { name = "NODE_ENV",             value = "production" },
+    { name = "PORT",                 value = "8080" },
+    { name = "USE_DB",               value = "true" },
+    { name = "DB_HOST",              value = aws_db_instance.acp.address },
+    { name = "DB_PORT",              value = "5432" },
+    { name = "DB_NAME",              value = var.db_name },
+    { name = "DB_USER",              value = var.db_username },
+    { name = "DB_PASSWORD",          value = var.db_password },
+    { name = "COGNITO_USER_POOL_ID", value = var.cognito_user_pool_id },
+    { name = "COGNITO_CLIENT_ID",    value = var.cognito_client_id },
+    { name = "COGNITO_REGION",       value = var.aws_region }
+  ]
 
     mountPoints = [{
       sourceVolume  = "acp-efs"
@@ -437,7 +440,7 @@ resource "aws_ecs_task_definition" "acp_backend" {
     },
     {
       sourceVolume  = "acp-efs"
-      containerPath = "/app/terraform"
+      containerPath = "/app/terraform/deployments"
       readOnly      = false
     }]
 

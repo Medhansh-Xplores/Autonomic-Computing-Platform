@@ -75,7 +75,9 @@ variable "db_username" {
 }
 
 variable "db_password" {
- default     = "ACP1234strong!"
+  description = "RDS master password — filled by GitHub Actions"
+  type        = string
+  default     = ""
 }
 
 variable "db_name" {
@@ -86,4 +88,14 @@ variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
   default     = "db.t3.micro"
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+}
+
+variable "cognito_client_id" {
+  description = "Cognito App Client ID"
+  type        = string
 }
