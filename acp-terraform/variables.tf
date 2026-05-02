@@ -35,13 +35,13 @@ variable "private_subnet_cidrs" {
 variable "backend_image" {
   description = "Backend ECR image URI — filled by GitHub Actions"
   type        = string
-  default     = ""
+  default     = "node:20-alpine"    # ← was ""
 }
 
 variable "frontend_image" {
   description = "Frontend ECR image URI — filled by GitHub Actions"
   type        = string
-  default     = ""
+  default     = "nginx:alpine"      # ← was ""
 }
 
 variable "backend_cpu" {
