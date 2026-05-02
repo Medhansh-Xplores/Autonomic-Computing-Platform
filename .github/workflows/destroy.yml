@@ -1,7 +1,7 @@
 name: Destroy ACP Portal - AWS ECS
 
 on:
-  workflow_dispatch:    # only runs when you manually trigger it from GitHub UI
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
@@ -49,4 +49,7 @@ jobs:
         run: |
           terraform destroy -auto-approve \
             -var="backend_image=nginx" \
-            -var="frontend_image=nginx"
+            -var="frontend_image=nginx" \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
+            -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}"
