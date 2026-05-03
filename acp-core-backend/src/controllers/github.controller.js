@@ -76,11 +76,15 @@ exports.getLogs = async (req, res) => {
         let run = null;
 
         if (runId) {
-            const runResp = await axios.get(
-                `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`,
-                { headers }
-            );
-            run = runResp.data;
+            try {
+                const runResp = await axios.get(
+                    `https://api.github.com/repos/${owner}/${repo}/actions/runs/${runId}`,
+                    { headers }
+                );
+                run = runResp.data;
+            } catch (err) {
+                return res.json({ complete: true, failed: true, steps: [] });
+            }
         } else {
             const runsResp = await axios.get(
                 `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflow}/runs?branch=${encodeURIComponent(branch)}&event=workflow_dispatch&per_page=1`,

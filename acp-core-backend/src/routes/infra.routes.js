@@ -5,6 +5,7 @@ const infraController = require("../controllers/infra.controller");
 const authMiddleware = require('../middleware/auth.middleware');
 
 router.get("/logs", authMiddleware, infraController.getLogs);
+router.get("/logs/:id", authMiddleware, infraController.getLogs);
 router.get("/deployments", authMiddleware, infraController.getDeployments);
 router.get("/vpcs", authMiddleware, infraController.getVpcs);
 router.get("/subnets", authMiddleware, infraController.getSubnets);

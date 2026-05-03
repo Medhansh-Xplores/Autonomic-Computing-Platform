@@ -97,7 +97,10 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
         let completing = false;  // ← guard flag
 
         this.intervalId = setInterval(() => {
-            if (completing) return;  // ← skip if already wrapping up
+            if (completing || this.isComplete) {
+                clearInterval(this.intervalId);
+                return;
+            }
 
             this.http.get<any>(this.apiBase + 'github/workflows/logs', {
                 params: {
@@ -144,7 +147,7 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
                 },
                 error: (err) => console.error('Error fetching logs', err)
             });
-        }, 2000);
+        }, 5000);
     }
 
     startTerraformPolling() {
@@ -173,7 +176,7 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
                     },
                     error: (err) => console.error('Terraform log poll error', err)
                 });
-        }, 2000);
+        }, 5000);
     }
 
     startWaitingForRunId() {
@@ -218,7 +221,7 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
                 },
                 error: (err) => console.error('Pending deployment poll error', err)
             });
-        }, 3000);
+        }, 5000);
     }
 
     ngAfterViewChecked() {

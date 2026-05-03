@@ -79,7 +79,7 @@ export class DeploymentLogsComponent implements OnInit {
 
         });
 
-    }, 2000);
+    }, 5000);
 
   }
 
