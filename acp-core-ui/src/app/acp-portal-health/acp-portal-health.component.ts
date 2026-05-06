@@ -4,8 +4,9 @@ import { ObservabilityService } from '../services/observability.service';
 import { ObservabilityHealth } from '../models/observability.model';
 
 const ACP_REGION = 'us-east-1';
-const ACP_CLUSTER = 'acp-portal-cluster';
-const ACP_SERVICE = 'acp-portal-service';
+const ACP_CLUSTER = 'acp-cluster';
+const ACP_BACKEND_SERVICE = 'acp-backend-service';
+const ACP_FRONTEND_SERVICE = 'acp-frontend-service';
 
 @Component({
     selector: 'app-acp-portal-health',
@@ -14,32 +15,53 @@ const ACP_SERVICE = 'acp-portal-service';
 })
 export class AcpPortalHealthComponent implements OnInit, OnDestroy {
 
-    health: ObservabilityHealth | null = null;
-    loading = true;
-    error = '';
+    backendHealth: ObservabilityHealth | null = null;
+    frontendHealth: ObservabilityHealth | null = null;
 
-    private sub: Subscription | null = null;
+    backendLoading = true;
+    frontendLoading = true;
+
+    backendError = '';
+    frontendError = '';
+
+    private backendSub: Subscription | null = null;
+    private frontendSub: Subscription | null = null;
 
     constructor(private observabilityService: ObservabilityService) { }
 
     ngOnInit(): void {
-        this.sub = this.observabilityService.pollAcpPortalHealth(
-            ACP_REGION, ACP_CLUSTER, ACP_SERVICE
+        this.backendSub = this.observabilityService.pollAcpPortalHealth(
+            ACP_REGION, ACP_CLUSTER, ACP_BACKEND_SERVICE
         ).subscribe({
             next: (data) => {
-                this.health = data;
-                this.loading = false;
-                this.error = '';
+                this.backendHealth = data;
+                this.backendLoading = false;
+                this.backendError = '';
             },
             error: (err) => {
-                this.loading = false;
-                this.error = err?.error?.error || 'Failed to fetch ACP Portal health';
+                this.backendLoading = false;
+                this.backendError = err?.error?.error || 'Failed to fetch backend health';
+            }
+        });
+
+        this.frontendSub = this.observabilityService.pollAcpPortalHealth(
+            ACP_REGION, ACP_CLUSTER, ACP_FRONTEND_SERVICE
+        ).subscribe({
+            next: (data) => {
+                this.frontendHealth = data;
+                this.frontendLoading = false;
+                this.frontendError = '';
+            },
+            error: (err) => {
+                this.frontendLoading = false;
+                this.frontendError = err?.error?.error || 'Failed to fetch frontend health';
             }
         });
     }
 
     ngOnDestroy(): void {
-        this.sub?.unsubscribe();
+        this.backendSub?.unsubscribe();
+        this.frontendSub?.unsubscribe();
     }
 
     getStatusClass(status: string): string {
