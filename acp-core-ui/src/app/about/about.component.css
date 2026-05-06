@@ -1,62 +1,812 @@
-/* HERO */
+/* =============================================
+   ABOUT PAGE — ACP PORTAL
+   Brand: Navy #003160 | Gold #e6bb00 | Orange accent rgb(240,132,34)
+   ============================================= */
+
+/* =============================================
+   HERO — matches login page structure
+   ============================================= */
 .acp-hero {
+    position: relative;
     width: 100%;
+    min-height: 420px;
     background-color: #003160;
     background-image: url('../../assets/img/login_background.png');
     background-position: left top;
-    min-height: 300px;
+    background-size: cover;
     display: flex;
     align-items: center;
+    overflow: hidden;
 }
 
-.hero-content {
-    padding: 60px 80px;
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 49, 96, 0.82) 0%, rgba(0, 30, 60, 0.6) 100%);
+    z-index: 0;
 }
 
-.hero-content h1 {
+.hero-body {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 60px;
+}
+
+.hero-text {
+    text-align: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+.hero-text h1 {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 45px;
-    font-weight: 600;
+    font-size: 52px;
+    font-weight: 700;
     color: #ffffff;
-    letter-spacing: 2px;
-    word-spacing: 4px;
-    margin: 0 0 20px 0;
+    letter-spacing: 3px;
+    word-spacing: 6px;
+    line-height: 1.15;
+    margin: 0 0 24px 0;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
 }
 
-.hero-sub {
+.hero-tagline {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 20px;
-    color: rgb(255, 193, 29);
+    color: #e6bb00;
+    margin: 0 0 14px 0;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    padding-left: 45px;
+    white-space: nowrap;
+}
+
+.hero-subtitle {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+    letter-spacing: 1.5px;
+    font-weight: 400;
+    text-align: center;
+    white-space: nowrap;
+    width: 100%;
+    padding-left: 100px;
+}
+
+/* =============================================
+   SHARED SECTION STRUCTURE
+   ============================================= */
+.about-section {
+    width: 100%;
+    padding: 60px 0;
+}
+
+.section-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+.section-heading {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #003160;
+    margin: 0 0 40px 0;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #e6bb00;
+    display: inline-block;
+}
+
+/* =============================================
+   SECTION 1 — COMPANY OVERVIEW
+   ============================================= */
+.company-overview {
+    background-color: #f7f9fc;
+    border-top: 4px solid #e6bb00;
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.label-bar {
+    display: inline-block;
+    width: 5px;
+    height: 28px;
+    background-color: #e6bb00;
+    border-radius: 3px;
+}
+
+.label-text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #003160;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.overview-text p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.85;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.overview-highlight-card {
+    background-color: #003160;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 49, 96, 0.18);
+}
+
+.highlight-card-header {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-left: 5px solid #e6bb00;
+    padding: 16px 24px;
+    margin-bottom: 0;
+}
+
+.highlight-title {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.highlight-subtitle {
+    display: block;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #e6bb00;
+    font-style: italic;
+}
+
+.overview-highlight-card p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.88);
+    padding: 20px 24px;
     margin: 0;
 }
 
-/* CONTENT */
-.about-content {
-    max-width: 960px;
-    margin: 50px auto;
-    padding: 0 40px;
-    font-family: Arial, Helvetica, sans-serif;
-    line-height: 1.8;
+.overview-highlight-card p:not(:last-child) {
+    padding-bottom: 0;
 }
 
-.about-content p {
+/* =============================================
+   SECTION 2 — SERVICES GRID
+   ============================================= */
+.services-grid-section {
+    background-color: #ffffff;
+}
+
+.services-header {
+    margin-bottom: 32px;
+}
+
+.services-header-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #003160;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 10px 20px;
+    border-radius: 4px;
+}
+
+.bar-icon {
     font-size: 16px;
-    color: #333;
+}
+
+.services-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.service-card {
+    background-color: #003160;
+    border-radius: 8px;
+    padding: 32px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-bottom: 4px solid transparent;
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(0, 49, 96, 0.25);
+    border-bottom-color: #e6bb00;
+}
+
+.service-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+}
+
+.service-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.service-name {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+}
+
+/* =============================================
+   SECTION 3 — AUTONOMIC DESCRIPTION
+   ============================================= */
+.autonomic-desc {
+    background-color: #f0f4f9;
+    border-top: 1px solid #dde3ec;
+    border-bottom: 1px solid #dde3ec;
+}
+
+.autonomic-intro {
+    max-width: 820px;
+    margin: 0 auto 40px;
+    text-align: center;
+}
+
+.autonomic-intro p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.85;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* INFOGRAPHIC */
+.infographic-wrapper {
+    background-color: #ffffff;
+    border: 1px solid #dde3ec;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 24px rgba(0, 49, 96, 0.1);
+    text-align: center;
+}
+
+.infographic-img {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+}
+
+.infographic-caption {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #6b7a8d;
+    margin: 16px 0 0;
+    font-style: italic;
+}
+
+/* BOTTOM ROW */
+.autonomic-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+}
+
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+}
+
+.desc-text p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.85;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.four-selfs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 24px 0;
+}
+
+.self-tag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #003160;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border-left: 4px solid #e6bb00;
+}
+
+.tag-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #e6bb00;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* MAPE-K card */
+.mapek-card {
+    background-color: #003160;
+    border-radius: 10px;
+    padding: 32px;
+    box-shadow: 0 4px 24px rgba(0, 49, 96, 0.18);
+}
+
+.mapek-header {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #e6bb00;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(230, 187, 0, 0.4);
+}
+
+.mapek-letters {
+    display: flex;
+    gap: 0;
     margin-bottom: 24px;
 }
 
-/* MOBILE */
+.mapek-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12px 4px;
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mapek-item:last-child {
+    border-right: none;
+}
+
+.mapek-letter {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #e6bb00;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.mapek-word {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mapek-desc {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+}
+
+.mapek-desc strong {
+    color: #e6bb00;
+}
+
+/* =============================================
+   SECTION 4 — BENEFITS GRID
+   ============================================= */
+.benefits-section {
+    background-color: #ffffff;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.benefit-card {
+    position: relative;
+    background-color: #f7f9fc;
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+    padding: 28px 24px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+}
+
+.benefit-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: #003160;
+    transition: background-color 0.2s ease;
+}
+
+.benefit-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 49, 96, 0.14);
+    border-color: #003160;
+}
+
+.benefit-card:hover::before {
+    background-color: #e6bb00;
+}
+
+.benefit-number {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: rgba(0, 49, 96, 0.08);
+    line-height: 1;
+    user-select: none;
+}
+
+.benefit-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 14px;
+}
+
+.benefit-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.benefit-card h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #003160;
+    margin: 0 0 10px 0;
+}
+
+.benefit-card p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #4a5568;
+    margin: 0;
+}
+
+/* =============================================
+   SECTION 5 — CREDENTIALS
+   ============================================= */
+.credentials-section {
+    background-color: #f0f4f9;
+}
+
+.credentials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.credential-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 49, 96, 0.08);
+    border-bottom: 3px solid #e6bb00;
+}
+
+.cred-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.cred-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.cred-text h4 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #003160;
+    margin: 0 0 8px 0;
+}
+
+.cred-text p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #4a5568;
+    margin: 0;
+}
+
+/* Partner logos strip */
+.partner-logos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 24px 0 8px;
+    border-top: 1px solid #dde3ec;
+}
+
+.partner-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 24px;
+    border-radius: 8px;
+    min-width: 120px;
+    text-align: center;
+    border: 2px solid;
+}
+
+.partner-badge .badge-top {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.partner-badge .badge-bottom {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aws-badge {
+    border-color: #FF9900;
+    color: #FF9900;
+}
+
+.swam-badge {
+    border-color: #003160;
+    color: #003160;
+}
+
+.gcp-badge {
+    border-color: #4285F4;
+    color: #4285F4;
+}
+
+.redhat-badge {
+    border-color: #CC0000;
+    color: #CC0000;
+}
+
+/* =============================================
+   SECTION 6 — CONTACT
+   ============================================= */
+.contact-section {
+    background-color: #003160;
+    padding: 60px 0;
+}
+
+.contact-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.contact-block h2 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #e6bb00;
+    margin: 0 0 28px 0;
+}
+
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.contact-row {
+    display: flex;
+    gap: 16px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-row:last-child {
+    border-bottom: none;
+}
+
+.contact-label {
+    font-weight: 700;
+    color: #e6bb00;
+    min-width: 110px;
+    flex-shrink: 0;
+}
+
+.contact-row a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.contact-row a:hover {
+    color: #e6bb00;
+}
+
+.contact-note {
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(230, 187, 0, 0.3);
+    border-left: 5px solid #e6bb00;
+    border-radius: 8px;
+    padding: 32px;
+}
+
+.note-icon {
+    font-size: 28px;
+    color: #e6bb00;
+    margin-bottom: 12px;
+    line-height: 1;
+}
+
+.contact-note p {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0 0 12px 0;
+}
+
+.note-legal {
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    margin: 0 !important;
+}
+
+/* =============================================
+   RESPONSIVE — TABLET & MOBILE
+   ============================================= */
+@media only screen and (max-width: 960px) {
+
+    .overview-grid,
+    .two-col,
+    .autonomic-bottom,
+    .contact-inner {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .infographic-wrapper {
+        padding: 16px;
+    }
+
+    .services-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .benefits-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .credentials-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media only screen and (max-width: 600px) {
-    .hero-content {
-        padding: 40px 20px;
+    .hero-body {
+        padding: 48px 20px;
     }
 
-    .hero-content h1 {
-        font-size: 28px;
+    .hero-text h1 {
+        font-size: 30px;
+        letter-spacing: 1.5px;
+        word-spacing: 2px;
     }
 
-    .about-content {
+    .hero-tagline {
+        font-size: 16px;
+    }
+
+    .hero-subtitle {
+        font-size: 13px;
+    }
+
+    .section-inner {
         padding: 0 20px;
-        margin: 30px auto;
+    }
+
+    .about-section {
+        padding: 40px 0;
+    }
+
+    .services-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .four-selfs {
+        grid-template-columns: 1fr;
+    }
+
+    .mapek-letters {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .mapek-item {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 10px;
+    }
+
+    .partner-logos {
+        gap: 12px;
+    }
+
+    .partner-badge {
+        min-width: 100px;
+        padding: 10px 16px;
     }
 }

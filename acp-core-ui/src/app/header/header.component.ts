@@ -49,9 +49,12 @@ export class HeaderComponent implements OnInit {
   }
 
   get isLoginPage(): boolean {
-    return this.router.url === '/login' || this.router.url === '/';
+    return this.router.url === '/login'
+      || this.router.url === '/'
+      || this.router.url === '/about'
+      || this.router.url.startsWith('/about?');
   }
-  
+
   ngOnInit() {
   }
 

@@ -548,6 +548,7 @@
 
 .form-col-right {
     min-width: 0;
+    font-size: 15px;
 }
 
 .form-col-right .iam-steps-block {
@@ -601,19 +602,19 @@
 }
 
 .step-text {
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .step-hint {
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .copy-row {
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .iam-steps-title {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .welcome-msg {

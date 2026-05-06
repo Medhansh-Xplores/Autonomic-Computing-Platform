@@ -20,7 +20,7 @@
 
 /* LOGO */
 .logo-container img {
-  width: 150px;
+  width: 175px;
 }
 
 /* NAVBAR WRAPPER */
@@ -229,4 +229,18 @@ ul {
   .usa-nav__primary-item {
     margin: 5px 10px;
   }
+}
+
+/* Platform title subtitle */
+.platform-title-bar {
+  flex-direction: column;
+}
+
+.platform-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #003160;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  font-family: Arial, Helvetica, sans-serif;
 }
