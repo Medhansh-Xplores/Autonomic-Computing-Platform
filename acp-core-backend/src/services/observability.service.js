@@ -77,8 +77,20 @@ exports.getEcsMetrics = async (credentials, region, cluster, serviceName) => {
                 Id: 'cpu',
                 MetricStat: {
                     Metric: {
-                        Namespace: 'AWS/ECS',
-                        MetricName: 'CPUUtilization',
+                        Namespace: 'ECS/ContainerInsights',
+                        MetricName: 'CpuUtilized',
+                        Dimensions: dimensions,
+                    },
+                    Period: 300,
+                    Stat: 'Average',
+                },
+            },
+            {
+                Id: 'cpu_reserved',
+                MetricStat: {
+                    Metric: {
+                        Namespace: 'ECS/ContainerInsights',
+                        MetricName: 'CpuReserved',
                         Dimensions: dimensions,
                     },
                     Period: 300,
@@ -89,8 +101,20 @@ exports.getEcsMetrics = async (credentials, region, cluster, serviceName) => {
                 Id: 'mem',
                 MetricStat: {
                     Metric: {
-                        Namespace: 'AWS/ECS',
-                        MetricName: 'MemoryUtilization',
+                        Namespace: 'ECS/ContainerInsights',
+                        MetricName: 'MemoryUtilized',
+                        Dimensions: dimensions,
+                    },
+                    Period: 300,
+                    Stat: 'Average',
+                },
+            },
+            {
+                Id: 'mem_reserved',
+                MetricStat: {
+                    Metric: {
+                        Namespace: 'ECS/ContainerInsights',
+                        MetricName: 'MemoryReserved',
                         Dimensions: dimensions,
                     },
                     Period: 300,
@@ -100,15 +124,20 @@ exports.getEcsMetrics = async (credentials, region, cluster, serviceName) => {
         ],
     }));
 
-    const pick = (id) => {
+    const pickValue = (id) => {
         const result = response.MetricDataResults?.find(r => r.Id === id);
         const values = result?.Values || [];
-        return values.length > 0 ? Math.round(values[0] * 10) / 10 : null;
+        return values.length > 0 ? values[0] : null;
     };
 
+    const cpuUsed = pickValue('cpu');
+    const cpuReserved = pickValue('cpu_reserved');
+    const memUsed = pickValue('mem');
+    const memReserved = pickValue('mem_reserved');
+
     return {
-        cpuUtilization: pick('cpu'),
-        memoryUtilization: pick('mem'),
+        cpuUtilization: (cpuUsed !== null && cpuReserved) ? Math.round((cpuUsed / cpuReserved) * 1000) / 10 : null,
+        memoryUtilization: (memUsed !== null && memReserved) ? Math.round((memUsed / memReserved) * 1000) / 10 : null,
     };
 };
 

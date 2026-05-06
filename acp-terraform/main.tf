@@ -317,6 +317,11 @@ resource "aws_lb_listener_rule" "acp_backend" {
 resource "aws_ecs_cluster" "acp" {
   name = "acp-cluster"
   tags = { Name = "acp-cluster" }
+
+  setting {
+    name  = "containerInsights"
+    value = "enhanced"
+  }
 }
 
 resource "aws_cloudwatch_log_group" "acp" {
