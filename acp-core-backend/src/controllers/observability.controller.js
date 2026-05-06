@@ -265,7 +265,9 @@ exports.getAcpPortalHealth = async (req, res) => {
     if (cached) return res.json(cached);
 
     try {
-        const credentials = await resolveCredentials(ACP_PORTAL_ACCOUNT_ID, userId, region);
+        // ACP Portal always runs inside account 377122171982.
+        // Use the ECS task role directly — no DB lookup needed, no account registration required.
+        const credentials = undefined;
 
         const [ecsService, ecsTasks, metrics, alarms, targetGroupHealth] = await Promise.allSettled([
             observabilityService.describeEcsService(credentials, region, cluster, serviceName),
