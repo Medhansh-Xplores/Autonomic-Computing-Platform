@@ -1,0 +1,189 @@
+<div class="container">
+
+    <!-- Mock / local dev banner -->
+    <div class="mock-banner" *ngIf="health?._mock">
+        <span class="mock-icon">🧪</span>
+        <span>
+            <strong>Local dev mode</strong> — ACP Portal is not on ECS yet.
+            This is simulated data. Real health will reflect once deployed to account
+            <code>377122171982</code>.
+        </span>
+    </div>
+
+    <!-- Page header -->
+    <div class="create-header-box">
+        <div class="header-subtitle">ACCOUNT: 377122171982</div>
+        <div class="create-header-title">ACP PORTAL HEALTH</div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="loading && !health" class="empty">
+        <div class="spinner"></div>
+        Fetching live data from AWS...
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error && !health" class="empty error-state">
+        {{ error }}
+    </div>
+
+    <!-- Health content -->
+    <div *ngIf="health && !loading">
+
+        <!-- ── Top status + task count row ── -->
+        <div class="detail-row">
+            <div class="detail-card">
+                <div class="detail-card-label">Status</div>
+                <span class="status-badge lg" [ngClass]="getStatusClass(health.status)">
+                    {{ getStatusIcon(health.status) }} {{ getStatusLabel(health.status) }}
+                </span>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Running Tasks</div>
+                <div class="detail-card-value">
+                    {{ health.service.runningCount }} / {{ health.service.desiredCount }}
+                </div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Pending Tasks</div>
+                <div class="detail-card-value">{{ health.service.pendingCount }}</div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Task Definition</div>
+                <div class="detail-card-value small">{{ health.service.taskDefinition || '—' }}</div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Region</div>
+                <div class="detail-card-value small">{{ health.service.region }}</div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Cluster</div>
+                <div class="detail-card-value small">{{ health.service.cluster }}</div>
+            </div>
+        </div>
+
+        <!-- ── Metrics ── -->
+        <div class="section-title">Metrics (last 5 min)</div>
+        <div class="detail-row">
+            <div class="metric-card">
+                <div class="metric-label">CPU Utilization</div>
+                <div class="metric-value">
+                    {{ health.metrics.cpuUtilization !== null ? health.metrics.cpuUtilization + '%' : 'N/A' }}
+                </div>
+                <div class="metric-bar-track" *ngIf="health.metrics.cpuUtilization !== null">
+                    <div class="metric-bar-fill" [ngClass]="getMetricBarClass(health.metrics.cpuUtilization)"
+                        [style.width]="getMetricBarWidth(health.metrics.cpuUtilization)">
+                    </div>
+                </div>
+                <div class="metric-na" *ngIf="health.metrics.cpuUtilization === null">
+                    Enable Container Insights to see metrics
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Memory Utilization</div>
+                <div class="metric-value">
+                    {{ health.metrics.memoryUtilization !== null ? health.metrics.memoryUtilization + '%' : 'N/A' }}
+                </div>
+                <div class="metric-bar-track" *ngIf="health.metrics.memoryUtilization !== null">
+                    <div class="metric-bar-fill" [ngClass]="getMetricBarClass(health.metrics.memoryUtilization)"
+                        [style.width]="getMetricBarWidth(health.metrics.memoryUtilization)">
+                    </div>
+                </div>
+                <div class="metric-na" *ngIf="health.metrics.memoryUtilization === null">
+                    Enable Container Insights to see metrics
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Load Balancer ── -->
+        <div *ngIf="health.targetGroupHealth">
+            <div class="section-title">Load Balancer</div>
+            <div class="alb-row">
+                <span class="alb-name">{{ health.targetGroupHealth.targetGroupName }}</span>
+                <span class="alb-count">
+                    {{ health.targetGroupHealth.healthyCount }} / {{ health.targetGroupHealth.totalCount }} targets
+                    healthy
+                </span>
+            </div>
+        </div>
+
+        <!-- ── Active Alarms ── -->
+        <div *ngIf="health.alarms.length > 0">
+            <div class="section-title">Active Alarms</div>
+            <div class="alarm-row" *ngFor="let alarm of health.alarms">
+                <span class="alarm-icon">⚠</span>
+                <div>
+                    <div class="alarm-name">{{ alarm.name }}</div>
+                    <div class="alarm-reason">{{ alarm.stateReason }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- No alarms state -->
+        <div *ngIf="health.alarms.length === 0">
+            <div class="section-title">Active Alarms</div>
+            <div class="no-alarms">✔ No active alarms</div>
+        </div>
+
+        <!-- ── Running Tasks ── -->
+        <div *ngIf="health.tasks.length > 0">
+            <div class="section-title">Running Tasks</div>
+            <div class="tasks-table">
+                <div class="tasks-header">
+                    <span>Task ID</span>
+                    <span>Status</span>
+                    <span>Health</span>
+                    <span>Started</span>
+                </div>
+                <div class="tasks-row" *ngFor="let t of health.tasks">
+                    <span class="task-id">{{ t.taskArn }}</span>
+                    <span class="task-status" [ngClass]="getTaskStatusClass(t.lastStatus)">
+                        {{ t.lastStatus }}
+                    </span>
+                    <span>{{ t.healthStatus || '—' }}</span>
+                    <span>{{ formatDate(t.startedAt) }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Active Deployment ── -->
+        <div *ngIf="health.deployment">
+            <div class="section-title">Active Deployment</div>
+            <div class="detail-row">
+                <div class="detail-card">
+                    <div class="detail-card-label">Rollout State</div>
+                    <div class="detail-card-value small">{{ health.deployment.rolloutState || '—' }}</div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-card-label">Running</div>
+                    <div class="detail-card-value">
+                        {{ health.deployment.runningCount }} / {{ health.deployment.desiredCount }}
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-card-label">Updated</div>
+                    <div class="detail-card-value small">{{ formatDate(health.deployment.updatedAt) }}</div>
+                </div>
+            </div>
+            <div class="rollout-reason" *ngIf="health.deployment.rolloutStateReason">
+                {{ health.deployment.rolloutStateReason }}
+            </div>
+        </div>
+
+        <!-- ── Recent Events ── -->
+        <div *ngIf="health.recentEvents.length > 0">
+            <div class="section-title">Recent Events</div>
+            <div class="event-row" *ngFor="let ev of health.recentEvents">
+                <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+                <span class="event-msg">{{ ev.message }}</span>
+            </div>
+        </div>
+
+        <div class="fetched-at">
+            <span *ngIf="health._mock">⚠ Simulated data &nbsp;·&nbsp;</span>
+            Last fetched: {{ formatDate(health.fetchedAt) }} &nbsp;·&nbsp; Auto-refreshes every 30s
+        </div>
+
+    </div>
+
+</div>

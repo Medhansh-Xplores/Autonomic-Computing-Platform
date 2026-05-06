@@ -1,43 +1,52 @@
 <div class="main-container">
   <header>
     <div class="menu-container">
-      <div class="menu-btn">
+      <div class="menu-btn"></div>
+      <div class="create-header-box">
+        <div class="create-header-title">SERVICES</div>
       </div>
-       <div class="create-header-box">
-        <div class="create-header-title">
-            SERVICES
-        </div>
-    </div>
     </div>
   </header>
+
+  <!-- LOGIN BUTTON shown only when not logged in -->
+  <div *ngIf="!isLoggedIn" class="login-prompt">
+    <a routerLink="/login" class="login-btn">Login to Access Services</a>
+  </div>
 
   <div class="services">
     <div class="top-row">
       <div class="IS">
-        <a class="usa-nav__link" routerLink="/infraservices">
+        <a class="usa-nav__link" (click)="navigateGuarded('/infraservices')">
           <div><img src="../../assets/img/1.PNG" alt=""></div>
         </a>
       </div>
       <div class="AS">
-        <a class="usa-nav__link" routerLink="/appservices"><img src="../../assets/img/2.PNG" alt=""></a>
+        <a class="usa-nav__link" (click)="navigateGuarded('/appservices')">
+          <img src="../../assets/img/2.PNG" alt="">
+        </a>
       </div>
       <div class="SCS">
-        <a routerLink="/security-compliance">
+        <a (click)="navigateGuarded('/security-compliance')">
           <img src="../../../assets/img/3.PNG" alt="">
         </a>
       </div>
     </div>
     <div class="bottom-row">
       <div class="ADS">
-        <a routerLink="/automation-deployment">
+        <a (click)="navigateGuarded('/automation-deployment')">
           <img src="../../assets/img/4.PNG" alt="">
         </a>
       </div>
       <div class="FSOA">
-        <a routerLink="['/FSOA']" href="#"><img src="../../assets/img/5.PNG" alt=""></a>
+        <a (click)="navigateGuarded('/fullstack-observability')">
+          <img src="../../assets/img/5.PNG" alt="">
+        </a>
       </div>
       <div class="ISA">
-        <a routerLink="['/ISA']" href="#"><img src="../../assets/img/6.PNG" alt=""></a>
+        <a (click)="navigateGuarded('/ISA')">
+          <img src="../../assets/img/6.PNG" alt="">
+        </a>
       </div>
     </div>
   </div>
+</div>

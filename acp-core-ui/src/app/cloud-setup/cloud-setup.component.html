@@ -73,149 +73,163 @@
         <form class="usa-form">
             <fieldset class="usa-fieldset">
 
-                <!-- SELECT CLOUD PROVIDER -->
-                <div class="form-group">
-                    <label class="form-label">Cloud Provider</label>
-                    <div class="btn-group">
-                        <button type="button" class="provider-btn" [class.active-btn]="selectedCloud === 'aws'"
-                            (click)="selectedCloud = 'aws'">
-                            AWS
-                        </button>
-                    </div>
-                </div>
+                <!-- TWO-COLUMN LAYOUT: left = fields, right = IAM steps -->
+                <div class="form-two-col">
 
-                <!-- SELECT AUTH METHOD -->
-                <div *ngIf="selectedCloud === 'aws'" class="form-group">
-                    <label class="form-label">Authentication Method</label>
-                    <div class="btn-group">
-                        <button type="button" class="provider-btn" [class.active-btn]="authType === 'role'"
-                            (click)="authType = 'role'">
-                            Assume IAM Role
-                        </button>
-                        <button type="button" class="provider-btn" [class.active-btn]="authType === 'keys'"
-                            (click)="authType = 'keys'">
-                            Use Access Keys
-                        </button>
-                    </div>
-                </div>
+                    <!-- LEFT COLUMN: all inputs -->
+                    <div class="form-col-left">
 
-                <div class="form-row-2">
-                    <div class="form-group">
-                        <label class="form-label" for="accountName">Account Name</label>
-                        <input class="usa-input" id="accountName" name="accountName" type="text"
-                            placeholder="e.g. Production, Dev" [(ngModel)]="form.accountName">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="accountId">AWS Account ID</label>
-                        <input class="usa-input" id="accountId" name="accountId" type="text"
-                            placeholder="12-digit account ID" [(ngModel)]="form.accountId" maxlength="12">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label" for="region">Default Region</label>
-                    <select class="usa-select" id="region" name="region" [(ngModel)]="form.region">
-                        <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}</option>
-                    </select>
-                </div>
-
-                <!-- IAM ROLE AUTH -->
-                <div *ngIf="authType === 'role'">
-                    <div *ngIf="!editingId && pendingExternalId" class="iam-steps-block">
-                        <p class="iam-steps-title">Complete these 4 steps in AWS, then paste the ACPDeploymentRole ARN below.</p>
-
-                        <div class="iam-step">
-                            <div class="step-number">1</div>
-                            <div>
-                                <p class="step-text">Go to <a
-                                        href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
-                                        class="step-link">AWS IAM → Roles → Create role</a>. Under <strong>Trusted
-                                        entity type</strong>, choose <strong>AWS account</strong>, then select
-                                    <strong>Another AWS account</strong>.
-                                </p>
-                                <p class="step-hint">Enter this as the Account ID:</p>
-                                <div class="copy-row">
-                                    <span>377122171982</span>
-                                    <button type="button" (click)="copyAccountId()" class="btn-copy">Copy</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="iam-step">
-                            <div class="step-number">2</div>
-                            <div class="step-flex">
-                                <p class="step-text">Under <strong>Options</strong>, check <strong>Require external
-                                        ID</strong>, then paste this External ID:</p>
-                                <div class="copy-row">
-                                    <span class="mono-text">{{ pendingExternalId }}</span>
-                                    <button type="button" (click)="copyExternalId()" class="btn-copy">
-                                        {{ copied ? 'Copied!' : 'Copy' }}
-                                    </button>
-                                </div>
-                                <p class="iam-footnote">The External ID is unique to your account and ensures only ACP
-                                    can
-                                    assume this role.</p>
-                            </div>
-                        </div>
-
-                        <div class="iam-step">
-                            <div class="step-number">3</div>
-                            <div>
-                                <p class="step-text">Search for and attach <strong>AdministratorAccess</strong> policy
-                                    (or a scoped policy).</p>
-                            </div>
-                        </div>
-
-                        <div class="iam-step">
-                            <div class="step-number">4</div>
-                            <div class="step-flex">
-                                <p class="step-text">Name the role exactly, then finish creating it and paste the
-                                    <strong>Role ARN</strong> below.
-                                </p>
-                                <div class="copy-row">
-                                    <span class="mono-text">ACPDeploymentRole</span>
-                                    <button type="button" (click)="copyRoleName()" class="btn-copy">
-                                        {{ copiedRoleName ? 'Copied!' : 'Copy' }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="roleArn">
-                            ACPDeploymentRole ARN <span class="required-marker">*required</span>
-                        </label>
-                        <input class="usa-input" id="roleArn" name="roleArn" type="text"
-                            placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole" [(ngModel)]="form.roleArn"
-                            [required]="authType === 'role'">
-                    </div>
-                </div>
-
-                <!-- ACCESS KEYS AUTH -->
-                <div *ngIf="authType === 'keys'">
-                    <div class="form-row-2">
+                        <!-- SELECT CLOUD PROVIDER -->
                         <div class="form-group">
-                            <label class="form-label">Access Key ID</label>
-                            <input class="usa-input" type="text" name="accessKeyId" [(ngModel)]="form.accessKeyId"
-                                placeholder="AKIAxxxxxxxxxxxx">
+                            <label class="form-label">Cloud Provider</label>
+                            <div class="btn-group">
+                                <button type="button" class="provider-btn" [class.active-btn]="selectedCloud === 'aws'"
+                                    (click)="selectedCloud = 'aws'">
+                                    AWS
+                                </button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Secret Access Key</label>
-                            <input class="usa-input" type="password" name="secretAccessKey"
-                                [(ngModel)]="form.secretAccessKey" placeholder="Enter your secret key">
-                        </div>
-                    </div>
-                    <p class="keys-warning">Make sure this IAM user has sufficient permissions (e.g.,
-                        AdministratorAccess or scoped policies).</p>
-                </div>
 
-                <div class="form-actions">
-                    <button class="btn-save" type="button" (click)="save()" [disabled]="loading">
-                        {{ loading ? 'Saving...' : (editingId ? 'Update Account' : 'Save Account') }}
-                    </button>
-                    <button class="btn-cancel" type="button" (click)="showForm = false">Cancel</button>
-                </div>
+                        <!-- SELECT AUTH METHOD -->
+                        <div *ngIf="selectedCloud === 'aws'" class="form-group">
+                            <label class="form-label">Authentication Method</label>
+                            <div class="btn-group">
+                                <button type="button" class="provider-btn" [class.active-btn]="authType === 'role'"
+                                    (click)="authType = 'role'">
+                                    Assume IAM Role
+                                </button>
+                                <button type="button" class="provider-btn" [class.active-btn]="authType === 'keys'"
+                                    (click)="authType = 'keys'">
+                                    Use Access Keys
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label" for="accountName">Account Name</label>
+                                <input class="usa-input" id="accountName" name="accountName" type="text"
+                                    placeholder="e.g. Production, Dev" [(ngModel)]="form.accountName">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="accountId">AWS Account ID</label>
+                                <input class="usa-input" id="accountId" name="accountId" type="text"
+                                    placeholder="12-digit account ID" [(ngModel)]="form.accountId" maxlength="12">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="region">Default Region</label>
+                            <select class="usa-select" id="region" name="region" [(ngModel)]="form.region">
+                                <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- IAM ROLE ARN input -->
+                        <div *ngIf="authType === 'role'" class="form-group">
+                            <label class="form-label" for="roleArn">
+                                ACPDeploymentRole ARN <span class="required-marker">*required</span>
+                            </label>
+                            <input class="usa-input" id="roleArn" name="roleArn" type="text"
+                                placeholder="arn:aws:iam::123456789012:role/ACPDeploymentRole"
+                                [(ngModel)]="form.roleArn" [required]="authType === 'role'">
+                        </div>
+
+                        <!-- ACCESS KEYS AUTH -->
+                        <div *ngIf="authType === 'keys'">
+                            <div class="form-row-2">
+                                <div class="form-group">
+                                    <label class="form-label">Access Key ID</label>
+                                    <input class="usa-input" type="text" name="accessKeyId"
+                                        [(ngModel)]="form.accessKeyId" placeholder="AKIAxxxxxxxxxxxx">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Secret Access Key</label>
+                                    <input class="usa-input" type="password" name="secretAccessKey"
+                                        [(ngModel)]="form.secretAccessKey" placeholder="Enter your secret key">
+                                </div>
+                            </div>
+                            <p class="keys-warning">Make sure this IAM user has sufficient permissions (e.g.,
+                                AdministratorAccess or scoped policies).</p>
+                        </div>
+
+                        <div class="form-actions">
+                            <button class="btn-save" type="button" (click)="save()" [disabled]="loading">
+                                {{ loading ? 'Saving...' : (editingId ? 'Update Account' : 'Save Account') }}
+                            </button>
+                            <button class="btn-cancel" type="button" (click)="showForm = false">Cancel</button>
+                        </div>
+
+                    </div><!-- /form-col-left -->
+
+                    <!-- RIGHT COLUMN: IAM steps -->
+                    <div class="form-col-right" *ngIf="authType === 'role' && !editingId && pendingExternalId">
+                        <div class="iam-steps-block">
+                            <p class="iam-steps-title">Complete these 4 steps in AWS, then paste the ACPDeploymentRole
+                                ARN on the left.</p>
+
+                            <div class="iam-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <p class="step-text">Go to <a
+                                            href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
+                                            class="step-link">AWS IAM → Roles → Create role</a>. Under <strong>Trusted
+                                            entity type</strong>, choose <strong>AWS account</strong>, then select
+                                        <strong>Another AWS account</strong>.
+                                    </p>
+                                    <p class="step-hint">Enter this as the Account ID:</p>
+                                    <div class="copy-row">
+                                        <span>377122171982</span>
+                                        <button type="button" (click)="copyAccountId()" class="btn-copy">Copy</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="iam-step">
+                                <div class="step-number">2</div>
+                                <div class="step-flex">
+                                    <p class="step-text">Under <strong>Options</strong>, check <strong>Require external
+                                            ID</strong>, then paste this External ID:</p>
+                                    <div class="copy-row">
+                                        <span class="mono-text">{{ pendingExternalId }}</span>
+                                        <button type="button" (click)="copyExternalId()" class="btn-copy">
+                                            {{ copied ? 'Copied!' : 'Copy' }}
+                                        </button>
+                                    </div>
+                                    <p class="iam-footnote">The External ID is unique to your account and ensures only
+                                        ACP
+                                        can assume this role.</p>
+                                </div>
+                            </div>
+
+                            <div class="iam-step">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <p class="step-text">Search for and attach <strong>AdministratorAccess</strong>
+                                        policy
+                                        (or a scoped policy).</p>
+                                </div>
+                            </div>
+
+                            <div class="iam-step">
+                                <div class="step-number">4</div>
+                                <div class="step-flex">
+                                    <p class="step-text">Name the role exactly, then finish creating it and paste the
+                                        <strong>Role ARN</strong> on the left.
+                                    </p>
+                                    <div class="copy-row">
+                                        <span class="mono-text">ACPDeploymentRole</span>
+                                        <button type="button" (click)="copyRoleName()" class="btn-copy">
+                                            {{ copiedRoleName ? 'Copied!' : 'Copy' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /form-col-right -->
+
+                </div><!-- /form-two-col -->
 
             </fieldset>
         </form>

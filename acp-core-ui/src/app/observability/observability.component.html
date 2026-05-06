@@ -1,0 +1,247 @@
+<div class="container">
+
+    <!-- Page header -->
+    <div class="create-header-box">
+        <div class="header-subtitle">AIOPS & MONITORING</div>
+        <div class="create-header-title">DEPLOYMENTS HEALTH</div>
+        <div class="header-description">Apps deployed across your cloud accounts</div>
+    </div>
+
+    <!-- Summary bar -->
+    <div class="summary-bar">
+        <div class="summary-card healthy">
+            <span class="summary-dot">●</span>
+            <span class="summary-count">{{ countByStatus('healthy') }}</span>
+            <span class="summary-label">Healthy</span>
+        </div>
+        <div class="summary-card degraded">
+            <span class="summary-dot">◐</span>
+            <span class="summary-count">{{ countByStatus('degraded') }}</span>
+            <span class="summary-label">Degraded</span>
+        </div>
+        <div class="summary-card unhealthy">
+            <span class="summary-dot">●</span>
+            <span class="summary-count">{{ countByStatus('unhealthy') }}</span>
+            <span class="summary-label">Unhealthy</span>
+        </div>
+        <div class="summary-card unknown">
+            <span class="summary-dot">○</span>
+            <span class="summary-count">{{ countByStatus('unknown') }}</span>
+            <span class="summary-label">Unknown</span>
+        </div>
+        <div class="refresh-note">Auto-refreshes every 30s</div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="allHealthLoading && allHealth.length === 0" class="empty">
+        Loading health data...
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="allHealthError && allHealth.length === 0" class="empty error-state">
+        {{ allHealthError }}
+    </div>
+
+    <!-- Deployments health table -->
+    <div class="infra-table" *ngIf="allHealth.length > 0">
+
+        <div class="table-header">
+            <th>Deployment</th>
+            <th>Status</th>
+            <th>Tasks</th>
+            <th>Actions</th>
+        </div>
+
+        <div class="table-body">
+            <div class="table-row" *ngFor="let h of allHealth" (click)="openDetail(h)">
+                <!-- Name -->
+                <div class="deployment-name">{{ h.name }}</div>
+
+                <!-- Status badge -->
+                <div>
+                    <span class="status-badge" [ngClass]="getStatusClass(h.status)">
+                        {{ getStatusIcon(h.status) }} {{ getStatusLabel(h.status) }}
+                    </span>
+                    <div *ngIf="h.reason" class="reason-text">{{ h.reason }}</div>
+                </div>
+
+                <!-- Task count -->
+                <div class="task-count" *ngIf="h.service; else noService">
+                    {{ h.service.runningCount }} / {{ h.service.desiredCount }} running
+                </div>
+                <ng-template #noService>
+                    <div>—</div>
+                </ng-template>
+
+                <!-- View detail -->
+                <div>
+                    <button class="detail-btn" (click)="openDetail(h); $event.stopPropagation()">
+                        View Detail
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Detail panel ─────────────────────────────────────────────────────── -->
+    <div class="detail-overlay" *ngIf="selectedDeployment">
+
+        <div class="detail-panel">
+
+            <!-- Detail header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedDeployment.name }}</div>
+                    <div class="detail-sub">{{ selectedDeployment.ecsCluster }} · {{ selectedDeployment.region }}</div>
+                </div>
+                <button class="close-btn" (click)="closeDetail()">✕</button>
+            </div>
+
+            <!-- Detail loading -->
+            <div *ngIf="detailLoading" class="detail-loading">Fetching live data from AWS...</div>
+
+            <!-- Detail error -->
+            <div *ngIf="detailError" class="detail-error">{{ detailError }}</div>
+
+            <!-- Detail content -->
+            <div *ngIf="detailHealth && !detailLoading">
+
+                <!-- Status + task counts row -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="status-badge lg" [ngClass]="getStatusClass(detailHealth.status)">
+                            {{ getStatusIcon(detailHealth.status) }} {{ getStatusLabel(detailHealth.status) }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Running</div>
+                        <div class="detail-card-value">
+                            {{ detailHealth.service.runningCount }} / {{ detailHealth.service.desiredCount }}
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Pending</div>
+                        <div class="detail-card-value">{{ detailHealth.service.pendingCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Task Definition</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.taskDefinition || '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="section-title">Metrics (last 5 min)</div>
+                <div class="detail-row">
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.cpuUtilization !== null ? detailHealth.metrics.cpuUtilization + '%'
+                            : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.cpuUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.cpuUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.cpuUtilization)"></div>
+                        </div>
+                        <div class="metric-na" *ngIf="detailHealth.metrics.cpuUtilization === null">
+                            Enable Container Insights to see metrics
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Memory Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.memoryUtilization !== null ? detailHealth.metrics.memoryUtilization
+                            + '%' : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.memoryUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.memoryUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.memoryUtilization)"></div>
+                        </div>
+                        <div class="metric-na" *ngIf="detailHealth.metrics.memoryUtilization === null">
+                            Enable Container Insights to see metrics
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target group health -->
+                <div *ngIf="detailHealth.targetGroupHealth">
+                    <div class="section-title">Load Balancer</div>
+                    <div class="alb-row">
+                        <span class="alb-name">{{ detailHealth.targetGroupHealth.targetGroupName }}</span>
+                        <span class="alb-count">
+                            {{ detailHealth.targetGroupHealth.healthyCount }} / {{
+                            detailHealth.targetGroupHealth.totalCount }} targets healthy
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Active alarms -->
+                <div *ngIf="detailHealth.alarms.length > 0">
+                    <div class="section-title">Active Alarms</div>
+                    <div class="alarm-row" *ngFor="let alarm of detailHealth.alarms">
+                        <span class="alarm-icon">⚠</span>
+                        <div>
+                            <div class="alarm-name">{{ alarm.name }}</div>
+                            <div class="alarm-reason">{{ alarm.stateReason }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks -->
+                <div *ngIf="detailHealth.tasks.length > 0">
+                    <div class="section-title">Running Tasks</div>
+                    <div class="tasks-table">
+                        <div class="tasks-header">
+                            <span>Task ID</span>
+                            <span>Status</span>
+                            <span>Health</span>
+                            <span>Started</span>
+                        </div>
+                        <div class="tasks-row" *ngFor="let t of detailHealth.tasks">
+                            <span class="task-id">{{ t.taskArn }}</span>
+                            <span class="task-status" [ngClass]="getTaskStatusClass(t.lastStatus)">
+                                {{ t.lastStatus }}
+                            </span>
+                            <span>{{ t.healthStatus || '—' }}</span>
+                            <span>{{ formatDate(t.startedAt) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent events -->
+                <div *ngIf="detailHealth.recentEvents.length > 0">
+                    <div class="section-title">Recent Events</div>
+                    <div class="event-row" *ngFor="let ev of detailHealth.recentEvents">
+                        <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+                        <span class="event-msg">{{ ev.message }}</span>
+                    </div>
+                </div>
+
+                <!-- Deployment rollout -->
+                <div *ngIf="detailHealth.deployment">
+                    <div class="section-title">Active Deployment</div>
+                    <div class="detail-row">
+                        <div class="detail-card">
+                            <div class="detail-card-label">Rollout State</div>
+                            <div class="detail-card-value">{{ detailHealth.deployment.rolloutState || '—' }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-card-label">Updated</div>
+                            <div class="detail-card-value small">{{ formatDate(detailHealth.deployment.updatedAt) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rollout-reason" *ngIf="detailHealth.deployment.rolloutStateReason">
+                        {{ detailHealth.deployment.rolloutStateReason }}
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(detailHealth.fetchedAt) }}</div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

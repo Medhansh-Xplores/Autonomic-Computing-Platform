@@ -40,7 +40,7 @@
     padding: 8px 12px;
     border-radius: 4px;
     border-left: 3px solid #28a745;
-    max-width: 800px;
+    max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -53,7 +53,7 @@
     padding: 8px 12px;
     border-radius: 4px;
     border-left: 3px solid #dc3545;
-    max-width: 800px;
+    max-width: 1100px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -83,8 +83,8 @@
     color: white;
     font-weight: 600;
     font-size: 14px;
-    letter-spacing: 0.4px;
-    border-bottom: 3px solid #ffc107;
+    letter-spacing: 0.2px;
+    border-bottom: 2px solid #ffc107;
 }
 
 .table-body {
@@ -105,17 +105,17 @@
 }
 
 .table-row:nth-child(odd) {
-    background: #f2f3f6;
+    background: #f7f9fd;
 }
 
 .table-row:nth-child(even) {
-    background: #ccdff5;
+    background: #ffffff;
 }
 
 .table-row:hover {
-    background: #b8c6f8;
-    border-left: 4px solid #1e4f86;
-    padding-left: 12px;
+    background: #eef3fb;
+    border-left: 3px solid #1e4f86;
+    padding-left: 13px;
 }
 
 .default-row {
@@ -279,8 +279,7 @@
     border-radius: 10px;
     border: 1px solid #e0e0e0;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    max-width: 800px;
+    max-width: 1100px;
     margin: 0 auto 30px;
 }
 
@@ -290,11 +289,13 @@
     padding: 14px 24px;
     font-size: 16px;
     font-weight: 600;
-    border-bottom: 3px solid #ffc107;
+    border-bottom: 2px solid #ffc107;
 }
 
 .usa-form {
     padding: 24px;
+    max-width: 100%;
+    width: 100%;
 }
 
 .usa-fieldset {
@@ -310,8 +311,9 @@
 .form-label {
     display: block;
     color: #003160;
+    /* same softer color as wizard labels appear */
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     margin-bottom: 6px;
 }
 
@@ -371,10 +373,10 @@
 /* ── IAM STEPS BLOCK ─────────────────────────────────────────── */
 .iam-steps-block {
     margin-bottom: 16px;
-    background: #f0f4fb;
+    background: #f7f9fd;
     padding: 16px;
     border-radius: 8px;
-    border: 1px solid #c0cfe0;
+    border: 1px solid #e0e8f5;
 }
 
 .iam-steps-title {
@@ -532,6 +534,100 @@
     color: #444;
 }
 
+/* ── TWO-COLUMN FORM LAYOUT ──────────────────────────────────── */
+.form-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+.form-col-left {
+    min-width: 0;
+}
+
+.form-col-right {
+    min-width: 0;
+}
+
+.form-col-right .iam-steps-block {
+    margin-bottom: 0;
+    height: 100%;
+}
+
+/* ── FONT SIZE INCREASES ─────────────────────────────────────── */
+.form-panel-header {
+    font-size: 18px;
+}
+
+.form-label {
+    font-size: 16px;
+    font-weight: 500;
+    /* drop from 600 → 500, matches wizard lightness */
+    color: #003160;
+    /* softer grey-navy instead of hard #003160 */
+}
+
+.usa-input,
+.usa-select {
+    font-size: 15px;
+}
+
+.provider-btn {
+    font-size: 14px;
+    font-weight: 500;
+    /* buttons were 600/700, tone them down */
+}
+
+.table-header {
+    font-size: 14px;
+}
+
+.table-row {
+    font-size: 14px;
+}
+
+.btn-action {
+    font-size: 13px;
+}
+
+.btn-add {
+    font-size: 15px;
+}
+
+.btn-save,
+.btn-cancel {
+    font-size: 15px;
+}
+
+.step-text {
+    font-size: 14px;
+}
+
+.step-hint {
+    font-size: 13px;
+}
+
+.copy-row {
+    font-size: 14px;
+}
+
+.iam-steps-title {
+    font-size: 14px;
+}
+
+.welcome-msg {
+    font-size: 16px;
+}
+
+.form-panel {
+    overflow: visible;
+}
+
+.form-panel-header {
+    border-radius: 10px 10px 0 0;
+}
+
 /* ── MOBILE ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .container {
@@ -546,6 +642,10 @@
     .table-row {
         grid-template-columns: 1fr 1fr 1fr;
         font-size: 12px;
+    }
+
+    .form-two-col {
+        grid-template-columns: 1fr;
     }
 
     .form-row-2 {

@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { IUser } from '../models/user.model';
 import { AuthServiceService } from '../services/auth-service.service';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-// import { ModalDialogConceptComponent } from '../modal-dialog-concept/modal-dialog-concept.component';
-// import { ModalDialogPlaybookComponent } from '../modal-dialog-playbook/modal-dialog-playbook.component';
 import { faUserCircle, faSignOutAlt, faHome, faFolderOpen, faSitemap, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import { faCloud } from '@fortawesome/free-solid-svg-icons';
+import { filter } from 'rxjs/operators';
 
 
 @Component({
@@ -28,6 +27,7 @@ export class HeaderComponent implements OnInit {
   curUser: IUser | undefined;
   ResourceSubMenuOpen: boolean = false;
   faCloud = faCloud;
+  showTitleBanner = true;
 
   constructor(private authService: AuthServiceService,
     private router: Router,
@@ -39,34 +39,26 @@ export class HeaderComponent implements OnInit {
         this.curUser = userAuth;
       });
 
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      const hideOn = ['/login', '/signup', '/confirm', '/newuser'];
+      this.showTitleBanner = !hideOn.some(path => event.url.includes(path));
+    });
 
   }
 
+  get isLoginPage(): boolean {
+    return this.router.url === '/login' || this.router.url === '/';
+  }
+  
   ngOnInit() {
-    // // console.log('in header, curUser:'+JSON.stringify(this.curUser));
   }
 
   logOutUser() {
     this.authService.logOut();
     this.router.navigate(['login']);
-    // // console.log('logging out!');
   }
-
-  // clickConcept(){
-  //   const dialogRef = this.dialog.open(ModalDialogConceptComponent, {
-
-  //         width: '75%',
-  //   });
-
-  // }
-  // clickPlaybook(){
-  //   const dialogRef = this.dialog.open(ModalDialogPlaybookComponent, {
-
-  //         width: '75%',
-  //     //data: {name: "pdf file", summary: "here is a file", file: obj}
-  //   });
-
-  // }
 
   resourceSubmenu() {
     if (this.ResourceSubMenuOpen == true) {
@@ -78,4 +70,3 @@ export class HeaderComponent implements OnInit {
   }
 
 }
-

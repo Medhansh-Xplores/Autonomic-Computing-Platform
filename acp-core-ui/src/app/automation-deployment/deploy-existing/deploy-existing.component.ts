@@ -129,7 +129,7 @@ export class DeployExistingComponent implements OnInit {
             }
 
             if (this.divToShow === 3) {
-                if (!this.repoUrl || !this.branch) {
+                if (!this.repoUrl) {
                     alert('Please fill GitHub details');
                     return;
                 }
@@ -296,12 +296,35 @@ export class DeployExistingComponent implements OnInit {
         if (this.isAcpAwsEcsFlow()) {
             this.loading = true;
 
+            // Parse subfolder URL like:
+            // https://github.com/ORG/REPO/tree/BRANCH/path/to/app
+            let baseRepoUrl = this.repoUrl;
+            let appSubfolder = '';
+            let resolvedBranch = 'main';   // sensible default
+
+            const treeMatch = this.repoUrl?.match(
+                /^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/tree\/([^\/]+)\/(.+)$/
+            );
+            if (treeMatch) {
+                baseRepoUrl = treeMatch[1];
+                resolvedBranch = treeMatch[2];   // extracted from URL — most accurate
+                appSubfolder = treeMatch[3];
+            }
+
+            const resolvedFrontendPath = appSubfolder
+                ? `${appSubfolder}/${this.frontendPath}`
+                : this.frontendPath;
+
+            const resolvedBackendPath = appSubfolder
+                ? `${appSubfolder}/${this.backendPath}`
+                : this.backendPath;
+
             const payload = {
-                repoUrl: this.repoUrl,
-                branch: this.branch,
+                repoUrl: baseRepoUrl,
+                branch: resolvedBranch,
                 token: this.githubToken,
-                frontendPath: this.frontendPath,
-                backendPath: this.backendPath,
+                frontendPath: resolvedFrontendPath,
+                backendPath: resolvedBackendPath,
                 account: this.account,
                 region: this.region,
                 ecsCluster: this.ecsCluster,
@@ -313,7 +336,6 @@ export class DeployExistingComponent implements OnInit {
                 apiPath: this.apiPath,
                 priority: this.priority,
                 frontendBasePath: this.frontendBasePath,
-
             };
 
             const safeAppName = (this.appName || 'app')
@@ -333,8 +355,8 @@ export class DeployExistingComponent implements OnInit {
                                 state: {
                                     phase: 'provisioning',
                                     appName: this.appName,
-                                    repoUrl: this.repoUrl,
-                                    branch: this.branch,
+                                    repoUrl: baseRepoUrl,
+                                    branch: resolvedBranch,
                                     token: this.githubToken,
                                     cloud: 'AWS',
                                     workflow: workflowName,
@@ -346,9 +368,9 @@ export class DeployExistingComponent implements OnInit {
                             this.router.navigate(['/automation-logs'], {
                                 state: {
                                     phase: 'github',
-                                    repoUrl: this.repoUrl,
+                                    repoUrl: baseRepoUrl,
                                     workflow: workflowName,
-                                    branch: this.branch,
+                                    branch: resolvedBranch,
                                     token: this.githubToken,
                                     deploymentId: deploymentId,
                                     runId: runId,
@@ -388,10 +410,8 @@ export class DeployExistingComponent implements OnInit {
 
                     this.loadingSteps = false;
 
-                    // ADD — Get runId from GitHub trigger response
                     const runId = res?.runId;
 
-                    // Parse repo url
                     let account = '';
                     let repoName = '';
 
@@ -415,20 +435,18 @@ export class DeployExistingComponent implements OnInit {
                         account: account,
                         branch: this.branch,
                         workflow: this.selectedWorkflow.name,
-                        runId: runId, // ADD
+                        runId: runId,
                         status: 'running',
                         triggeredFrom: 'ACP Portal',
                         createdAt: new Date().toISOString()
                     };
 
-                    // Create deployment record
                     this.http.post(this.apiBase + 'deployments/create', deploymentPayload)
                         .subscribe({
                             next: (response: any) => {
 
                                 const deploymentId = response?.id;
 
-                                // Navigate AFTER record creation
                                 this.router.navigate(['/automation-logs'], {
                                     state: {
                                         repoUrl: this.repoUrl,
@@ -447,7 +465,6 @@ export class DeployExistingComponent implements OnInit {
 
                                 console.error('Deployment record failed', err);
 
-                                // Still navigate (don't break flow)
                                 this.router.navigate(['/automation-logs'], {
                                     state: {
                                         repoUrl: this.repoUrl,

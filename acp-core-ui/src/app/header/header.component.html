@@ -16,8 +16,8 @@
     <div class="navbar">
       <div class="menu">
         <ul>
-          <li><a routerLink="">ABOUT</a></li>
-          <li><a routerLink="">CONTACT US</a></li>
+          <li><a routerLink="about">ABOUT</a></li>
+          <li><a routerLink="contact">CONTACT US</a></li>
           <li><a routerLink="services">SERVICES</a></li>
         </ul>
       </div>
@@ -61,7 +61,8 @@
   </div>
 
   <!-- PLATFORM TITLE BANNER -->
-  <div class="platform-title-bar">
+  <!-- PLATFORM TITLE BANNER -->
+  <div class="platform-title-bar" *ngIf="!isLoginPage">
     <span>Autonomic Computing Platform (ACP)</span>
   </div>
 

@@ -1,174 +1,352 @@
-.title {
-    display: flex;
-    margin: auto;
-    width: 50%;
-    text-align: center;
-    justify-content: center;
-    color: #003160;
+/* ── PAGE CONTAINER ─────────────────────────────────────────── */
+.container {
+    padding: 30px;
+    min-height: calc(100vh - 290px);
+    background: #fff;
 }
 
-.form-table {
-    background-color: darkgray;
-    border-radius: 25px;
-    margin: auto;
-}
-
-th,
-td {
-    padding: 12px 15px;
-    color: #003160;
-    font-size: 15px;
-}
-
-
-
-.form-page {
-    position: relative;
-    margin: auto;
-    width: 100%;
-    padding: 18px;
-    border-radius: 5px;
-    margin-bottom: 35px;
-    /* pushes footer down only on this page */
-}
-
-.landing {
-    background-color: #ffffff;
-    color: #003160;
-    border-radius: 10px;
-    margin: auto;
-    width: 50%;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    border: 2px solid #003160;
-}
-
-/* Radio button labels */
-.landing input[type="radio"] {
-    accent-color: #003160;
-    width: 16px;
-    height: 16px;
-    margin-right: 6px;
-    cursor: pointer;
-}
-
-/* Text inputs inside the box */
-.landing input[type="text"],
-.landing input[type="password"] {
-    border: 2px solid #003160;
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: #003160;
-    font-size: 14px;
-    width: 220px;
-    outline: none;
-}
-
-.landing input[type="text"]:focus,
-.landing input[type="password"]:focus {
-    border-color: #f0a500;
-    box-shadow: 0 0 0 2px rgba(240, 165, 0, 0.2);
-}
-
-/* Dropdowns inside the box */
-.landing select {
-    border: 2px solid #003160;
-    border-radius: 6px;
-    padding: 6px 10px;
-    color: #003160;
-    font-size: 14px;
-    width: 220px;
-}
-
-.navbutton {
-    margin: auto;
-    width: 50%;
-    display: flex;
-    justify-content: space-between;
-    margin-top: 18px;
-    /* add this */
-}
-
-.navbutton div:last-child button {
-    margin-left: 10px;
-}
-
-.logo {
-    border-radius: 10%;
-    width: 100px;
-}
-
-.landing td:last-child {
-    color: #003160;
-    font-weight: 500;
-    font-size: 15px;
-}
-
-.custombutton {
-    background-color: #1c3b57;
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: 0.2s ease;
-}
-
-.custombutton:hover {
-    background-color: #295c85;
-}
-
-.custominput {
-    color: black;
-    border-radius: 10px;
-    border: black;
-    padding: 6px;
-    width: 220px;
-}
-
-.customdropdown {
-    color: black;
-    border-radius: 10px;
-    padding: 6px;
-    width: 220px;
-}
-
-.section-title {
-    margin-top: 30px;
-    margin-bottom: 10px;
-    border-bottom: 2px solid #e6bb00;
-    padding-bottom: 8px;
-    font-weight: 600;
-    font-size: 16px;
-    letter-spacing: 0.5px;
-}
-
-.section-spacing {
-    height: 10px;
-}
-
+/* ── HEADER BOX (matches cloud-setup) ───────────────────────── */
 .create-header-box {
     width: 50%;
-    margin: 30px auto 15px;
-    padding: 14px 12px;
-    background: #003160;
+    margin: 30px auto 24px;
+    padding: 12px;
+    background: #eaeaea;
     border-radius: 10px;
-    border-left: 5px solid #f0a500;
-    border-right: 5px solid #f0a500;
+    border-left: 4px solid #003160;
     text-align: center;
 }
 
 .create-header-title {
     font-size: 20px;
     font-weight: 750;
-    color: #f0a500;
+    color: #003160;
 }
 
 .header-subtitle {
-    font-size: 14px;
+    font-size: 20px;
     letter-spacing: 1px;
-    color: #ffffff;
+    color: #003160;
     margin-bottom: 4px;
     text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* ── MESSAGES ───────────────────────────────────────────────── */
+.success-msg {
+    color: #1e7e34;
+    font-size: 13px;
+    margin: 0 0 16px;
+    background-color: #d4edda;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #28a745;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-msg {
+    color: #721c24;
+    font-size: 13px;
+    margin: 0 0 16px;
+    background-color: #f8d7da;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ── FORM PAGE ───────────────────────────────────────────────── */
+.form-page {
+    position: relative;
+    margin: auto;
+    width: 100%;
+    padding: 0 18px 35px;
+}
+
+/* ── FORM PANEL (matches cloud-setup .form-panel) ────────────── */
+.form-panel {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto 30px;
+}
+
+.form-panel-header {
+    background: #1e4f86;
+    color: white;
+    padding: 14px 24px;
+    font-size: 16px;
     font-weight: 600;
+    border-bottom: 3px solid #ffc107;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-panel-header img.panel-logo {
+    height: 28px;
+    background: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+}
+
+.form-panel-body {
+    padding: 24px;
+}
+
+/* ── FORM GROUPS ─────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    color: #003160;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.usa-input,
+.usa-select,
+select,
+input[type="text"],
+input[type="password"] {
+    width: 100%;
+    border: 1px solid #c0cfe0;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #0b2545;
+    background: #f9fbff;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+.usa-input:focus,
+.usa-select:focus,
+select:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: none;
+    border-color: #1e4f86;
+    box-shadow: 0 0 0 2px rgba(30, 79, 134, 0.15);
+}
+
+input[type="checkbox"] {
+    accent-color: #1e4f86;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ── PROVIDER / AUTH BUTTONS ─────────────────────────────────── */
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.provider-btn {
+    padding: 8px 18px;
+    border: 1px solid #c0cfe0;
+    border-radius: 5px;
+    background: white;
+    color: #1e4f86;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.provider-btn:hover {
+    background: #eef3fb;
+}
+
+.active-btn {
+    background: #1e4f86 !important;
+    color: white !important;
+    border-color: #1e4f86 !important;
+}
+
+/* ── SECTION TITLE ───────────────────────────────────────────── */
+.section-title {
+    margin: 20px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ffc107;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: #003160;
+    text-transform: uppercase;
+}
+
+/* ── REVIEW TABLE (read-only summary rows) ───────────────────── */
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.review-table td {
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #0b2545;
+    border-bottom: 1px solid #e6e6e6;
+    vertical-align: middle;
+}
+
+.review-table td:first-child {
+    font-weight: 600;
+    color: #003160;
+    width: 40%;
+}
+
+.review-table tr:last-child td {
+    border-bottom: none;
+}
+
+.review-table tr:nth-child(odd) td {
+    background: #f7f9fd;
+}
+
+/* ── NAV BUTTONS ─────────────────────────────────────────────── */
+.navbutton {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.navbutton div {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-save,
+.custombutton {
+    background: #1e4f86;
+    border: none;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-save:hover,
+.custombutton:hover {
+    background: #163d6b;
+}
+
+.btn-save:disabled,
+.custombutton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-cancel {
+    background: none;
+    border: 1px solid #c0cfe0;
+    color: #555;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #f2f3f6;
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c2d3f3;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9fb8e8;
+}
+
+/* ── FONT SIZE INCREASES ─────────────────────────────────────── */
+.form-panel-header {
+    font-size: 18px;
+}
+
+.form-label {
+    font-size: 16px;
+}
+
+.usa-input,
+.usa-select,
+select,
+input[type="text"],
+input[type="password"] {
+    font-size: 15px;
+}
+
+.provider-btn {
+    font-size: 15px;
+}
+
+.radio-option {
+    font-size: 15px;
+}
+
+.review-table td {
+    font-size: 15px;
+}
+
+.custombutton,
+.btn-cancel {
+    font-size: 15px;
+}
+
+/* ── MOBILE ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .create-header-box {
+        width: 100%;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .navbutton {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .navbutton div {
+        justify-content: center;
+    }
 }

@@ -1,4 +1,3 @@
-
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, NgModule, SimpleChange } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -9,11 +8,8 @@ import { faCoffee, fas } from '@fortawesome/free-solid-svg-icons';
 import { MatTabsModule } from '@angular/material/tabs'
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptorService } from './helpers/auth-interceptor.service';
-// ADD also this missing component (referenced in login but route missing):
 import { SecurityComplianceComponent } from './security-compliance/security-compliance.component';
 
-
-// current components
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
@@ -39,6 +35,12 @@ import { ViewDeploymentsComponent } from './automation-deployment/view-deploymen
 import { NewuserComponent } from './newuser/newuser.component';
 import { ConfirmComponent } from './confirm/confirm.component';
 import { CloudSetupComponent } from './cloud-setup/cloud-setup.component';
+import { ObservabilityComponent } from './observability/observability.component';
+import { FullstackObservabilityComponent } from './fullstack-observability/fullstack-observability.component';
+import { AcpPortalHealthComponent } from './acp-portal-health/acp-portal-health.component';
+import { AboutComponent } from './about/about.component';
+import { ContactComponent } from './contact/contact.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 
 @NgModule({
   declarations: [
@@ -64,6 +66,12 @@ import { CloudSetupComponent } from './cloud-setup/cloud-setup.component';
     ConfirmComponent,
     SecurityComplianceComponent,
     CloudSetupComponent,
+    ObservabilityComponent,
+    FullstackObservabilityComponent,
+    AcpPortalHealthComponent,
+    AboutComponent,
+    ContactComponent,
+    ForgotPasswordComponent,
   ],
   imports: [
     BrowserModule,

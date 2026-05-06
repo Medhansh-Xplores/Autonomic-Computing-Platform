@@ -122,7 +122,7 @@ jobs:
           wait-for-service-stability: true
 
       # ── Done ─────────────────────────────────────────────────────────────────
-      - name: Print portal URL
+      - name: ACP portal URL
         working-directory: acp-terraform
         run: |
           echo "ACP Portal is live at:"

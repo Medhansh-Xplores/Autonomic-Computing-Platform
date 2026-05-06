@@ -22,14 +22,19 @@ import { NewuserComponent } from './newuser/newuser.component';
 import { ConfirmComponent } from './confirm/confirm.component';
 import { CloudSetupComponent } from './cloud-setup/cloud-setup.component';
 import { CloudSetupGuard } from './helpers/cloud-setup-guard.service';
-
+import { ObservabilityComponent } from './observability/observability.component';
+import { FullstackObservabilityComponent } from './fullstack-observability/fullstack-observability.component';
+import { AcpPortalHealthComponent } from './acp-portal-health/acp-portal-health.component';
+import { AboutComponent } from './about/about.component';
+import { ContactComponent } from './contact/contact.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 
 
 const routes: Routes = [
   { path: '', component: LoginComponent },
   { path: 'login', component: LoginComponent },
 
-  { path: 'services', component: MainPageComponent, canActivate: [AuthGuardService, CloudSetupGuard] },
+  { path: 'services', component: MainPageComponent },
   { path: 'infraservices', component: InfrastructureServicesComponent, canActivate: [AuthGuardService, CloudSetupGuard] },
   { path: 'CreateApplication', component: CreateApplicationComponent, canActivate: [AuthGuardService] },
   { path: 'CreateInfrastructure', component: CreateInfrastructureComponent, canActivate: [AuthGuardService] },
@@ -48,6 +53,12 @@ const routes: Routes = [
   { path: 'newuser', component: NewuserComponent },
   { path: 'confirm', component: ConfirmComponent },
   { path: 'cloud-setup', component: CloudSetupComponent, canActivate: [AuthGuardService] },
+  { path: 'fullstack-observability', component: FullstackObservabilityComponent, canActivate: [AuthGuardService] },
+  { path: 'observability/acp-portal-health', component: AcpPortalHealthComponent, canActivate: [AuthGuardService] },
+  { path: 'observability', component: ObservabilityComponent, canActivate: [AuthGuardService] },
+  { path: 'about', component: AboutComponent },
+  { path: 'contact', component: ContactComponent },
+  { path: 'forgotpassword', component: ForgotPasswordComponent },
 ];
 
 @NgModule({

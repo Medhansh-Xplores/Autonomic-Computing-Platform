@@ -1,923 +1,661 @@
-<body>
+<div class="container">
 
     <div class="create-header-box">
         <div class="header-subtitle">INFRASTRUCTURE SERVICES</div>
-        <div class="create-header-title">
-            CREATE CLOUD INFRASTRUCTURE
-        </div>
+        <div class="create-header-title">CREATE CLOUD INFRASTRUCTURE</div>
     </div>
 
 
-    <!-- INITIAL LANDING PAGE -->
+    <!-- ── STEP 1: INITIAL LANDING PAGE ──────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 1">
 
-        <table class="landing">
-            <tr>
-                <td>
-                    <p><strong>Platform</strong></p>
-                </td>
-                <td>
-                    <input type="radio" value="AWS" name="platformChoice" (change)="onPlatformChange($event)"
-                        [checked]="platformType == 'AWS'"> Amazon Web Services<br>
-                    <input type="radio" value="AZURE" name="platformChoice" (change)="onPlatformChange($event)"
-                        [checked]="platformType == 'Azure'"> Azure<br>
-                    <input type="radio" value="GCP" name="platformChoice" (change)="onPlatformChange($event)"
-                        [checked]="platformType == 'Google Cloud Platform'"> Google Cloud Platform
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p><br>
-                </td>
-                <td>
-                    <select class="customdropdown" #optionsLanding (change)='onBlueprintChange($event)'>
-                        <option value="" disabled selected>
-                            --- Choose a Platform ---
-                        </option>
-                    </select>
-                </td>
-            </tr>
+        <div class="form-panel">
+            <div class="form-panel-header">Select Platform &amp; Infrastructure</div>
+            <div class="form-panel-body">
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Name</strong></p><br>
-                </td>
-                <td>
-                    <input type="text" (change)="onZoneNameChange($event)" [value]="zoneName">
-                </td>
-            </tr>
-        </table>
+                <div class="form-group">
+                    <label class="form-label">Platform</label>
+                    <div class="btn-group">
+                        <button class="provider-btn" [class.active-btn]="platformType == 'AWS'"
+                            (click)="onPlatformChange({target:{value:'AWS'}})">
+                            Amazon Web Services
+                        </button>
+                        <button class="provider-btn" [class.active-btn]="platformType == 'Azure'"
+                            (click)="onPlatformChange({target:{value:'AZURE'}})">
+                            Azure
+                        </button>
+                        <button class="provider-btn" [class.active-btn]="platformType == 'Google Cloud Platform'"
+                            (click)="onPlatformChange({target:{value:'GCP'}})">
+                            Google Cloud Platform
+                        </button>
+                    </div>
+                    <!-- Keep original hidden radios for TS compatibility -->
+                    <div style="display:none">
+                        <input type="radio" value="AWS" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'AWS'">
+                        <input type="radio" value="AZURE" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'Azure'">
+                        <input type="radio" value="GCP" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'Google Cloud Platform'">
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Infrastructure Type</label>
+                        <select #optionsLanding (change)="onBlueprintChange($event)" class="usa-select">
+                            <option value="" disabled selected>--- Choose a Platform ---</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Infrastructure Name</label>
+                        <input type="text" class="usa-input" (change)="onZoneNameChange($event)" [value]="zoneName"
+                            placeholder="e.g. my-prod-vpc">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <div class="navbutton">
-            <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
-            <button class="custombutton" (click)="changePage($event)" value=-1>NEXT</button>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value="-1">Next</button>
+            </div>
         </div>
     </div>
 
-    <!-- AWS CUSTOMIZATION -->
+
+    <!-- ── STEP 2: AWS VPC CUSTOMIZATION ─────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 2">
-        <table class="landing">
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    <p>AWS Virtual Private Cloud</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Account</strong></p>
-                </td>
-                <td>
-                    <select #accountsAWS (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select [(ngModel)]="region" #regionsAWS (change)='onRegionChange($event)' required>
-                        <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" [value]="VPCname" readonly>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC CIDR Block</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Virtual Private Cloud — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsAWS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" #regionsAWS (change)="onRegionChange($event)" class="usa-select"
+                            required>
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC Name</label>
+                    <input type="text" class="usa-input" [value]="VPCname" readonly>
+                </div>
+
+                <h3 class="section-title">CIDR &amp; Subnets</h3>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
                         minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Public Subnet 1 CIDR</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onPublicSubnet1Change($event)"
-                        placeholder="10.0.1.0/24">
-                </td>
-            </tr>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Public Subnet 2 CIDR</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onPublicSubnet2Change($event)"
-                        placeholder="10.0.2.0/24">
-                </td>
-            </tr>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Public Subnet 1 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPublicSubnet1Change($event)"
+                            placeholder="10.0.1.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Public Subnet 2 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPublicSubnet2Change($event)"
+                            placeholder="10.0.2.0/24">
+                    </div>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Private Subnet 1 CIDR</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onPrivateSubnet1Change($event)"
-                        placeholder="10.0.3.0/24">
-                </td>
-            </tr>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Private Subnet 1 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPrivateSubnet1Change($event)"
+                            placeholder="10.0.3.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Private Subnet 2 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPrivateSubnet2Change($event)"
+                            placeholder="10.0.4.0/24">
+                    </div>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Private Subnet 2 CIDR</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onPrivateSubnet2Change($event)"
-                        placeholder="10.0.4.0/24">
-                </td>
-            </tr>
+            </div>
+        </div>
 
-        </table>
         <div class="navbutton">
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
             </div>
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
-                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
             </div>
         </div>
     </div>
 
-    <!-- AZURE CUSTOMIZATION -->
+
+    <!-- ── STEP 3: AZURE VPC CUSTOMIZATION ───────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 3">
-        <table class="landing">
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/azure-transparent-logo.png">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    <p>Azure Virtual Private Cloud</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Subscription ID</strong></p>
-                </td>
-                <td>
-                    <select #accountsAzure (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select [(ngModel)]="region" #regionsAzure (change)='onRegionChange($event)' required>
-                        <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}</option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Virtual Network Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC CIDR Block</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/azure-transparent-logo.png" alt="Azure">
+                Azure Virtual Network — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Subscription ID</label>
+                        <select #accountsAzure (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" #regionsAzure (change)="onRegionChange($event)" class="usa-select"
+                            required>
+                            <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Virtual Network Name</label>
+                    <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
                         minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
-                </td>
-            </tr>
-        </table>
+                </div>
+
+            </div>
+        </div>
+
         <div class="navbutton">
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
             </div>
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
-                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
             </div>
         </div>
     </div>
 
-    <!-- GCP CUSTOMIZATION -->
+
+    <!-- ── STEP 4: GCP VPC CUSTOMIZATION ─────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 4">
-        <table class="landing">
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/google-cloud-logo-5.png">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    <p>GCP Virtual Private Cloud</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Project</strong></p>
-                </td>
-                <td>
-                    <select #accountsGCP (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select #regionsGCP (change)='onRegionChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC CIDR Block</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/google-cloud-logo-5.png" alt="GCP">
+                GCP Virtual Private Cloud — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Project</label>
+                        <select #accountsGCP (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select #regionsGCP (change)="onRegionChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC Name</label>
+                    <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
                         minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
-                </td>
-            </tr>
-        </table>
+                </div>
+
+            </div>
+        </div>
+
         <div class="navbutton">
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
             </div>
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
-                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
             </div>
         </div>
     </div>
 
-    <!-- AWS ELASTIC CUSTOMIZATION -->
+
+    <!-- ── STEP 5: AWS EKS CUSTOMIZATION ─────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 5">
-        <table class="landing">
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    <p>AWS Elastic Kubernetes Service (EKS) with Fargate</p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Account</strong></p>
-                </td>
-                <td>
-                    <select #accountsEKS (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select #regionsEKS (change)='onRegionChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onVPCNameChange($event)" [value]="VPCname">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Cluster Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" (change)="onClusterNameChange($event)" [value]="ClusterName">
-                </td>
-            </tr>
-        </table>
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Elastic Kubernetes Service (EKS) with Fargate — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsEKS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select #regionsEKS (change)="onRegionChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">VPC Name</label>
+                        <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cluster Name</label>
+                        <input type="text" class="usa-input" (change)="onClusterNameChange($event)"
+                            [value]="ClusterName">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <div class="navbutton">
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
             </div>
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>BACK</button>
-                <button class="custombutton" (click)="changePage($event)" value=6>NEXT</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
             </div>
         </div>
     </div>
 
-    <!-- AWS ECS FARGATE CUSTOMIZATION -->
+
+    <!-- ── STEP 6: REVIEW (VPC / EKS / Azure / GCP) ──────────────── -->
+    <div class="form-page" [hidden]="divToShow != 6">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>{{blueprintDescription}}</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC CIDR Block</td>
+                        <td>{{CIDRBlock}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC Name</td>
+                        <td>{{VPCname}}</td>
+                    </tr>
+                    <tr>
+                        <td>Public Subnet 1</td>
+                        <td>{{publicSubnet1}}</td>
+                    </tr>
+                    <tr>
+                        <td>Public Subnet 2</td>
+                        <td>{{publicSubnet2}}</td>
+                    </tr>
+                    <tr>
+                        <td>Private Subnet 1</td>
+                        <td>{{privateSubnet1}}</td>
+                    </tr>
+                    <tr>
+                        <td>Private Subnet 2</td>
+                        <td>{{privateSubnet2}}</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="-2">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 7: AWS ECS FARGATE CONFIGURATION ─────────────────── -->
     <div class="form-page" [hidden]="divToShow != 7">
-        <table class="landing">
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    <p>AWS Elastic Container Service (Fargate)</p>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Basic Info</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Account</strong></p>
-                </td>
-                <td>
-                    <select #accountsECS (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
 
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select [(ngModel)]="region" (change)='onRegionChange($event)'>
-                        <option *ngFor="let x of awsregionlist" [value]="x.code">
-                            {{x.name}}
-                        </option>
-                    </select>
-                </td>
-            </tr>
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Elastic Container Service (Fargate) — Configuration
+            </div>
+            <div class="form-panel-body">
 
-            <tr>
-                <td>
-                    <p><strong>Cluster Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" [(ngModel)]="ClusterName" readonly>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Network</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC</strong></p>
-                </td>
-                <td>
-                    <select class="customdropdown" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
+                <h3 class="section-title">Basic Info</h3>
 
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsECS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cluster Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="ClusterName" readonly>
+                </div>
+
+                <h3 class="section-title">Network</h3>
+
+                <div class="form-group">
+                    <label class="form-label">VPC</label>
+                    <select class="usa-select" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
                         <option value="">Select VPC</option>
-
                         <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
                             {{ vpc.name }} ({{ vpc.vpcId }})
                         </option>
-
                     </select>
+                    <div *ngIf="loadingVpcs" style="font-size:13px;color:#888;margin-top:4px;">Loading VPCs...</div>
+                </div>
 
-                    <div *ngIf="loadingVpcs">
-                        Loading VPCs...
+                <h3 class="section-title">Compute</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">CPU</label>
+                        <select class="usa-select" [(ngModel)]="cpu">
+                            <option value="256">256 (.25 vCPU)</option>
+                            <option value="512">512 (.5 vCPU)</option>
+                            <option value="1024">1024 (1 vCPU)</option>
+                            <option value="2048">2048 (2 vCPU)</option>
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Memory</label>
+                        <select class="usa-select" [(ngModel)]="memory">
+                            <option value="512">512 MB</option>
+                            <option value="1024">1 GB</option>
+                            <option value="2048">2 GB</option>
+                            <option value="4096">4 GB</option>
+                        </select>
+                    </div>
+                </div>
 
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Compute</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>CPU</strong></p>
-                </td>
-                <td>
-                    <select class="customdropdown" [(ngModel)]="cpu">
-                        <option value="256">256 (.25 vCPU)</option>
-                        <option value="512">512 (.5 vCPU)</option>
-                        <option value="1024">1024 (1 vCPU)</option>
-                        <option value="2048">2048 (2 vCPU)</option>
-                    </select>
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Memory</strong></p>
-                </td>
-                <td>
-                    <select class="customdropdown" [(ngModel)]="memory">
-                        <option value="512">512 MB</option>
-                        <option value="1024">1 GB</option>
-                        <option value="2048">2 GB</option>
-                        <option value="4096">4 GB</option>
-                    </select>
-                </td>
-            </tr>
-        </table>
-
-        <div class="navbutton">
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>
-                    CANCEL
-                </button>
-            </div>
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>
-                    BACK
-                </button>
-
-                <button class="custombutton" (click)="changePage($event)" value=8>
-                    NEXT
-                </button>
             </div>
         </div>
 
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="8">Next</button>
+            </div>
+        </div>
     </div>
 
-    <!-- ECS REVIEW -->
+
+    <!-- ── STEP 8: ECS REVIEW ─────────────────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 8">
 
-        <table class="landing">
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm — ECS (Fargate)</div>
+            <div class="form-panel-body">
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    AWS ECS (Fargate)
-                </td>
-            </tr>
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>AWS ECS (Fargate)</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster Name</td>
+                        <td>{{ClusterName}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC</td>
+                        <td>{{vpcName}} ({{vpcId}})</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>{{cpu}}</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>{{memory}}</td>
+                    </tr>
+                </table>
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Name</strong></p>
-                </td>
-                <td>
-                    {{zoneName}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Account / Region</strong></p>
-                </td>
-                <td>
-                    {{accountNum}} / {{region}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Cluster Name</strong></p>
-                </td>
-                <td>
-                    {{ClusterName}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>VPC</strong></p>
-                </td>
-                <td>
-                    {{vpcName}} ({{vpcId}})
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>CPU</strong></p>
-                </td>
-                <td>
-                    {{cpu}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Memory</strong></p>
-                </td>
-                <td>
-                    {{memory}}
-                </td>
-            </tr>
-
-        </table>
-
-        <div class="navbutton">
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>
-                    CANCEL
-                </button>
-            </div>
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=7>
-                    BACK
-                </button>
-
-                <button class="custombutton" (click)="submitForProcessing()">
-                    CREATE
-                </button>
             </div>
         </div>
 
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="7">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()">Create</button>
+            </div>
+        </div>
     </div>
 
-    <!-- AWS RDS CONFIGURATION -->
+
+    <!-- ── STEP 9: AWS RDS CONFIGURATION ─────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 9">
 
-        <table class="landing">
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Relational Database Service — Configuration
+            </div>
+            <div class="form-panel-body">
 
-            <tr>
-                <td>
-                    <img class="logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png">
-                </td>
-            </tr>
+                <h3 class="section-title">Basic Info</h3>
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    AWS Relational Database Service
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Basic Info</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Account</strong></p>
-                </td>
-                <td>
-                    <select #accountsRDS (change)='onAccountChange($event)'>
-                        <option></option>
-                    </select>
-                </td>
-            </tr>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsRDS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Region</strong></p>
-                </td>
-                <td>
-                    <select [(ngModel)]="region" (change)='onRegionChange($event)'>
-                        <option *ngFor="let x of awsregionlist" [value]="x.code">
-                            {{x.name}}
-                        </option>
-                    </select>
-                </td>
-            </tr>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Database Engine</label>
+                        <select [(ngModel)]="dbEngine" class="usa-select">
+                            <option value="postgres">Postgres</option>
+                            <option value="mysql">MySQL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">RDS Identifier</label>
+                        <input type="text" class="usa-input" [(ngModel)]="rdsIdentifier" readonly>
+                    </div>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Database Engine</strong></p>
-                </td>
-                <td>
-                    <select [(ngModel)]="dbEngine">
-                        <option value="postgres">Postgres</option>
-                        <option value="mysql">MySQL</option>
-                    </select>
-                </td>
-            </tr>
+                <h3 class="section-title">Credentials</h3>
 
-            <tr>
-                <td>
-                    <p><strong>RDS Identifier</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" [(ngModel)]="rdsIdentifier" readonly>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Credentials</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Username</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" [(ngModel)]="dbUsername">
-                </td>
-            </tr>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="usa-input" [(ngModel)]="dbUsername">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="usa-input" [(ngModel)]="dbPassword">
+                    </div>
+                </div>
 
-            <tr>
-                <td>
-                    <p><strong>Password</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="password" [(ngModel)]="dbPassword">
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Network</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC</strong></p>
-                </td>
-                <td>
+                <h3 class="section-title">Network</h3>
 
-                    <select class="customdropdown" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
-
+                <div class="form-group">
+                    <label class="form-label">VPC</label>
+                    <select class="usa-select" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
                         <option value="">Select VPC</option>
-
                         <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
                             {{ vpc.name }} ({{ vpc.vpcId }})
                         </option>
-
                     </select>
+                </div>
 
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <h3 class="section-title">Optional</h3>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Create Initial Database</strong></p>
-                </td>
-                <td>
-                    <input type="checkbox" [(ngModel)]="createInitialDb">
-                </td>
-            </tr>
-            <tr *ngIf="createInitialDb">
-                <td>
-                    <p><strong>Initial Database Name</strong></p>
-                </td>
-                <td>
-                    <input class="custominput" type="text" [(ngModel)]="initialDbName">
-                </td>
-            </tr>
+                <h3 class="section-title">Optional</h3>
 
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="createInitialDb" [(ngModel)]="createInitialDb">
+                    <label for="createInitialDb" class="form-label" style="margin:0;cursor:pointer;">
+                        Create Initial Database
+                    </label>
+                </div>
 
-        </table>
+                <div class="form-group" *ngIf="createInitialDb">
+                    <label class="form-label">Initial Database Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="initialDbName">
+                </div>
 
-        <div class="navbutton">
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>
-                    CANCEL
-                </button>
             </div>
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=1>
-                    BACK
-                </button>
-
-                <button class="custombutton" (click)="changePage($event)" value=10>
-                    NEXT
-                </button>
-            </div>
-
         </div>
 
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="10">Next</button>
+            </div>
+        </div>
     </div>
-    <!-- RDS REVIEW -->
+
+
+    <!-- ── STEP 10: RDS REVIEW ────────────────────────────────────── -->
     <div class="form-page" [hidden]="divToShow != 10">
 
-        <table class="landing">
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm — RDS</div>
+            <div class="form-panel-body">
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type</strong></p>
-                </td>
-                <td>
-                    AWS RDS
-                </td>
-            </tr>
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>AWS RDS</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Database Engine</td>
+                        <td>{{dbEngine}}</td>
+                    </tr>
+                    <tr>
+                        <td>RDS Identifier</td>
+                        <td>{{rdsIdentifier}}</td>
+                    </tr>
+                    <tr>
+                        <td>Username</td>
+                        <td>{{dbUsername}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC</td>
+                        <td>{{vpcName}} ({{vpcId}})</td>
+                    </tr>
+                    <tr *ngIf="createInitialDb">
+                        <td>Initial Database</td>
+                        <td>{{initialDbName}}</td>
+                    </tr>
+                </table>
 
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Name</strong></p>
-                </td>
-                <td>
-                    {{zoneName}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Account / Region</strong></p>
-                </td>
-                <td>
-                    {{accountNum}} / {{region}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Database Engine</strong></p>
-                </td>
-                <td>
-                    {{dbEngine}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>RDS Identifier</strong></p>
-                </td>
-                <td>
-                    {{rdsIdentifier}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Username</strong></p>
-                </td>
-                <td>
-                    {{dbUsername}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>VPC</strong></p>
-                </td>
-                <td>
-                    {{vpcName}} ({{vpcId}})
-                </td>
-            </tr>
-
-            <tr *ngIf="createInitialDb">
-                <td>
-                    <p><strong>Initial Database</strong></p>
-                </td>
-                <td>
-                    {{initialDbName}}
-                </td>
-            </tr>
-
-        </table>
-
-        <div class="navbutton">
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>
-                    CANCEL
-                </button>
             </div>
-
-            <div>
-                <button class="custombutton" (click)="changePage($event)" value=9>
-                    BACK
-                </button>
-
-                <button class="custombutton" (click)="submitForProcessing()">
-                    CREATE
-                </button>
-            </div>
-
         </div>
 
-    </div>
-
-    <!-- REVIEW -->
-    <div class="form-page" [hidden]="divToShow != 6">
-        <table class="landing">
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Type:</strong></p>
-                </td>
-                <td>
-                    {{blueprintDescription}}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Infrastructure Name:</strong></p><br>
-                </td>
-                <td>
-                    {{zoneName}}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>Account/Region:</strong></p><br>
-                </td>
-                <td>
-                    {{accountNum}} / {{region}}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC CIDR Block</strong></p>
-                </td>
-                <td>
-                    {{CIDRBlock}}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <p><strong>VPC Name</strong></p>
-                </td>
-                <td>
-                    {{VPCname}}
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Public Subnet 1</strong></p>
-                </td>
-                <td>{{publicSubnet1}}</td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Public Subnet 2</strong></p>
-                </td>
-                <td>{{publicSubnet2}}</td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Private Subnet 1</strong></p>
-                </td>
-                <td>{{privateSubnet1}}</td>
-            </tr>
-
-            <tr>
-                <td>
-                    <p><strong>Private Subnet 2</strong></p>
-                </td>
-                <td>{{privateSubnet2}}</td>
-            </tr>
-        </table>
         <div class="navbutton">
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=0>CANCEL</button>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
             </div>
             <div>
-                <button class="custombutton" (click)="changePage($event)" value=-2>BACK</button>
-                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
-                    {{ isCreating ? 'Creating...' : 'CREATE' }}
-                </button>
+                <button class="btn-cancel" (click)="changePage($event)" value="9">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()">Create</button>
             </div>
         </div>
     </div>
 
-</body>
+</div>

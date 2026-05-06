@@ -19,6 +19,7 @@ const vpcRoutes = require("./routes/vpc.routes");
 const githubRoutes = require('./routes/github.routes');
 const authRoutes = require('./routes/auth.routes');
 const cloudAccountRoutes = require('./routes/cloudAccount.routes');
+const observabilityRoutes = require('./routes/observability.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -31,6 +32,7 @@ app.use("/api/v1", vpcRoutes);
 app.use('/api/v1/github', githubRoutes);
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cloud-accounts', cloudAccountRoutes);
+app.use('/api/v1/observability', observabilityRoutes);
 
 // Health
 app.get("/health", (req, res) => {
