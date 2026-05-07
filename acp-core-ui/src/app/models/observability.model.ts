@@ -77,3 +77,70 @@ export interface DeploymentHealthSummary {
     };
     metrics?: MetricsInfo;
 }
+
+// ── VPC Health ────────────────────────────────────────────────────────────────
+export interface SubnetInfo {
+    subnetId: string;
+    name: string;
+    az: string;
+    type: 'public' | 'private';
+    cidr: string;
+    state: string;
+}
+
+export interface VpcInfo {
+    vpcId: string;
+    name: string;
+    cidr: string;
+    state: string;
+    subnets: SubnetInfo[];
+}
+
+export interface VpcHealthPayload {
+    vpcs: VpcInfo[];
+    fetchedAt: string;
+    _mock?: boolean;
+}
+
+// ── RDS Health ────────────────────────────────────────────────────────────────
+export interface RdsInstance {
+    identifier: string;
+    engine: string;
+    engineVersion: string;
+    status: string;
+    instanceClass: string;
+    multiAz: boolean;
+    endpoint: string | null;
+    port: number | null;
+    storageGb: number;
+    createdAt: string | null;
+}
+
+export interface RdsHealthPayload {
+    instances: RdsInstance[];
+    fetchedAt: string;
+    _mock?: boolean;
+}
+
+// ── ALB Health ────────────────────────────────────────────────────────────────
+export interface AlbTargetGroup {
+    name: string;
+    healthy: number;
+    total: number;
+}
+
+export interface AlbInfo {
+    name: string;
+    arn: string;
+    dns: string;
+    scheme: string;
+    state: string;
+    type: string;
+    targetGroups: AlbTargetGroup[];
+}
+
+export interface AlbHealthPayload {
+    loadBalancers: AlbInfo[];
+    fetchedAt: string;
+    _mock?: boolean;
+}

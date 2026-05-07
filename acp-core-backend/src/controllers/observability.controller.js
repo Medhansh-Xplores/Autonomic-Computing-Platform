@@ -1,5 +1,20 @@
 const db = require('../config/db');
-const { STSClient, AssumeRoleCommand } = require('@aws-sdk/client-sts');
+const {
+    EC2Client,
+    DescribeVpcsCommand,
+    DescribeSubnetsCommand,
+} = require('@aws-sdk/client-ec2');
+const {
+    RDSClient,
+    DescribeDBInstancesCommand,
+} = require('@aws-sdk/client-rds');
+const {
+    ElasticLoadBalancingV2Client,
+    DescribeLoadBalancersCommand,
+    DescribeTargetGroupsCommand,
+    DescribeTargetHealthCommand,
+} = require('@aws-sdk/client-elastic-load-balancing-v2');
+
 const observabilityService = require('../services/observability.service');
 const deploymentModel = require('../models/deployment.model');
 const IS_LOCAL = process.env.NODE_ENV !== 'production';
@@ -333,6 +348,214 @@ exports.getAcpPortalHealth = async (req, res) => {
 
     } catch (err) {
         console.error('[acp-portal-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ── NEW: GET /api/v1/observability/acp-portal-infra-health ──────────────────
+// Returns health/status for VPC, RDS, and ALB that were provisioned by acp-terraform
+
+const ACP_CLUSTER_TAG = 'acp-cluster'; // tag/name prefix used by acp-terraform
+
+exports.getAcpVpcHealth = async (req, res) => {
+    const { region } = req.query;
+    if (!region) return res.status(400).json({ error: 'Missing region' });
+
+    if (IS_LOCAL) {
+        return res.json({
+            _mock: true,
+            vpcs: [
+                {
+                    vpcId: 'vpc-0abc123mock',
+                    name: 'acp-vpc',
+                    cidr: '10.0.0.0/16',
+                    state: 'available',
+                    subnets: [
+                        { subnetId: 'subnet-pub1', name: 'acp-public-1', az: 'us-east-1a', type: 'public', cidr: '10.0.1.0/24', state: 'available' },
+                        { subnetId: 'subnet-priv1', name: 'acp-private-1', az: 'us-east-1b', type: 'private', cidr: '10.0.2.0/24', state: 'available' },
+                    ],
+                },
+            ],
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+
+    const cacheKey = `acp-vpc:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const ec2 = new EC2Client({ region });
+
+        // Find VPCs tagged/named with acp prefix
+        const vpcsResp = await ec2.send(new DescribeVpcsCommand({
+            Filters: [{ Name: 'tag:Name', Values: ['acp-*'] }],
+        }));
+
+        const vpcs = await Promise.all((vpcsResp.Vpcs || []).map(async vpc => {
+            const nameTag = vpc.Tags?.find(t => t.Key === 'Name')?.Value || vpc.VpcId;
+            const subnetsResp = await ec2.send(new DescribeSubnetsCommand({
+                Filters: [{ Name: 'vpc-id', Values: [vpc.VpcId] }],
+            }));
+
+            const subnets = (subnetsResp.Subnets || []).map(s => ({
+                subnetId: s.SubnetId,
+                name: s.Tags?.find(t => t.Key === 'Name')?.Value || s.SubnetId,
+                az: s.AvailabilityZone,
+                type: s.MapPublicIpOnLaunch ? 'public' : 'private',
+                cidr: s.CidrBlock,
+                state: s.State,
+            }));
+
+            return {
+                vpcId: vpc.VpcId,
+                name: nameTag,
+                cidr: vpc.CidrBlock,
+                state: vpc.State,
+                subnets,
+            };
+        }));
+
+        const payload = { vpcs, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+
+    } catch (err) {
+        console.error('[acp-vpc-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAcpRdsHealth = async (req, res) => {
+    const { region } = req.query;
+    if (!region) return res.status(400).json({ error: 'Missing region' });
+
+    if (IS_LOCAL) {
+        return res.json({
+            _mock: true,
+            instances: [
+                {
+                    identifier: 'acp-postgres',
+                    engine: 'postgres',
+                    engineVersion: '15.4',
+                    status: 'available',
+                    instanceClass: 'db.t3.micro',
+                    multiAz: false,
+                    endpoint: 'acp-postgres.mock.us-east-1.rds.amazonaws.com',
+                    port: 5432,
+                    storageGb: 20,
+                    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                },
+            ],
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+
+    const cacheKey = `acp-rds:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const rds = new RDSClient({ region });
+        const resp = await rds.send(new DescribeDBInstancesCommand({}));
+
+        // Filter to instances whose identifier starts with 'acp-'
+        const instances = (resp.DBInstances || [])
+            .filter(db => db.DBInstanceIdentifier.startsWith('acp-'))
+            .map(db => ({
+                identifier: db.DBInstanceIdentifier,
+                engine: db.Engine,
+                engineVersion: db.EngineVersion,
+                status: db.DBInstanceStatus,
+                instanceClass: db.DBInstanceClass,
+                multiAz: db.MultiAZ,
+                endpoint: db.Endpoint?.Address || null,
+                port: db.Endpoint?.Port || null,
+                storageGb: db.AllocatedStorage,
+                createdAt: db.InstanceCreateTime?.toISOString() || null,
+            }));
+
+        const payload = { instances, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+
+    } catch (err) {
+        console.error('[acp-rds-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAcpAlbHealth = async (req, res) => {
+    const { region } = req.query;
+    if (!region) return res.status(400).json({ error: 'Missing region' });
+
+    if (IS_LOCAL) {
+        return res.json({
+            _mock: true,
+            loadBalancers: [
+                {
+                    name: 'acp-alb',
+                    arn: 'arn:aws:elasticloadbalancing:us-east-1:377122171982:loadbalancer/app/acp-alb/mock',
+                    dns: 'acp-alb-mock.us-east-1.elb.amazonaws.com',
+                    scheme: 'internet-facing',
+                    state: 'active',
+                    type: 'application',
+                    targetGroups: [
+                        { name: 'acp-backend-tg', healthy: 2, total: 2 },
+                        { name: 'acp-frontend-tg', healthy: 2, total: 2 },
+                    ],
+                },
+            ],
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+
+    const cacheKey = `acp-alb:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const elb = new ElasticLoadBalancingV2Client({ region });
+        const lbResp = await elb.send(new DescribeLoadBalancersCommand({}));
+
+        const acpLbs = (lbResp.LoadBalancers || []).filter(lb =>
+            lb.LoadBalancerName.toLowerCase().startsWith('acp-')
+        );
+
+        const tgResp = await elb.send(new DescribeTargetGroupsCommand({}));
+        const acpTgs = (tgResp.TargetGroups || []).filter(tg =>
+            tg.LoadBalancerArns?.some(arn => acpLbs.find(lb => lb.LoadBalancerArn === arn))
+        );
+
+        const tgHealthPromises = acpTgs.map(tg =>
+            elb.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
+                .then(r => {
+                    const targets = r.TargetHealthDescriptions || [];
+                    return {
+                        name: tg.TargetGroupName,
+                        healthy: targets.filter(t => t.TargetHealth?.State === 'healthy').length,
+                        total: targets.length,
+                    };
+                })
+        );
+        const tgHealthResults = await Promise.all(tgHealthPromises);
+
+        const loadBalancers = acpLbs.map(lb => ({
+            name: lb.LoadBalancerName,
+            arn: lb.LoadBalancerArn,
+            dns: lb.DNSName,
+            scheme: lb.Scheme,
+            state: lb.State?.Code,
+            type: lb.Type,
+            targetGroups: tgHealthResults,
+        }));
+
+        const payload = { loadBalancers, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+
+    } catch (err) {
+        console.error('[acp-alb-health]', err.message);
         res.status(500).json({ error: err.message });
     }
 };

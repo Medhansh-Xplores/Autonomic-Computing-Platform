@@ -6,6 +6,9 @@ const authMiddleware = require('../middleware/auth.middleware');
 
 router.get('/health', authMiddleware, observabilityController.getHealth);
 router.get('/acp-portal-health', authMiddleware, observabilityController.getAcpPortalHealth);
+router.get('/acp-portal-vpc-health', authMiddleware, observabilityController.getAcpVpcHealth);
+router.get('/acp-portal-rds-health', authMiddleware, observabilityController.getAcpRdsHealth);
+router.get('/acp-portal-alb-health', authMiddleware, observabilityController.getAcpAlbHealth);
 router.get('/deployments-health', authMiddleware, observabilityController.getAllDeploymentsHealth);
 
 module.exports = router;
