@@ -386,7 +386,9 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "ecs:*",
           "rds:*",
           "ecr:*",
-          "logs:*"
+          "logs:*",
+          "elasticloadbalancing:*",
+          "cloudwatch:*"
         ]
         Resource = "*"
       }
