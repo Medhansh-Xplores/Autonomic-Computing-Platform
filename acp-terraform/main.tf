@@ -320,7 +320,7 @@ resource "aws_ecs_cluster" "acp" {
 
   setting {
     name  = "containerInsights"
-    value = "enhanced"
+    value = "enabled"
   }
 }
 

@@ -10,8 +10,8 @@
 
     <!-- Page header -->
     <div class="create-header-box">
-        <div class="header-subtitle">ACCOUNT: 377122171982</div>
         <div class="create-header-title">ACP HEALTH</div>
+        <div class="header-subtitle">AWS ACCOUNT: 377122171982</div>
         <div class="header-hint">Click a resource card to view details</div>
     </div>
 
@@ -76,7 +76,17 @@
 
         <!-- ALB Card -->
         <div class="resource-card" [class.active]="activeTab === 'alb'" (click)="selectTab('alb')">
-            <div class="resource-card-icon">⚖</div>
+            <div class="resource-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                    <circle cx="4" cy="12" r="2.5" />
+                    <circle cx="20" cy="6" r="2.5" />
+                    <circle cx="20" cy="12" r="2.5" />
+                    <circle cx="20" cy="18" r="2.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="6" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="12" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="18" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+            </div>
             <div class="resource-card-title">ALB</div>
             <div class="resource-card-subtitle">Load Balancer</div>
             <div *ngIf="albLoading" class="resource-card-status">
@@ -233,7 +243,7 @@
 
     <!-- ALB Detail -->
     <div class="detail-panel" *ngIf="activeTab === 'alb'">
-        <div class="detail-panel-title">⚖ ALB — Application Load Balancer</div>
+        <div class="detail-panel-title">ALB — Application Load Balancer</div>
         <div *ngIf="albLoading" class="empty">
             <div class="spinner"></div> Fetching ALB data from AWS...
         </div>

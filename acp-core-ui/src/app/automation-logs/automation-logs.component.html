@@ -1,67 +1,152 @@
-<div class="logs-container">
+<div class="page-container">
 
-    <div class="logs-header">
-        <h2>
-            {{ status }}
-            <span *ngIf="appName"> : {{ appName }}</span>
-        </h2>
-
-        <div class="status-indicator" *ngIf="!isComplete">
-            <span class="spinner"></span>
-            Running...
-        </div>
-    </div>
-    <!-- ADD: Terraform logs section — only shows during provisioning/waiting -->
-    <div *ngIf="phase === 'provisioning' || phase === 'waiting' || terraformDone">
-
-        <div class="phase-label">
-            <span *ngIf="!terraformDone">⏳ Creating AWS Services...</span>
-            <span *ngIf="terraformDone && !terraformFailed">✅ Services Created</span>
-            <span *ngIf="terraformDone && terraformFailed">❌ Service Creation Failed</span>
-        </div>
-
-        <div class="terminal-box" #terminalBox>
-            <pre>{{ terraformLogs.join('') || 'Waiting for logs...' }}</pre>
-        </div>
-
-        <div *ngIf="phase === 'waiting'"
-            style="color: #a8cce8; font-size: 14px; margin: 12px 0; display:flex; align-items:center; gap:8px;">
-            <span class="spinner"></span> Setting up GitHub Actions...
-        </div>
-
+    <!-- PAGE HEADER -->
+    <div class="create-header-box">
+        <div class="create-header-title">AUTOMATION LOGS</div>
     </div>
 
-    <!-- EXISTING html stays exactly as is below this -->
-    <div class="steps-container">
-        ...
+    <!-- STATUS BANNER -->
+    <div class="status-banner" [ngClass]="{
+    'banner-running': !isComplete,
+    'banner-success': isComplete && !status.includes('Failed'),
+    'banner-error': isComplete && status.includes('Failed')
+  }">
+        <div class="banner-left">
+            <span class="banner-icon" *ngIf="!isComplete">
+                <span class="spinner"></span>
+            </span>
+            <span class="banner-icon" *ngIf="isComplete && !status.includes('Failed')">✅</span>
+            <span class="banner-icon" *ngIf="isComplete && status.includes('Failed')">❌</span>
+            <div class="banner-text">
+                <div class="banner-title">{{ status }}</div>
+                <div class="banner-sub" *ngIf="appName">Application: <strong>{{ appName }}</strong></div>
+            </div>
+        </div>
+        <div class="banner-right" *ngIf="!isComplete">
+            <span class="live-badge">● LIVE</span>
+        </div>
+    </div>
 
-        <div class="steps-container">
-            <div *ngFor="let step of steps" class="step-box">
-                <div class="step-header">
-                    <span *ngIf="step.status === 'completed' && step.conclusion === 'success'">✅</span>
-                    <span *ngIf="step.status === 'completed' && step.conclusion === 'failure'">❌</span>
-                    <span *ngIf="step.status !== 'completed'">⏳</span>
+    <!-- TERRAFORM / PROVISIONING SECTION -->
+    <div *ngIf="phase === 'provisioning' || phase === 'waiting' || terraformDone" class="log-panel">
 
-                    {{ step.name }}
+        <div class="log-panel-header">
+            <div class="panel-title-row">
+                <div class="panel-icon">☁</div>
+                <div>
+                    <div class="panel-title">AWS Service Provisioning</div>
+                    <div class="panel-subtitle">Terraform infrastructure logs</div>
                 </div>
-
-                <div class="step-logs" *ngIf="step.logs?.length">
-                    <pre>{{ step.logs.join('\n') }}</pre>
-                </div>
-
-                <div class="step-logs" *ngIf="step.logs && step.logs.length === 0">
-                    <pre>No logs found for this step yet.</pre>
+                <div class="panel-status-badge" [ngClass]="{
+          'badge-running': !terraformDone,
+          'badge-success': terraformDone && !terraformFailed,
+          'badge-error': terraformDone && terraformFailed
+        }">
+                    <span *ngIf="!terraformDone"><span class="spinner-sm"></span> Running</span>
+                    <span *ngIf="terraformDone && !terraformFailed">Completed</span>
+                    <span *ngIf="terraformDone && terraformFailed">Failed</span>
                 </div>
             </div>
         </div>
 
-        <div class="actions" *ngIf="isComplete">
-            <button *ngIf="deploymentMode !== 'acp'" class="back-btn" (click)="goBack()">
-                ← Back to Workflows
-            </button>
-            <button *ngIf="deploymentMode === 'acp'" class="back-btn" (click)="goToDeployments()">
-                View Deployments →
-            </button>
+        <div class="terminal-wrap">
+            <div class="terminal-toolbar">
+                <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                <span class="terminal-label">terraform output</span>
+            </div>
+            <div class="terminal-body" #terminalBox>
+                <pre>{{ terraformLogs.join('') || 'Waiting for logs...' }}</pre>
+            </div>
+        </div>
+
+        <div *ngIf="phase === 'waiting'" class="waiting-bar">
+            <span class="spinner-sm"></span>
+            Setting up GitHub Actions workflow...
         </div>
 
     </div>
+
+    <!-- GITHUB ACTIONS STEPS SECTION -->
+    <div class="log-panel" *ngIf="steps.length > 0 || (phase === 'github' && !terraformDone)">
+
+        <div class="log-panel-header">
+            <div class="panel-title-row">
+                <div class="panel-icon">⚡</div>
+                <div>
+                    <div class="panel-title">GitHub Actions Pipeline</div>
+                    <div class="panel-subtitle">Workflow execution steps</div>
+                </div>
+                <div class="panel-status-badge" [ngClass]="{
+          'badge-running': !isComplete,
+          'badge-success': isComplete && !status.includes('Failed'),
+          'badge-error': isComplete && status.includes('Failed')
+        }">
+                    <span *ngIf="!isComplete"><span class="spinner-sm"></span> Running</span>
+                    <span *ngIf="isComplete && !status.includes('Failed')">Completed</span>
+                    <span *ngIf="isComplete && status.includes('Failed')">Failed</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="steps-list">
+            <div *ngFor="let step of steps; let i = index" class="step-card" [ngClass]="{
+        'step-success': step.status === 'completed' && step.conclusion === 'success',
+        'step-failed': step.status === 'completed' && step.conclusion === 'failure',
+        'step-pending': step.status !== 'completed'
+      }">
+                <div class="step-card-header">
+                    <div class="step-left">
+                        <div class="step-num">{{ i + 1 }}</div>
+                        <div class="step-status-icon">
+                            <span *ngIf="step.status === 'completed' && step.conclusion === 'success'">✅</span>
+                            <span *ngIf="step.status === 'completed' && step.conclusion === 'failure'">❌</span>
+                            <span *ngIf="step.status !== 'completed'"><span class="spinner-sm"></span></span>
+                        </div>
+                        <div class="step-name">{{ step.name }}</div>
+                    </div>
+                    <div class="step-conclusion-badge" *ngIf="step.status === 'completed'"
+                        [ngClass]="step.conclusion === 'success' ? 'conclusion-success' : 'conclusion-fail'">
+                        {{ step.conclusion }}
+                    </div>
+                    <div class="step-conclusion-badge badge-in-progress" *ngIf="step.status !== 'completed'">
+                        in progress
+                    </div>
+                </div>
+
+                <div class="step-log-body" *ngIf="step.logs?.length">
+                    <div class="terminal-toolbar mini">
+                        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                        <span class="terminal-label">step logs</span>
+                    </div>
+                    <div class="terminal-body mini-terminal">
+                        <pre>{{ step.logs.join('\n') }}</pre>
+                    </div>
+                </div>
+
+                <div class="step-log-body empty-log" *ngIf="step.logs && step.logs.length === 0">
+                    <pre>No logs available for this step yet.</pre>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- EMPTY STATE WHILE STARTING -->
+    <div class="empty-state" *ngIf="steps.length === 0 && phase === 'github' && !terraformDone">
+        <div class="empty-icon">⏳</div>
+        <div class="empty-title">Waiting for pipeline to start</div>
+        <div class="empty-sub">Steps will appear here once the GitHub Actions workflow begins.</div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="page-actions" *ngIf="isComplete">
+        <button *ngIf="deploymentMode !== 'acp'" class="btn-primary" (click)="goBack()">
+            ← Back to Workflows
+        </button>
+        <button *ngIf="deploymentMode === 'acp'" class="btn-primary" (click)="goToDeployments()">
+            View Deployments →
+        </button>
+    </div>
+
+</div>

@@ -21,7 +21,7 @@ const {
 // ── ECS ───────────────────────────────────────────────────────────────────────
 
 exports.describeEcsService = async (credentials, region, cluster, serviceName) => {
-    const ecs = new ECSClient({ region, credentials });
+    const ecs = new ECSClient({ region, ...(credentials && { credentials }) });
 
     const response = await ecs.send(new DescribeServicesCommand({
         cluster,
@@ -36,7 +36,7 @@ exports.describeEcsService = async (credentials, region, cluster, serviceName) =
 };
 
 exports.describeEcsTasks = async (credentials, region, cluster, serviceName) => {
-    const ecs = new ECSClient({ region, credentials });
+    const ecs = new ECSClient({ region, ...(credentials && { credentials }) });
 
     const listed = await ecs.send(new ListTasksCommand({
         cluster,
@@ -59,7 +59,7 @@ exports.describeEcsTasks = async (credentials, region, cluster, serviceName) => 
 // ── CloudWatch ────────────────────────────────────────────────────────────────
 
 exports.getEcsMetrics = async (credentials, region, cluster, serviceName) => {
-    const cw = new CloudWatchClient({ region, credentials });
+    const cw = new CloudWatchClient({ region, ...(credentials && { credentials }) });
 
     const now = new Date();
     const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000);
@@ -142,7 +142,7 @@ exports.getEcsMetrics = async (credentials, region, cluster, serviceName) => {
 };
 
 exports.getActiveAlarms = async (credentials, region, cluster) => {
-    const cw = new CloudWatchClient({ region, credentials });
+    const cw = new CloudWatchClient({ region, ...(credentials && { credentials }) });
 
     const response = await cw.send(new DescribeAlarmsCommand({
         AlarmNamePrefix: cluster,
@@ -159,7 +159,7 @@ exports.getActiveAlarms = async (credentials, region, cluster) => {
 // ── ALB ───────────────────────────────────────────────────────────────────────
 
 exports.getTargetGroupHealth = async (credentials, region, cluster) => {
-    const elb = new ElasticLoadBalancingV2Client({ region, credentials });
+    const elb = new ElasticLoadBalancingV2Client({ region, ...(credentials && { credentials }) });
 
     // Find target groups whose names contain the cluster name
     const tgResponse = await elb.send(new DescribeTargetGroupsCommand({}));

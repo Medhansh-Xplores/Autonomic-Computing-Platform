@@ -96,15 +96,12 @@ exports.getHealth = async (req, res) => {
     if (cached) return res.json(cached);
 
     try {
-        const credentials = await resolveCredentials(account, userId, region);
-
-        // Fan out to all AWS sources in parallel
         const [ecsService, ecsTasks, metrics, alarms, targetGroupHealth] = await Promise.allSettled([
-            observabilityService.describeEcsService(credentials, region, cluster, serviceName),
-            observabilityService.describeEcsTasks(credentials, region, cluster, serviceName),
-            observabilityService.getEcsMetrics(credentials, region, cluster, serviceName),
-            observabilityService.getActiveAlarms(credentials, region, cluster),
-            observabilityService.getTargetGroupHealth(credentials, region, cluster),
+            observabilityService.describeEcsService(null, region, cluster, serviceName),
+            observabilityService.describeEcsTasks(null, region, cluster, serviceName),
+            observabilityService.getEcsMetrics(null, region, cluster, serviceName),
+            observabilityService.getActiveAlarms(null, region, cluster),
+            observabilityService.getTargetGroupHealth(null, region, cluster),
         ]);
 
         const service = ecsService.status === 'fulfilled' ? ecsService.value : null;
