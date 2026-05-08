@@ -286,7 +286,7 @@ exports.deployToEcs = async (req, res) => {
                 workflowContent,
                 appName
             });
-
+            
             // STEP 3: Assume role and set AWS secrets (same as before)
             const creds = {
                 AccessKeyId: appCredentials.accessKeyId,
@@ -364,7 +364,7 @@ exports.deployToEcs = async (req, res) => {
             };
 
             // Small delay to let GitHub index the newly committed workflow file (same as before)
-            await new Promise(r => setTimeout(r, 12000));
+            await new Promise(r => setTimeout(r, 30000));
 
             const { runId } = await githubService.triggerWorkflow({
                 repoUrl, branch, token,

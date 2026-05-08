@@ -43,11 +43,26 @@ exports.triggerWorkflow = async (data) => {
 
     // Trigger workflow
     const dispatchTime = Date.now();
-    await axios.post(
-        `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`,
-        { ref: branch, inputs: inputs || {} },
-        { headers }
-    );
+    let dispatched = false;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            await axios.post(
+                `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${workflowId}/dispatches`,
+                { ref: branch, inputs: inputs || {} },
+                { headers }
+            );
+            dispatched = true;
+            break;
+        } catch (err) {
+            if (err.response?.status === 422) {
+                // Workflow not yet indexed — wait and retry
+                await new Promise(r => setTimeout(r, 5000));
+            } else {
+                throw err;
+            }
+        }
+    }
+    if (!dispatched) throw new Error(`Workflow ${workflowId} not found on branch ${branch} after retries. Ensure the workflow is committed to the default branch.`);
 
     // GitHub can lag; poll until the newly dispatched run is visible.
     // Selecting by created_at prevents picking an older completed run.
@@ -63,7 +78,7 @@ exports.triggerWorkflow = async (data) => {
         const runs = runsResp.data.workflow_runs || [];
         const matchedRun = runs.find((run) => {
             const createdAtMs = Date.parse(run.created_at || '');
-            return Number.isFinite(createdAtMs) && createdAtMs >= (dispatchTime - 10000);
+            return Number.isFinite(createdAtMs) && createdAtMs >= (dispatchTime - 60000);
         });
 
         if (matchedRun) {

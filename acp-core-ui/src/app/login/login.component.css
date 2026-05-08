@@ -93,9 +93,9 @@
 .right-text {
   width: 58%;
   text-align: left;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: 1.2px;
+  letter-spacing: normal;
   padding-left: 56px;
   padding-top: 40px;
 

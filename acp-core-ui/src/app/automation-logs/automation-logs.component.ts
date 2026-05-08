@@ -180,7 +180,19 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
     }
 
     startWaitingForRunId() {
+        let waited = 0;
+        const MAX_WAIT_MS = 600000; // 10 minutes
+
         this.waitInterval = setInterval(() => {
+            waited += 5000;
+
+            if (waited >= MAX_WAIT_MS) {
+                clearInterval(this.waitInterval);
+                this.status = 'Deployment Failed ❌ (timed out waiting for GitHub run)';
+                this.isComplete = true;
+                return;
+            }
+
             this.http.get<any>(this.apiBase + 'github/pending-deployment', {
                 params: { appName: this.appName }
             }).subscribe({
@@ -204,11 +216,10 @@ export class AutomationLogsComponent implements OnInit, OnDestroy, AfterViewChec
 
                     const workflowName = `deploy-${safeAppName}.yml`;
 
-                    this.workflow = workflowName; // ADD
+                    this.workflow = workflowName;
                     this.phase = 'github';
                     this.status = 'Deployment Running...';
 
-                    // ADD: log to confirm values before polling starts
                     console.log('Switching to GitHub polling:', {
                         repoUrl: this.repoUrl,
                         workflow: this.workflow,
