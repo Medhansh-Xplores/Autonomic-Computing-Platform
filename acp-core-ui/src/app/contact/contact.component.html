@@ -1,19 +1,136 @@
-<!-- HERO BANNER -->
-<section class="acp-hero" aria-label="Contact">
-    <div class="hero-content">
-        <h1>AUTONOMIC COMPUTING <br> PLATFORM (ACP)</h1>
-        <p class="hero-sub">Patterned on the human body's self healing autonomic nervous system</p>
+<!-- HERO BANNER — mirrors about page hero -->
+<section class="acp-hero" aria-label="Resources">
+    <div class="hero-overlay"></div>
+    <div class="hero-body">
+        <div class="hero-text">
+            <h1>AUTONOMIC COMPUTING <br> PLATFORM (ACP)</h1>
+            <p class="hero-tagline">Patterned on the human body's self healing autonomic nervous system</p>
+            <p class="hero-subtitle">Self-Manageable&nbsp;&nbsp;|&nbsp;&nbsp;Software
+                Driven&nbsp;&nbsp;|&nbsp;&nbsp;Reusable Engineering</p>
+        </div>
     </div>
 </section>
 
-<!-- CONTACT CONTENT -->
-<section class="contact-content">
-    <div class="contact-card">
-        <h2>Contact Us</h2>
-        <p><span class="label">Location:</span> Chantilly, VA 20152</p>
-        <p><span class="label">Email:</span> <a
-                href="mailto:info@autonomicsolutionsllc.com">info@autonomicsolutionsllc.com</a></p>
-        <p><span class="label">Web:</span> <a href="https://www.autonomicsolutionsllc.com"
-                target="_blank">www.autonomicsolutionsllc.com</a></p>
+<!-- RESOURCES CONTENT -->
+<section class="resources-content">
+    <div class="section-inner">
+
+        <div class="section-header">
+            <h2>Resources</h2>
+            <p class="section-desc">Access documentation, guides, and demo materials for the Autonomic Computing
+                Platform.</p>
+        </div>
+
+        <!-- DEMO VIDEO -->
+        <div class="resources-group">
+            <h3 class="group-title"><span class="group-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" />
+                    </svg>
+                </span> Demo Video</h3>
+            <div class="video-placeholder" (click)="openVideoModal()">
+                <div class="video-thumb-overlay">
+                    <div class="play-btn">
+                        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="30" cy="30" r="30" fill="rgba(0,49,96,0.85)" />
+                            <polygon points="23,16 48,30 23,44" fill="#e6bb00" />
+                        </svg>
+                    </div>
+                    <div class="video-label">
+                        <span class="video-badge">DEMO</span>
+                        <p class="video-title">ACP Platform Walkthrough</p>
+                        <p class="video-sub">Click to watch the full platform demo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF RESOURCES -->
+        <div class="resources-group">
+            <h3 class="group-title"><span class="group-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                </span> Documentation</h3>
+            <div class="cards-row">
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">PDF</div>
+                    <div class="card-body">
+                        <h4>ACP Overview Guide</h4>
+                        <p>A comprehensive overview of the Autonomic Computing Platform, its architecture, and core
+                            capabilities.</p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/acp-overview.pdf', 'ACP Overview Guide')">
+                        &#128065; View PDF
+                    </button>
+                </div>
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">PDF</div>
+                    <div class="card-body">
+                        <h4>ACP User Manual</h4>
+                        <p>Step-by-step instructions for using ACP features including deployments, cloud setup, and
+                            observability.</p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/acp-user-manual.pdf', 'ACP User Manual')">
+                        &#128065; View PDF
+                    </button>
+                </div>
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">PDF</div>
+                    <div class="card-body">
+                        <h4>ACP Technical Reference</h4>
+                        <p>Technical specifications, API references, and infrastructure configuration details for
+                            advanced users.</p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/acp-technical-reference.pdf', 'ACP Technical Reference')">
+                        &#128065; View PDF
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
     </div>
 </section>
+
+<!-- PDF VIEWER MODAL -->
+<div class="modal-backdrop" *ngIf="pdfModalOpen" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title">{{ activePdfTitle }}</span>
+            <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="modal-body">
+            <iframe [src]="safePdfUrl" class="pdf-frame" frameborder="0" [title]="activePdfTitle"
+                sandbox="allow-scripts allow-same-origin">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+<!-- VIDEO VIEWER MODAL -->
+<div class="modal-backdrop" *ngIf="videoModalOpen" (click)="closeModal()">
+    <div class="modal-box modal-box--video" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title">ACP Platform Walkthrough</span>
+            <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="modal-body modal-body--video">
+            <video class="demo-video" controls controlsList="nodownload" disablePictureInPicture
+                oncontextmenu="return false;">
+                <source src="assets/video/acp-demo.mp4" type="video/mp4">
+                Your browser does not support HTML5 video.
+            </video>
+        </div>
+    </div>
+</div>

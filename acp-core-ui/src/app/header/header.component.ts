@@ -42,7 +42,7 @@ export class HeaderComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      const hideOn = ['/login', '/signup', '/confirm', '/newuser'];
+      const hideOn = ['/login', '/signup', '/confirm', '/newuser', '/newuser'];
       this.showTitleBanner = !hideOn.some(path => event.url.includes(path));
     });
 
@@ -52,7 +52,8 @@ export class HeaderComponent implements OnInit {
     return this.router.url === '/login'
       || this.router.url === '/'
       || this.router.url === '/about'
-      || this.router.url.startsWith('/about?');
+      || this.router.url.startsWith('/about?')
+      || this.router.url === '/contact';
   }
 
   ngOnInit() {
