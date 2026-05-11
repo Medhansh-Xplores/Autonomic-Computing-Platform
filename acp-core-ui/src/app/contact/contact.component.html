@@ -17,8 +17,9 @@
 
         <div class="section-header">
             <h2>Resources</h2>
-            <p class="section-desc">Access documentation, guides, and demo materials for the Autonomic Computing
-                Platform.</p>
+            <p class="section-desc">Explore the documentation and materials behind the Autonomic Computing Platform.
+                Browse our technical whitepapers and architecture guides to understand how ACP delivers autonomous,
+                self-managing cloud infrastructure - and watch the demo video to see the platform in action.</p>
         </div>
 
         <!-- DEMO VIDEO -->
@@ -56,17 +57,19 @@
                         <polyline points="14 2 14 8 20 8" />
                     </svg>
                 </span> Documentation</h3>
-            <div class="cards-row">
+            <div class="cards-col">
 
                 <div class="resource-card">
                     <div class="card-icon pdf-icon">PDF</div>
                     <div class="card-body">
-                        <h4>ACP Overview Guide</h4>
-                        <p>A comprehensive overview of the Autonomic Computing Platform, its architecture, and core
-                            capabilities.</p>
+                        <h4>ACP Platform Overview</h4>
+                        <p>A concise introduction to Autonomic Solutions LLC and the ACP. Learn about our mission, key
+                            partnerships, and how ACP's four self-managing capabilities - Self-Configure, Self-Heal,
+                            Self-Optimize, and Self-Protect - reduce operational costs and accelerate cloud deployments.
+                        </p>
                     </div>
                     <button class="view-btn"
-                        (click)="openPdfModal('assets/docs/acp-overview.pdf', 'ACP Overview Guide')">
+                        (click)="openPdfModal('assets/docs/ACP-Overview.pdf', 'ACP Platform Overview')">
                         &#128065; View PDF
                     </button>
                 </div>
@@ -74,12 +77,13 @@
                 <div class="resource-card">
                     <div class="card-icon pdf-icon">PDF</div>
                     <div class="card-body">
-                        <h4>ACP User Manual</h4>
-                        <p>Step-by-step instructions for using ACP features including deployments, cloud setup, and
-                            observability.</p>
+                        <h4>ACP Technical Whitepaper</h4>
+                        <p>A technical deep-dive into how ACP works under the hood. Explores the platform's biological
+                            inspiration, its four autonomic properties, a built-in compliance pipeline, and consistent
+                            security across AWS, Azure, and GCP - all enforced by default on every deployment.</p>
                     </div>
                     <button class="view-btn"
-                        (click)="openPdfModal('assets/docs/acp-user-manual.pdf', 'ACP User Manual')">
+                        (click)="openPdfModal('assets/docs/ACP-Whitepaper.pdf', 'ACP Technical Whitepaper')">
                         &#128065; View PDF
                     </button>
                 </div>
@@ -87,12 +91,13 @@
                 <div class="resource-card">
                     <div class="card-icon pdf-icon">PDF</div>
                     <div class="card-body">
-                        <h4>ACP Technical Reference</h4>
-                        <p>Technical specifications, API references, and infrastructure configuration details for
-                            advanced users.</p>
+                        <h4>Multi-LLM MAPE-K Addendum</h4>
+                        <p>Explores ACP's next-generation AI layer, where different AI models are assigned to different
+                            phases of autonomous decision-making. See how ACP intelligently routes tasks to the right
+                            model - balancing cost, speed, and reasoning power across every cloud workload.</p>
                     </div>
                     <button class="view-btn"
-                        (click)="openPdfModal('assets/docs/acp-technical-reference.pdf', 'ACP Technical Reference')">
+                        (click)="openPdfModal('assets/docs/ACP-MAPEK.pdf', 'Multi-LLM MAPE-K Addendum')">
                         &#128065; View PDF
                     </button>
                 </div>
@@ -103,6 +108,7 @@
     </div>
 </section>
 
+
 <!-- PDF VIEWER MODAL -->
 <div class="modal-backdrop" *ngIf="pdfModalOpen" (click)="closeModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
@@ -111,8 +117,7 @@
             <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
         </div>
         <div class="modal-body">
-            <iframe [src]="safePdfUrl" class="pdf-frame" frameborder="0" [title]="activePdfTitle"
-                sandbox="allow-scripts allow-same-origin">
+            <iframe [src]="safePdfUrl" class="pdf-frame" frameborder="0" [title]="activePdfTitle">
             </iframe>
         </div>
     </div>
