@@ -433,6 +433,9 @@ export class DeployExistingComponent implements OnInit {
                         repoUrl: this.repoUrl,
                         repoName: repoName,
                         account: account,
+                        accountID: this.account,      // ← ADD: matches what observability controller reads
+                        region: this.region,          // ← ADD: required for ECS lookup
+                        ecsCluster: this.ecsCluster,  // ← ADD: required for ECS lookup
                         branch: this.branch,
                         workflow: this.selectedWorkflow.name,
                         runId: runId,
