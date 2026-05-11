@@ -2,7 +2,8 @@ const deploymentService = require('../models/deployment.model');
 
 exports.createDeployment = async (req, res) => {
     try {
-        const result = await deploymentService.createDeployment(req.body);
+        const body = { ...req.body, userId: req.user?.username };
+        const result = await deploymentService.createDeployment(body);
         res.json(result);
     } catch (err) {
         console.error(err);

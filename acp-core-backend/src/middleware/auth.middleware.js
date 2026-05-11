@@ -20,8 +20,11 @@ module.exports = async (req, res, next) => {
             Buffer.from(token.split('.')[1], 'base64').toString('utf8')
         );
 
+        // Cognito access tokens use 'cognito:username'; ID tokens use 'username'
+        const username = payload.username || payload['cognito:username'] || payload.sub;
+
         // Basic sanity checks
-        if (!payload.sub || !payload.username) {
+        if (!payload.sub || !username) {
             return res.status(401).json({ message: 'Invalid token payload' });
         }
 
@@ -30,7 +33,7 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ message: 'Token expired' });
         }
 
-        req.user = { username: payload.username };
+        req.user = { username };
         next();
     } catch (err) {
         return res.status(401).json({ message: 'Invalid token' });
