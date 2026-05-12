@@ -35,7 +35,7 @@ router.post("/GCP-VPC", (req, res) => {
 
 // Deployments
 router.post("/create", authMiddleware, deploymentController.createDeployment);
-router.get("/list", deploymentController.getDeployments);
+router.get("/list", authMiddleware, deploymentController.getDeployments);
 router.patch("/:id/status", deploymentController.updateStatus);
 router.delete("/record/:id", authMiddleware, deploymentController.deleteDeployment);
 

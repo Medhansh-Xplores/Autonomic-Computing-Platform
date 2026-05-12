@@ -11,9 +11,11 @@ exports.createDeployment = async (req, res) => {
     }
 };
 
+// AFTER
 exports.getDeployments = async (req, res) => {
     try {
-        const deployments = await deploymentService.getDeployments();
+        const userId = req.user?.username;
+        const deployments = await deploymentService.getDeployments(userId);
         res.json(deployments);
     } catch (err) {
         console.error(err);

@@ -85,6 +85,8 @@ function computeStatus({ service, alarms, targetGroupHealth }) {
 
 // ── GET /api/v1/observability/health ─────────────────────────────────────────
 // Query params: account, region, cluster, service
+// ── GET /api/v1/observability/health ─────────────────────────────────────────
+// Query params: account, region, cluster, service
 exports.getHealth = async (req, res) => {
     const { account, region, cluster, service: serviceName } = req.query;
     const userId = req.user?.username;
@@ -102,30 +104,55 @@ exports.getHealth = async (req, res) => {
     try {
         const credentials = await resolveCredentials(account, userId, region);
 
-        const [ecsService, ecsTasks, metrics, alarms, targetGroupHealth] = await Promise.allSettled([
-            observabilityService.describeEcsService(credentials, region, cluster, serviceName),
-            observabilityService.describeEcsTasks(credentials, region, cluster, serviceName),
-            observabilityService.getEcsMetrics(credentials, region, cluster, serviceName),
-            observabilityService.getActiveAlarms(credentials, region, cluster),
-            observabilityService.getTargetGroupHealth(credentials, region, cluster),
-        ]);
+        // Derive the two real ECS service names from the app name
+        const backendSvc = `${serviceName}-backend`;
+        const frontendSvc = `${serviceName}-frontend`;
 
-        const service = ecsService.status === 'fulfilled' ? ecsService.value : null;
-        const tasks = ecsTasks.status === 'fulfilled' ? ecsTasks.value : [];
-        const metricsVal = metrics.status === 'fulfilled' ? metrics.value : { cpuUtilization: null, memoryUtilization: null };
+        const [ecsBackend, ecsFrontend, tasksBackend, tasksFrontend,
+            metricsResult, alarms, targetGroupHealth] = await Promise.allSettled([
+                observabilityService.describeEcsService(credentials, region, cluster, backendSvc),
+                observabilityService.describeEcsService(credentials, region, cluster, frontendSvc),
+                observabilityService.describeEcsTasks(credentials, region, cluster, backendSvc),
+                observabilityService.describeEcsTasks(credentials, region, cluster, frontendSvc),
+                observabilityService.getEcsMetrics(credentials, region, cluster, backendSvc),
+                observabilityService.getActiveAlarms(credentials, region, cluster),
+                observabilityService.getTargetGroupHealth(credentials, region, cluster),
+            ]);
+
+        const backend = ecsBackend.status === 'fulfilled' ? ecsBackend.value : null;
+        const frontend = ecsFrontend.status === 'fulfilled' ? ecsFrontend.value : null;
+
+        // Use backend as primary for deployment/event metadata; fall back to frontend
+        const primaryService = backend || frontend;
+
+        const tasks = [
+            ...(tasksBackend.status === 'fulfilled' ? tasksBackend.value : []),
+            ...(tasksFrontend.status === 'fulfilled' ? tasksFrontend.value : []),
+        ];
+
+        const metricsVal = metricsResult.status === 'fulfilled'
+            ? metricsResult.value
+            : { cpuUtilization: null, memoryUtilization: null };
         const alarmsVal = alarms.status === 'fulfilled' ? alarms.value : [];
         const tgHealth = targetGroupHealth.status === 'fulfilled' ? targetGroupHealth.value : null;
 
-        // Pull the last 5 service events for display
-        const recentEvents = (service?.events || []).slice(0, 5).map(e => ({
+        // Merge running/desired/pending counts across both services
+        const mergedService = (backend || frontend) ? {
+            runningCount: (backend?.runningCount ?? 0) + (frontend?.runningCount ?? 0),
+            desiredCount: (backend?.desiredCount ?? 0) + (frontend?.desiredCount ?? 0),
+            pendingCount: (backend?.pendingCount ?? 0) + (frontend?.pendingCount ?? 0),
+        } : null;
+
+        // Pull the last 5 events from the primary service
+        const recentEvents = (primaryService?.events || []).slice(0, 5).map(e => ({
             message: e.message,
             createdAt: e.createdAt,
         }));
 
-        // Deployment info from the active deployment
-        const activeDeployment = (service?.deployments || []).find(d => d.status === 'PRIMARY');
+        // Deployment info from the active deployment on the primary service
+        const activeDeployment = (primaryService?.deployments || []).find(d => d.status === 'PRIMARY');
 
-        const status = computeStatus({ service, alarms: alarmsVal, targetGroupHealth: tgHealth });
+        const status = computeStatus({ service: mergedService, alarms: alarmsVal, targetGroupHealth: tgHealth });
 
         const payload = {
             status,
@@ -133,11 +160,11 @@ exports.getHealth = async (req, res) => {
                 name: serviceName,
                 cluster,
                 region,
-                runningCount: service?.runningCount ?? 0,
-                desiredCount: service?.desiredCount ?? 0,
-                pendingCount: service?.pendingCount ?? 0,
-                taskDefinition: service?.taskDefinition?.split('/').pop() ?? null,
-                createdAt: service?.createdAt ?? null,
+                runningCount: mergedService?.runningCount ?? 0,
+                desiredCount: mergedService?.desiredCount ?? 0,
+                pendingCount: mergedService?.pendingCount ?? 0,
+                taskDefinition: primaryService?.taskDefinition?.split('/').pop() ?? null,
+                createdAt: primaryService?.createdAt ?? null,
             },
             deployment: activeDeployment ? {
                 status: activeDeployment.status,
@@ -174,42 +201,64 @@ exports.getHealth = async (req, res) => {
 
 // ── GET /api/v1/observability/deployments-health ──────────────────────────────
 // Returns lightweight health status for ALL deployments stored in DB
+// AFTER
 exports.getAllDeploymentsHealth = async (req, res) => {
     const userId = req.user?.username;
 
+    if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized: no user identity found' });
+    }
+
     try {
-        const deployments = await deploymentModel.getDeployments();
+        const deployments = await deploymentModel.getDeployments(userId);
 
         // For each deployment that has ECS metadata, fetch health in parallel
         const healthChecks = deployments.map(async (d) => {
             const { id, name, ecsCluster, region, accountID, status: dbStatus } = d;
 
+            // AFTER
             if (!ecsCluster || !region || !accountID) {
-                return { id, name, status: 'unknown', reason: 'Missing ECS metadata' };
+                const missing = [!ecsCluster && 'ecsCluster', !region && 'region', !accountID && 'accountID'].filter(Boolean);
+                return { id, name, status: 'unknown', reason: `Missing ECS metadata: ${missing.join(', ')}` };
             }
 
             const cacheKey = `${userId}:${accountID}:${region}:${ecsCluster}:${name}`;
             const cached = getCached(cacheKey);
             if (cached) return { id, name, status: cached.status, metrics: cached.metrics, service: cached.service };
 
+            // AFTER
             try {
                 const credentials = await resolveCredentials(accountID, userId, region);
-                const [ecsService, alarms] = await Promise.allSettled([
-                    observabilityService.describeEcsService(credentials, region, ecsCluster, name),
+
+                // Derive the two real ECS service names (stored on record, or fall back to convention)
+                const backendSvc = d.ecsServiceBackend || `${name}-backend`;
+                const frontendSvc = d.ecsServiceFrontend || `${name}-frontend`;
+
+                const [ecsBackend, ecsFrontend, alarms] = await Promise.allSettled([
+                    observabilityService.describeEcsService(credentials, region, ecsCluster, backendSvc),
+                    observabilityService.describeEcsService(credentials, region, ecsCluster, frontendSvc),
                     observabilityService.getActiveAlarms(credentials, region, ecsCluster),
                 ]);
 
-                const service = ecsService.status === 'fulfilled' ? ecsService.value : null;
+                const backend = ecsBackend.status === 'fulfilled' ? ecsBackend.value : null;
+                const frontend = ecsFrontend.status === 'fulfilled' ? ecsFrontend.value : null;
                 const alarmsVal = alarms.status === 'fulfilled' ? alarms.value : [];
-                const status = computeStatus({ service, alarms: alarmsVal, targetGroupHealth: null });
+
+                // Merge running/desired counts from both services
+                const mergedService = (backend || frontend) ? {
+                    runningCount: (backend?.runningCount ?? 0) + (frontend?.runningCount ?? 0),
+                    desiredCount: (backend?.desiredCount ?? 0) + (frontend?.desiredCount ?? 0),
+                } : null;
+
+                const status = computeStatus({ service: mergedService, alarms: alarmsVal, targetGroupHealth: null });
 
                 return {
                     id,
                     name,
                     status,
                     service: {
-                        runningCount: service?.runningCount ?? 0,
-                        desiredCount: service?.desiredCount ?? 0,
+                        runningCount: mergedService?.runningCount ?? 0,
+                        desiredCount: mergedService?.desiredCount ?? 0,
                     },
                 };
             } catch (err) {

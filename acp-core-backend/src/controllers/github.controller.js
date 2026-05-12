@@ -286,7 +286,7 @@ exports.deployToEcs = async (req, res) => {
                 workflowContent,
                 appName
             });
-            
+
             // STEP 3: Assume role and set AWS secrets (same as before)
             const creds = {
                 AccessKeyId: appCredentials.accessKeyId,
@@ -384,23 +384,26 @@ exports.deployToEcs = async (req, res) => {
                 .replace(/\/+$/, '')
                 .split('/');
 
+            // AFTER
             const { id: deploymentId } = await deploymentModel.createDeployment({
                 name: appName || ecsCluster,
                 cloud: 'AWS',
                 deployment: 'ECS Fargate',
                 repoUrl,
-                repoName: repoParts[1] || '',          // ← parsed repo name
+                repoName: repoParts[1] || '',
                 account: repoParts[0] || account,
-                awsAccount: account,          // ← ADD: the real AWS account ID
-                userId: req.user?.username,     // ← parsed GitHub account (org/user), not AWS account
-                workflow: `deploy-${safeAppName}.yml`,       // ← known for ACP flow
+                accountID: account,
+                userId: req.user?.username,
+                workflow: `deploy-${safeAppName}.yml`,
                 branch,
                 ecsCluster,
                 region,
                 runId,
                 status: 'running',
                 triggeredFrom: 'ACP Portal',
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                ecsServiceBackend: `${appName}-backend`,    // ← ADD
+                ecsServiceFrontend: `${appName}-frontend`,  // ← ADD
             });
 
             // STEP 5b: Fetch ALB DNS and store as url

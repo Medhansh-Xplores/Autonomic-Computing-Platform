@@ -45,14 +45,21 @@ exports.createDeployment = async (data) => {
 
 // ─── GET ALL ──────────────────────────────────────────────────────────────────
 
-exports.getDeployments = async () => {
+// AFTER
+exports.getDeployments = async (userId) => {
     if (USE_DB) {
         const db = require('../config/db');
-        const result = await db.query('SELECT data FROM deployments ORDER BY created_at DESC');
+        // If userId provided, filter to only that user's deployments
+        const result = userId
+            ? await db.query(
+                `SELECT data FROM deployments WHERE data->>'userId' = $1 ORDER BY created_at DESC`,
+                [userId]
+            )
+            : await db.query('SELECT data FROM deployments ORDER BY created_at DESC');
         return result.rows.map(row => row.data);
     }
 
-    // ── local filesystem (unchanged) ──
+    // ── local filesystem ──
     if (!fs.existsSync(deploymentsPath)) return [];
 
     return fs.readdirSync(deploymentsPath).map(folder => {
@@ -60,7 +67,7 @@ exports.getDeployments = async () => {
         if (fs.existsSync(metadataPath)) {
             return JSON.parse(fs.readFileSync(metadataPath));
         }
-    }).filter(Boolean);
+    }).filter(Boolean).filter(d => !userId || d.userId === userId);
 };
 
 // ─── UPDATE STATUS ────────────────────────────────────────────────────────────
