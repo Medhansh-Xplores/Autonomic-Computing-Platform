@@ -70,7 +70,12 @@
                     </div>
                     <button class="view-btn"
                         (click)="openPdfModal('assets/docs/ACP-Overview.pdf', 'ACP Platform Overview')">
-                        &#128065; View PDF
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
                     </button>
                 </div>
 
@@ -84,7 +89,12 @@
                     </div>
                     <button class="view-btn"
                         (click)="openPdfModal('assets/docs/ACP-Whitepaper.pdf', 'ACP Technical Whitepaper')">
-                        &#128065; View PDF
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
                     </button>
                 </div>
 
@@ -98,7 +108,12 @@
                     </div>
                     <button class="view-btn"
                         (click)="openPdfModal('assets/docs/ACP-MAPEK.pdf', 'Multi-LLM MAPE-K Addendum')">
-                        &#128065; View PDF
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
                     </button>
                 </div>
 
@@ -112,14 +127,46 @@
 <!-- PDF VIEWER MODAL -->
 <div class="modal-backdrop" *ngIf="pdfModalOpen" (click)="closeModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
         <div class="modal-header">
             <span class="modal-title">{{ activePdfTitle }}</span>
             <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
         </div>
-        <div class="modal-body">
-            <iframe [src]="safePdfUrl" class="pdf-frame" frameborder="0" [title]="activePdfTitle">
-            </iframe>
+
+        <!-- Zoom toolbar -->
+        <div class="pdf-toolbar">
+            <button class="zoom-btn" (click)="zoomOut()" title="Zoom Out" [disabled]="pdfScale <= 0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+            <span class="zoom-label">{{ (pdfScale * 100).toFixed(0) }}%</span>
+            <button class="zoom-btn" (click)="zoomIn()" title="Zoom In" [disabled]="pdfScale >= 3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+            <button class="zoom-btn zoom-fit" (click)="zoomFit()" title="Fit to Width">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+            </button>
+            <span class="page-info">{{ totalPages }} pages — scroll to navigate</span>
         </div>
+
+        <!-- All pages scrollable container -->
+        <div class="modal-body pdf-canvas-body">
+            <div #pdfContainer class="pdf-pages-container"></div>
+        </div>
+
     </div>
 </div>
 

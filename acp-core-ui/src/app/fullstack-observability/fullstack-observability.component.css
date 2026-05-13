@@ -47,8 +47,8 @@
 .serv1,
 .serv2,
 .serv3 {
-    width: 250px;
-    height: 250px;
+    width: 300px;
+    height: 300px;
     overflow: hidden;
     border-radius: 14px;
     background: #1a3a6b;
@@ -82,36 +82,21 @@
 }
 
 /* Card label at bottom */
-.serv1 p,
-.serv2 p,
-.serv3 p {
+.serv1 h2,
+.serv2 h2,
+.serv3 h2 {
     position: relative;
     z-index: 2;
     width: 100%;
     margin: 0;
     padding: 10px 12px;
     background: rgba(26, 58, 107, 0.88);
-    color: #ffc107;
-    font-size: 15px;
-    font-weight: 700;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
     text-align: center;
     letter-spacing: 0.3px;
     border-top: 2px solid #ffc107;
-}
-
-/* Yellow accent border on left — matches the portal card style */
-.serv1::before,
-.serv2::before,
-.serv3::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: #e6bb00;
-    z-index: 3;
-    border-radius: 0 0 0 14px;
 }
 
 @media only screen and (max-width: 900px) {
@@ -122,13 +107,13 @@
     .serv1,
     .serv2,
     .serv3 {
-        width: 180px;
-        height: 180px;
+        width: 220px;
+        height: 220px;
     }
 
-    .serv1 p,
-    .serv2 p,
-    .serv3 p {
+    .serv1 h2,
+    .serv2 h2,
+    .serv3 h2 {
         font-size: 13px;
     }
 }

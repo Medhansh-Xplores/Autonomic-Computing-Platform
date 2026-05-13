@@ -81,6 +81,11 @@ resource "aws_route_table_association" "private" {
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
 
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
   tags = {
     CreatedBy = var.created_by
   }

@@ -33,6 +33,8 @@ export interface TaskInfo {
 export interface MetricsInfo {
     cpuUtilization: number | null;
     memoryUtilization: number | null;
+    cpuReservedUnits?: number;
+    memoryReservedMiB?: number;
 }
 
 export interface AlarmInfo {
@@ -141,6 +143,22 @@ export interface AlbInfo {
 
 export interface AlbHealthPayload {
     loadBalancers: AlbInfo[];
+    fetchedAt: string;
+    _mock?: boolean;
+}
+
+// ── ECS Health ────────────────────────────────────────────────────────────────
+export interface EcsClusterInfo {
+    name: string;
+    arn: string;
+    status: string;
+    runningTasksCount: number;
+    pendingTasksCount: number;
+    activeServicesCount: number;
+}
+
+export interface EcsHealthPayload {
+    clusters: EcsClusterInfo[];
     fetchedAt: string;
     _mock?: boolean;
 }

@@ -1,16 +1,16 @@
 
 region     = "us-east-1"
 
-app_name   = "my-app"
+app_name   = "task-app"
 zone_name  = "dev-ecs"
-vpc_id     = "vpc-0f71b2ce07cf550f9"
+vpc_id     = "vpc-0b9528b7c35d0a387"
 
 cluster_id         = "arn:aws:ecs:us-east-1:997053010568:cluster/dev-ecs"
 execution_role_arn = "arn:aws:iam::997053010568:role/dev-ecs-execution-role"
 log_group_name     = "/ecs/dev-ecs"
-http_listener_arn  = "arn:aws:elasticloadbalancing:us-east-1:997053010568:listener/app/dev-ecs-alb/6b679d28c5bc563f/82914559bde1190d"
-security_group_id  = "sg-040988df67a8fe1df"
-private_subnet_ids = ["subnet-0b7d1d46b6aba51d7","subnet-0d2fce748b443234f"]
+http_listener_arn  = "arn:aws:elasticloadbalancing:us-east-1:997053010568:listener/app/dev-ecs-alb/81ea109ad8a198b5/1225eb2a98bef27c"
+security_group_id  = "sg-0c9d2e123bf11096e"
+private_subnet_ids = ["subnet-03209354681bc0355","subnet-05972fb834b2b7026"]
 
 cpu            = 256
 memory         = 512

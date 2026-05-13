@@ -13,8 +13,8 @@
 .servicelist {
     display: flex;
     justify-content: center;
-    gap: 60px;
-    margin-top: 40px;
+    gap: 15px;
+    margin-top: 80px;
 }
 
 /* Responsive */
@@ -35,6 +35,7 @@
     border-radius: 10px;
     border-left: 4px solid #003160;
     text-align: center;
+    margin-top: 10px;
 }
 
 .create-header-title {

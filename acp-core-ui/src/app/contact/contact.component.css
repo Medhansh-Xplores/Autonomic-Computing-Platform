@@ -500,3 +500,103 @@
         height: 56px;
     }
 }
+
+/* =============================================
+   PDF ZOOM TOOLBAR
+   ============================================= */
+.pdf-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #f0f4f8;
+    border-bottom: 1px solid #dde3ec;
+    flex-shrink: 0;
+}
+
+.zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #ffffff;
+    border: 1px solid #c5d0de;
+    border-radius: 5px;
+    cursor: pointer;
+    color: #003160;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.zoom-btn:hover:not(:disabled) {
+    background-color: #003160;
+    border-color: #003160;
+    color: #ffffff;
+}
+
+.zoom-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.zoom-fit {
+    width: auto;
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 600;
+}
+
+.zoom-label {
+    min-width: 48px;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #003160;
+}
+
+.page-info {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    color: #555;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+/* =============================================
+   PDF SCROLLABLE BODY
+   ============================================= */
+.pdf-canvas-body {
+    overflow-y: auto;
+    overflow-x: auto;
+    background-color: #525659;
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    min-height: 0;
+}
+
+.pdf-pages-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Each page wrapper — adds shadow and spacing */
+.pdf-page-wrapper {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+/* Canvas inside each wrapper — CSS size set by JS via style.width/height */
+.pdf-page-canvas {
+    display: block;
+    background: #fff;
+}

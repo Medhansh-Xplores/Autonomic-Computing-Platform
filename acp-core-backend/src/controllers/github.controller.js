@@ -75,6 +75,7 @@ exports.getLogs = async (req, res) => {
         // Get the correct run
         let run = null;
 
+        // AFTER
         if (runId) {
             try {
                 const runResp = await axios.get(
@@ -83,7 +84,10 @@ exports.getLogs = async (req, res) => {
                 );
                 run = runResp.data;
             } catch (err) {
-                return res.json({ complete: true, failed: true, steps: [] });
+                // Transient GitHub API error — do NOT mark as failed.
+                // Return incomplete so the frontend keeps polling.
+                console.warn('[getLogs] transient error fetching run, will retry:', err.message);
+                return res.json({ complete: false, failed: false, steps: [] });
             }
         } else {
             const runsResp = await axios.get(

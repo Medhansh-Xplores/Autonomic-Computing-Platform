@@ -5,7 +5,7 @@ import { switchMap, shareReplay } from 'rxjs/operators';
 import { EnvService } from 'src/environments/env.service';
 import {
     ObservabilityHealth, DeploymentHealthSummary,
-    VpcHealthPayload, RdsHealthPayload, AlbHealthPayload
+    VpcHealthPayload, RdsHealthPayload, AlbHealthPayload, EcsHealthPayload
 } from '../models/observability.model';
 
 @Injectable({
@@ -112,6 +112,60 @@ export class ObservabilityService {
     pollAcpAlbHealth(region: string): Observable<AlbHealthPayload> {
         return timer(0, 60000).pipe(
             switchMap(() => this.getAcpAlbHealth(region)),
+            shareReplay(1)
+        );
+    }
+
+    // ADD after pollAcpAlbHealth():
+
+    // ── User infra VPC health (account-scoped, no acp- prefix filter) ────────────
+    getInfraVpcHealth(accountId: string, region: string): Observable<VpcHealthPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<VpcHealthPayload>(`${this.apiBase}observability/infra-vpc-health`, { params });
+    }
+
+    pollInfraVpcHealth(accountId: string, region: string): Observable<VpcHealthPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraVpcHealth(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    // ── User infra RDS health ─────────────────────────────────────────────────────
+    getInfraRdsHealth(accountId: string, region: string): Observable<RdsHealthPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<RdsHealthPayload>(`${this.apiBase}observability/infra-rds-health`, { params });
+    }
+
+    pollInfraRdsHealth(accountId: string, region: string): Observable<RdsHealthPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraRdsHealth(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    // ── User infra ALB health ─────────────────────────────────────────────────────
+    getInfraAlbHealth(accountId: string, region: string): Observable<AlbHealthPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<AlbHealthPayload>(`${this.apiBase}observability/infra-alb-health`, { params });
+    }
+
+    pollInfraAlbHealth(accountId: string, region: string): Observable<AlbHealthPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraAlbHealth(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    // ── User infra ECS health ─────────────────────────────────────────────────────
+    getInfraEcsHealth(accountId: string, region: string): Observable<EcsHealthPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<EcsHealthPayload>(`${this.apiBase}observability/infra-ecs-health`, { params });
+    }
+
+    pollInfraEcsHealth(accountId: string, region: string): Observable<EcsHealthPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraEcsHealth(accountId, region)),
             shareReplay(1)
         );
     }

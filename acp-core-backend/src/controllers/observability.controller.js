@@ -3,6 +3,12 @@ const {
     EC2Client,
     DescribeVpcsCommand,
     DescribeSubnetsCommand,
+    DescribeRouteTablesCommand,
+    DescribeInternetGatewaysCommand,
+    DescribeNatGatewaysCommand,
+    DescribeSecurityGroupsCommand,
+    DescribeFlowLogsCommand,
+    DescribeVpcAttributeCommand,
 } = require('@aws-sdk/client-ec2');
 const {
     RDSClient,
@@ -18,6 +24,12 @@ const {
     STSClient,
     AssumeRoleCommand,
 } = require('@aws-sdk/client-sts');
+const {
+    ECSClient,
+    DescribeClustersCommand,
+    ListClustersCommand,
+    DescribeServicesCommand,
+} = require('@aws-sdk/client-ecs');
 
 const observabilityService = require('../services/observability.service');
 const deploymentModel = require('../models/deployment.model');
@@ -133,6 +145,21 @@ exports.getHealth = async (req, res) => {
         const metricsVal = metricsResult.status === 'fulfilled'
             ? metricsResult.value
             : { cpuUtilization: null, memoryUtilization: null };
+
+        // If Container Insights isn't enabled, fall back to task-level reserved capacity
+        if (metricsVal.cpuUtilization === null && metricsVal.memoryUtilization === null) {
+            const allTasks = [
+                ...(tasksBackend.status === 'fulfilled' ? tasksBackend.value : []),
+                ...(tasksFrontend.status === 'fulfilled' ? tasksFrontend.value : []),
+            ];
+            if (allTasks.length > 0) {
+                const totalCpuUnits = allTasks.reduce((s, t) => s + (parseInt(t.cpu) || 0), 0);
+                const totalMemMiB = allTasks.reduce((s, t) => s + (parseInt(t.memory) || 0), 0);
+                metricsVal.cpuReservedUnits = totalCpuUnits;
+                metricsVal.memoryReservedMiB = totalMemMiB;
+            }
+        }
+
         const alarmsVal = alarms.status === 'fulfilled' ? alarms.value : [];
         const tgHealth = targetGroupHealth.status === 'fulfilled' ? targetGroupHealth.value : null;
 
@@ -608,6 +635,177 @@ exports.getAcpAlbHealth = async (req, res) => {
 
     } catch (err) {
         console.error('[acp-alb-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ── NEW: GET /api/v1/observability/infra-vpc-health ───────────────────────────
+// User's VPCs in any account/region they registered — no acp- prefix filter
+
+exports.getInfraVpcHealth = async (req, res) => {
+    const { region, accountId } = req.query;
+    const userId = req.user?.username;
+    if (!region || !accountId) return res.status(400).json({ error: 'Missing region or accountId' });
+
+    const cacheKey = `infra-vpc:${userId}:${accountId}:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const credentials = await resolveCredentials(accountId, userId, region);
+        const ec2 = new EC2Client({ region, credentials });
+
+        const vpcsResp = await ec2.send(new DescribeVpcsCommand({}));
+
+        const vpcs = await Promise.all((vpcsResp.Vpcs || []).map(async vpc => {
+            const nameTag = vpc.Tags?.find(t => t.Key === 'Name')?.Value || vpc.VpcId;
+            const subnetsResp = await ec2.send(new DescribeSubnetsCommand({
+                Filters: [{ Name: 'vpc-id', Values: [vpc.VpcId] }],
+            }));
+            const subnets = (subnetsResp.Subnets || []).map(s => ({
+                subnetId: s.SubnetId,
+                name: s.Tags?.find(t => t.Key === 'Name')?.Value || s.SubnetId,
+                az: s.AvailabilityZone,
+                type: s.MapPublicIpOnLaunch ? 'public' : 'private',
+                cidr: s.CidrBlock,
+                state: s.State,
+            }));
+            return { vpcId: vpc.VpcId, name: nameTag, cidr: vpc.CidrBlock, state: vpc.State, subnets };
+        }));
+
+        const payload = { vpcs, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+    } catch (err) {
+        console.error('[infra-vpc-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getInfraRdsHealth = async (req, res) => {
+    const { region, accountId } = req.query;
+    const userId = req.user?.username;
+    if (!region || !accountId) return res.status(400).json({ error: 'Missing region or accountId' });
+
+    const cacheKey = `infra-rds:${userId}:${accountId}:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const credentials = await resolveCredentials(accountId, userId, region);
+        const rds = new RDSClient({ region, credentials });
+        const resp = await rds.send(new DescribeDBInstancesCommand({}));
+
+        const instances = (resp.DBInstances || []).map(db => ({
+            identifier: db.DBInstanceIdentifier,
+            engine: db.Engine,
+            engineVersion: db.EngineVersion,
+            status: db.DBInstanceStatus,
+            instanceClass: db.DBInstanceClass,
+            multiAz: db.MultiAZ,
+            endpoint: db.Endpoint?.Address || null,
+            port: db.Endpoint?.Port || null,
+            storageGb: db.AllocatedStorage,
+            createdAt: db.InstanceCreateTime?.toISOString() || null,
+        }));
+
+        const payload = { instances, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+    } catch (err) {
+        console.error('[infra-rds-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getInfraAlbHealth = async (req, res) => {
+    const { region, accountId } = req.query;
+    const userId = req.user?.username;
+    if (!region || !accountId) return res.status(400).json({ error: 'Missing region or accountId' });
+
+    const cacheKey = `infra-alb:${userId}:${accountId}:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const credentials = await resolveCredentials(accountId, userId, region);
+        const elb = new ElasticLoadBalancingV2Client({ region, credentials });
+
+        const lbResp = await elb.send(new DescribeLoadBalancersCommand({}));
+        const allLbs = lbResp.LoadBalancers || [];
+
+        const tgResp = await elb.send(new DescribeTargetGroupsCommand({}));
+        const allTgs = tgResp.TargetGroups || [];
+
+        const tgHealthPromises = allTgs.map(tg =>
+            elb.send(new DescribeTargetHealthCommand({ TargetGroupArn: tg.TargetGroupArn }))
+                .then(r => {
+                    const targets = r.TargetHealthDescriptions || [];
+                    return {
+                        name: tg.TargetGroupName,
+                        healthy: targets.filter(t => t.TargetHealth?.State === 'healthy').length,
+                        total: targets.length,
+                        lbArns: tg.LoadBalancerArns || [],
+                    };
+                })
+        );
+        const tgHealthResults = await Promise.all(tgHealthPromises);
+
+        const loadBalancers = allLbs.map(lb => ({
+            name: lb.LoadBalancerName,
+            arn: lb.LoadBalancerArn,
+            dns: lb.DNSName,
+            scheme: lb.Scheme,
+            state: lb.State?.Code,
+            type: lb.Type,
+            targetGroups: tgHealthResults.filter(tg => tg.lbArns.includes(lb.LoadBalancerArn))
+                .map(({ lbArns, ...rest }) => rest),
+        }));
+
+        const payload = { loadBalancers, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+    } catch (err) {
+        console.error('[infra-alb-health]', err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getInfraEcsHealth = async (req, res) => {
+    const { region, accountId } = req.query;
+    const userId = req.user?.username;
+    if (!region || !accountId) return res.status(400).json({ error: 'Missing region or accountId' });
+
+    const cacheKey = `infra-ecs:${userId}:${accountId}:${region}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
+
+    try {
+        const credentials = await resolveCredentials(accountId, userId, region);
+        const ecs = new ECSClient({ region, credentials });
+
+        // List all cluster ARNs, then describe them
+        const listResp = await ecs.send(new ListClustersCommand({}));
+        const clusterArns = listResp.clusterArns || [];
+
+        let clusters = [];
+        if (clusterArns.length > 0) {
+            const descResp = await ecs.send(new DescribeClustersCommand({ clusters: clusterArns }));
+            clusters = (descResp.clusters || []).map(c => ({
+                name: c.clusterName,
+                arn: c.clusterArn,
+                status: c.status,
+                runningTasksCount: c.runningTasksCount ?? 0,
+                pendingTasksCount: c.pendingTasksCount ?? 0,
+                activeServicesCount: c.activeServicesCount ?? 0,
+            }));
+        }
+
+        const payload = { clusters, fetchedAt: new Date().toISOString() };
+        setCached(cacheKey, payload);
+        res.json(payload);
+    } catch (err) {
+        console.error('[infra-ecs-health]', err.message);
         res.status(500).json({ error: err.message });
     }
 };
