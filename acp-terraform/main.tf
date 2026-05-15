@@ -284,7 +284,7 @@ resource "aws_db_instance" "acp" {
   publicly_accessible    = false
 
   # FIX: deletion_protection — was missing, now enabled
-  deletion_protection = true
+  deletion_protection = false
 
   # FIX: backup_retention_period — was 0 days (default), now 7 days minimum
   backup_retention_period = 7
