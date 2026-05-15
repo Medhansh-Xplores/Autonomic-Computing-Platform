@@ -300,15 +300,258 @@
 
 /* grid column definitions per resource type */
 .vpc-grid {
-    grid-template-columns: 1.5fr 1fr 2fr 1fr;
+    grid-template-columns: 2fr 1.5fr 2.5fr 1fr 120px;
+}
+
+/* ── VPC detail subnet + flowlog grids ── */
+.vpc-detail-subnet-grid {
+    grid-template-columns: 2fr 1.5fr 1.5fr 80px 100px;
+}
+
+.vpc-detail-flowlog-grid {
+    grid-template-columns: 2fr 80px 90px 2fr 130px;
+}
+
+/* ── Boolean pill (DNS / IGW) ── */
+.bool-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.bool-yes {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.bool-no {
+    background: #f5f5f5;
+    color: #888;
+}
+
+/* ── VPC tags grid ── */
+.vpc-tags-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.vpc-tag-row {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    padding: 4px 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.vpc-tag-key {
+    color: #555;
+    font-weight: 600;
+    min-width: 140px;
+}
+
+.vpc-tag-value {
+    color: #333;
+}
+
+/* ── Subnet count pill ── */
+.subnet-count-pill {
+    display: inline-block;
+    background: #eef2ff;
+    color: #3949ab;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 11px;
+    margin-right: 4px;
 }
 
 .rds-grid {
-    grid-template-columns: 1.5fr 1fr 1fr 2fr 1fr;
+    grid-template-columns: 2fr 2fr 1.5fr 1fr 120px;
+}
+
+/* ── Endpoint copy row ── */
+.endpoint-copy-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.endpoint-text {
+    word-break: break-all;
+    font-size: 11px;
+    color: #444;
+}
+
+.copy-btn {
+    font-size: 11px;
+    padding: 2px 10px;
+    border: 1px solid #c2d3f3;
+    border-radius: 6px;
+    background: #f0f5ff;
+    color: #3949ab;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.copy-btn:hover {
+    background: #dce8ff;
+}
+
+/* ── Storage type pill ── */
+.storage-type-pill {
+    display: inline-block;
+    background: #f0f5ff;
+    color: #3949ab;
+    border-radius: 8px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+/* ── Section count badge ── */
+.section-count {
+    display: inline-block;
+    background: #eef2ff;
+    color: #3949ab;
+    border-radius: 10px;
+    padding: 0 7px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+/* ── Log file block ── */
+.log-file-block {
+    margin-bottom: 16px;
+    border: 1px solid #e8edf5;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.log-file-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f5f7ff;
+    border-bottom: 1px solid #e8edf5;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.log-file-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3949ab;
+}
+
+.log-file-meta {
+    font-size: 11px;
+    color: #999;
+}
+
+.log-lines-block {
+    padding: 8px 12px;
+    background: #0d1117;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.log-line {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #c9d1d9;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 
 .alb-grid {
-    grid-template-columns: 1.5fr 2fr 1fr 1fr;
+    grid-template-columns: 2.5fr 1fr 2fr 1fr 120px;
+}
+
+/* ── ALB target group + listener grids ── */
+.alb-tg-grid {
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 80px 90px;
+}
+
+.alb-listener-grid {
+    grid-template-columns: 80px 60px 2fr 1.5fr;
+}
+
+/* ── Scheme pill ── */
+.scheme-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.scheme-external {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.scheme-internal {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* ── DNS truncate in row ── */
+.dns-copy-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.dns-truncate {
+    font-size: 11px;
+    color: #555;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 220px;
+}
+
+/* ── ARN truncate ── */
+.arn-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+}
+
+/* ── AZ pills ── */
+.az-pill {
+    display: inline-block;
+    background: #f0f5ff;
+    color: #3949ab;
+    border-radius: 8px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+/* ── Metric warn / danger values ── */
+.metric-warn {
+    color: #e65100;
+    font-weight: 700;
+}
+
+.metric-danger {
+    color: #c62828;
+    font-weight: 700;
 }
 
 .expand-name {
@@ -599,9 +842,38 @@
 
 .ecs-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2.5fr 1fr 2fr 1fr 120px;
     gap: 0 1rem;
     align-items: center;
+}
+
+/* ── ECS service + task grids ── */
+.ecs-svc-grid {
+    grid-template-columns: 2fr 2fr 1fr 1fr 1fr;
+}
+
+.ecs-task-grid {
+    grid-template-columns: 1.5fr 2fr 1fr 1.5fr 1fr;
+}
+
+/* ── Task count pills (row) ── */
+.task-count-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.task-running-pill {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.task-pending-pill {
+    background: #fff8e1;
+    color: #f57f17;
 }
 
 /* ── Detail slide-in overlay (unchanged) ── */

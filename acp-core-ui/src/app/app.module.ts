@@ -41,6 +41,7 @@ import { AcpPortalHealthComponent } from './acp-portal-health/acp-portal-health.
 import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { AcpSecurityComponent } from './acp-security/acp-security.component';
 
 @NgModule({
   declarations: [
@@ -72,6 +73,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
     AboutComponent,
     ContactComponent,
     ForgotPasswordComponent,
+    AcpSecurityComponent,
   ],
   imports: [
     BrowserModule,

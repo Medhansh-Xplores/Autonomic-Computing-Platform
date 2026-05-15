@@ -236,6 +236,51 @@ resource "aws_db_instance" "acp" {
   tags = { Name = "acp-rds" }
 }
 
+# ── S3 BUCKET FOR ALB ACCESS LOGS ────────────────────────────────────────────
+
+data "aws_elb_service_account" "main" {}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_s3_bucket" "acp_alb_logs" {
+  bucket        = "acp-alb-access-logs-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
+
+  tags = { Name = "acp-alb-access-logs" }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "acp_alb_logs" {
+  bucket = aws_s3_bucket.acp_alb_logs.id
+
+  rule {
+    id     = "expire-old-logs"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 30
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "acp_alb_logs" {
+  bucket = aws_s3_bucket.acp_alb_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowALBLogDelivery"
+        Effect    = "Allow"
+        Principal = { AWS = data.aws_elb_service_account.main.arn }
+        Action    = "s3:PutObject"
+        Resource  = "${aws_s3_bucket.acp_alb_logs.arn}/acp-alb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+      }
+    ]
+  })
+}
+
 # ── ALB ───────────────────────────────────────────────────────────────────────
 
 resource "aws_lb" "acp" {
@@ -244,6 +289,16 @@ resource "aws_lb" "acp" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.acp_alb.id]
   subnets            = aws_subnet.acp_public[*].id
+
+  # ADD THIS
+  access_logs {
+    bucket  = aws_s3_bucket.acp_alb_logs.id
+    prefix  = "acp-alb"
+    enabled = true
+  }
+
+  # ADD THIS — bucket policy must exist before ALB tries to write logs
+  depends_on = [aws_s3_bucket_policy.acp_alb_logs]
 
   tags = { Name = "acp-alb" }
 }
@@ -378,6 +433,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         ]
         Resource = aws_efs_file_system.acp.arn
       },
+    
       {
         Effect = "Allow"
         Action = [
@@ -388,7 +444,28 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "ecr:*",
           "logs:*",
           "elasticloadbalancing:*",
-          "cloudwatch:*"
+          "cloudwatch:*",
+
+          # ── Security dashboard additions ──
+          "iam:GetRole",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListRolePolicies",
+          "iam:GetRolePolicy",
+
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecrets",
+
+          "guardduty:ListDetectors",
+          "guardduty:ListFindings",
+          "guardduty:GetFindings",
+
+          "cloudtrail:DescribeTrails",
+          "cloudtrail:GetTrailStatus",
+
+          "acm:ListCertificates",
+          "acm:DescribeCertificate",
+
+          "wafv2:GetWebACLForResource"
         ]
         Resource = "*"
       }

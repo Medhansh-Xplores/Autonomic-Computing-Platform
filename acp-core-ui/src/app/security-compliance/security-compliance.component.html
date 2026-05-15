@@ -1,32 +1,200 @@
 <div class="main-container">
 
-    <header>
-        <div class="menu-container">
-            <div class="menu-btn"></div>
-            <h1 class="page-title">Security & Compliance Services</h1>
-        </div>
-    </header>
+    <div class="create-header-box">
+        <div class="create-header-title">SECURITY AND COMPLIANCE SERVICES <br>ACP Portal · Infra & App Deployments ·
+            AIOps</div>
+    </div>
 
     <div class="servicelist">
 
-        <a routerLink="/security-scanning">
+        <!-- Card 1: ACP Portal Security Checks -->
+        <a routerLink="/security/acp-security">
             <div class="serv1">
-                <svg></svg>
-                <h2>Security Scanning</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+                    <!-- Background shadow ellipse -->
+                    <ellipse cx="400" cy="520" rx="320" ry="40" fill="#e8eaf6" opacity="0.5" />
+
+                    <!-- Shield body -->
+                    <path d="M400,110 L560,180 L560,320 Q560,440 400,500 Q240,440 240,320 L240,180 Z" fill="#1a3a6b" />
+                    <path d="M400,135 L538,198 L538,318 Q538,422 400,476 Q262,422 262,318 L262,198 Z" fill="#0d2444" />
+
+                    <!-- Lock icon in shield center -->
+                    <rect x="365" y="285" width="70" height="55" rx="8" fill="#4fc3f7" opacity="0.9" />
+                    <path d="M378,285 Q378,255 400,255 Q422,255 422,285" fill="none" stroke="#4fc3f7" stroke-width="8"
+                        stroke-linecap="round" />
+                    <circle cx="400" cy="310" r="8" fill="#0d2444" />
+                    <rect x="396" y="310" width="8" height="14" rx="4" fill="#0d2444" />
+
+                    <!-- Checkmarks around shield -->
+                    <circle cx="290" cy="220" r="18" fill="#00e676" opacity="0.9" />
+                    <polyline points="282,220 292,230 302,210" fill="none" stroke="#fff" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <circle cx="510" cy="220" r="18" fill="#00e676" opacity="0.9" />
+                    <polyline points="502,220 512,230 522,210" fill="none" stroke="#fff" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <circle cx="290" cy="360" r="18" fill="#00e676" opacity="0.9" />
+                    <polyline points="282,360 292,370 302,350" fill="none" stroke="#fff" stroke-width="3"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <!-- Radar/scan ring -->
+                    <circle cx="400" cy="310" r="100" fill="none" stroke="#4fc3f7" stroke-width="1"
+                        stroke-dasharray="8 4" opacity="0.4" />
+                    <circle cx="400" cy="310" r="140" fill="none" stroke="#4fc3f7" stroke-width="1"
+                        stroke-dasharray="5 6" opacity="0.2" />
+
+                    <!-- Person (right side) -->
+                    <circle cx="650" cy="225" r="42" fill="#fdb797" />
+                    <path d="M608,335 Q650,285 692,335 L708,510 H592 Z" fill="#1a3a6b" />
+                    <path d="M608,355 Q572,395 568,435" stroke="#fdb797" stroke-width="18" fill="none"
+                        stroke-linecap="round" />
+                    <path d="M692,355 Q728,395 732,435" stroke="#fdb797" stroke-width="18" fill="none"
+                        stroke-linecap="round" />
+                    <!-- Hair -->
+                    <path d="M608,203 Q630,173 650,171 Q670,173 692,203 Q680,188 650,185 Q620,188 608,203Z"
+                        fill="#333" />
+
+                    <!-- Alert badge -->
+                    <rect x="490" y="130" width="170" height="52" rx="12" fill="#1a3a6b" stroke="#00e676"
+                        stroke-width="2" />
+                    <circle cx="514" cy="156" r="8" fill="#00e676" />
+                    <rect x="528" y="149" width="110" height="8" rx="4" fill="#4fc3f7" opacity="0.9" />
+                    <rect x="528" y="163" width="75" height="6" rx="3" fill="#4fc3f7" opacity="0.5" />
+                </svg>
+                <h2>ACP Portal Security Checks</h2>
             </div>
         </a>
 
-        <a routerLink="/compliance-checks">
+        <!-- Card 2: Infra and App Deployments Security Checks -->
+        <a routerLink="/security-compliance/infra-app">
             <div class="serv2">
-                <svg></svg>
-                <h2>Compliance Checks</h2>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+                    <ellipse cx="400" cy="520" rx="300" ry="38" fill="#e8eaf6" opacity="0.5" />
+
+                    <!-- Server rack left -->
+                    <rect x="130" y="160" width="120" height="280" rx="10" fill="#1a3a6b" />
+                    <rect x="142" y="175" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="190" r="6" fill="#00e676" />
+                    <rect x="142" y="215" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="230" r="6" fill="#ffc107" />
+                    <rect x="142" y="255" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="270" r="6" fill="#00e676" />
+                    <rect x="142" y="295" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="310" r="6" fill="#ef5350" />
+                    <rect x="142" y="335" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="350" r="6" fill="#00e676" />
+                    <rect x="142" y="375" width="96" height="30" rx="5" fill="#0d2444" />
+                    <circle cx="228" cy="390" r="6" fill="#4fc3f7" />
+
+                    <!-- Center pipeline/flow -->
+                    <line x1="310" y1="200" x2="490" y2="200" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="8 4"
+                        opacity="0.7" />
+                    <line x1="310" y1="300" x2="490" y2="300" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="8 4"
+                        opacity="0.7" />
+                    <line x1="310" y1="400" x2="490" y2="400" stroke="#4fc3f7" stroke-width="2" stroke-dasharray="8 4"
+                        opacity="0.7" />
+
+                    <!-- Shield checkpoints on pipeline -->
+                    <polygon points="400,180 420,200 400,220 380,200" fill="#00e676" opacity="0.9" />
+                    <polyline points="391,200 398,208 412,192" fill="none" stroke="#fff" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <polygon points="400,280 420,300 400,320 380,300" fill="#ffc107" opacity="0.9" />
+                    <line x1="391" y1="300" x2="409" y2="300" stroke="#fff" stroke-width="2.5" stroke-linecap="round" />
+
+                    <polygon points="400,380 420,400 400,420 380,400" fill="#00e676" opacity="0.9" />
+                    <polyline points="391,400 398,408 412,392" fill="none" stroke="#fff" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <!-- Cloud box right -->
+                    <path
+                        d="M530,240 Q520,210 545,205 Q548,185 570,185 Q592,168 610,185 Q635,178 640,205 Q658,205 658,225 Q658,250 635,250 Z"
+                        fill="#1a3a6b" stroke="#4fc3f7" stroke-width="1.5" />
+                    <rect x="540" y="250" width="108" height="80" rx="8" fill="#1a3a6b" />
+                    <rect x="552" y="262" width="84" height="10" rx="4" fill="#4fc3f7" opacity="0.7" />
+                    <rect x="552" y="280" width="60" height="8" rx="4" fill="#4fc3f7" opacity="0.4" />
+                    <rect x="552" y="296" width="72" height="8" rx="4" fill="#4fc3f7" opacity="0.4" />
+                    <circle cx="614" cy="312" r="10" fill="#00e676" />
+                    <polyline points="608,312 613,318 622,305" fill="none" stroke="#fff" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" />
+
+                    <!-- Person -->
+                    <circle cx="650" cy="430" r="38" fill="#fdb797" />
+                    <path d="M612,530 Q650,488 688,530 L700,600 H600 Z" fill="#e6bb00" />
+                    <path d="M612,600 Q612,535 590,510" stroke="#fdb797" stroke-width="16" fill="none"
+                        stroke-linecap="round" />
+                    <path d="M612,408 Q634,380 650,378 Q666,380 688,408 Q676,393 650,390 Q624,393 612,408Z"
+                        fill="#4a3000" />
+                </svg>
+                <h2>Infra &amp; App Deployments Security Checks</h2>
             </div>
         </a>
 
-        <a routerLink="/security-policies">
-            <div class="serv3">
-                <svg></svg>
-                <h2>Security Policies</h2>
+        <!-- Card 3: AIOps Security (Coming Soon) -->
+        <a class="disabled-card">
+            <div class="serv3 coming-soon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+                    <ellipse cx="400" cy="520" rx="300" ry="38" fill="#e8eaf6" opacity="0.5" />
+
+                    <!-- AI head -->
+                    <ellipse cx="330" cy="260" rx="110" ry="130" fill="#1a3a6b" />
+                    <ellipse cx="330" cy="260" rx="95" ry="115" fill="#0d2444" />
+
+                    <!-- Circuit lines -->
+                    <line x1="280" y1="220" x2="380" y2="220" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="280" y1="250" x2="380" y2="250" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="280" y1="280" x2="380" y2="280" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="280" y1="310" x2="380" y2="310" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="300" y1="200" x2="300" y2="340" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="330" y1="190" x2="330" y2="350" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+                    <line x1="360" y1="200" x2="360" y2="340" stroke="#4fc3f7" stroke-width="1.5" opacity="0.8" />
+
+                    <!-- Circuit nodes -->
+                    <circle cx="300" cy="220" r="5" fill="#00e676" />
+                    <circle cx="330" cy="250" r="5" fill="#ffc107" />
+                    <circle cx="360" cy="280" r="5" fill="#4fc3f7" />
+                    <circle cx="300" cy="310" r="5" fill="#00e676" />
+                    <circle cx="360" cy="220" r="5" fill="#ef5350" />
+                    <circle cx="330" cy="310" r="5" fill="#4fc3f7" />
+
+                    <!-- Neck -->
+                    <rect x="305" y="375" width="50" height="50" rx="6" fill="#1a3a6b" />
+
+                    <!-- Shield floating cards on right -->
+                    <rect x="480" y="130" width="170" height="62" rx="10" fill="#1a3a6b" stroke="#00e676"
+                        stroke-width="1.5" />
+                    <polygon points="498,161 510,173 510,149" fill="#00e676" />
+                    <rect x="518" y="148" width="114" height="8" rx="3" fill="#4fc3f7" opacity="0.9" />
+                    <rect x="518" y="162" width="82" height="7" rx="3" fill="#4fc3f7" opacity="0.5" />
+                    <rect x="518" y="175" width="96" height="6" rx="3" fill="#4fc3f7" opacity="0.3" />
+
+                    <rect x="480" y="210" width="170" height="62" rx="10" fill="#1a3a6b" stroke="#ffc107"
+                        stroke-width="1.5" />
+                    <polygon points="498,241 510,253 510,229" fill="#ffc107" />
+                    <rect x="518" y="228" width="100" height="8" rx="3" fill="#4fc3f7" opacity="0.9" />
+                    <rect x="518" y="242" width="72" height="7" rx="3" fill="#4fc3f7" opacity="0.5" />
+                    <rect x="518" y="255" width="86" height="6" rx="3" fill="#4fc3f7" opacity="0.3" />
+
+                    <rect x="480" y="290" width="170" height="62" rx="10" fill="#1a3a6b" stroke="#ef5350"
+                        stroke-width="1.5" />
+                    <polygon points="498,321 510,333 510,309" fill="#ef5350" />
+                    <rect x="518" y="308" width="118" height="8" rx="3" fill="#4fc3f7" opacity="0.9" />
+                    <rect x="518" y="322" width="88" height="7" rx="3" fill="#4fc3f7" opacity="0.5" />
+                    <rect x="518" y="335" width="100" height="6" rx="3" fill="#4fc3f7" opacity="0.3" />
+
+                    <!-- Connecting lines -->
+                    <line x1="425" y1="220" x2="480" y2="161" stroke="#4fc3f7" stroke-width="1" stroke-dasharray="5 3"
+                        opacity="0.6" />
+                    <line x1="425" y1="260" x2="480" y2="241" stroke="#4fc3f7" stroke-width="1" stroke-dasharray="5 3"
+                        opacity="0.6" />
+                    <line x1="425" y1="300" x2="480" y2="321" stroke="#4fc3f7" stroke-width="1" stroke-dasharray="5 3"
+                        opacity="0.6" />
+
+                    <!-- Base platform -->
+                    <rect x="190" y="430" width="280" height="20" rx="10" fill="#e6bb00" opacity="0.7" />
+                </svg>
+                <h2>AIOps Security</h2>
             </div>
         </a>
 

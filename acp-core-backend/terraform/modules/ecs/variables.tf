@@ -13,3 +13,9 @@ variable "created_by" {
   type        = string
   default     = "terraform"
 }
+
+variable "elb_account_id" {
+  description = "AWS ELB service account ID for your region. us-east-1 = 127311923021. Full list: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html"
+  type        = string
+  default     = "127311923021"
+}

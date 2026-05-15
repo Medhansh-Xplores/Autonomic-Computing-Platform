@@ -3,9 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, timer } from 'rxjs';
 import { switchMap, shareReplay } from 'rxjs/operators';
 import { EnvService } from 'src/environments/env.service';
+import { AcpSecurityPosture } from '../models/security.model';
 import {
     ObservabilityHealth, DeploymentHealthSummary,
-    VpcHealthPayload, RdsHealthPayload, AlbHealthPayload, EcsHealthPayload
+    VpcHealthPayload, RdsHealthPayload, AlbHealthPayload, EcsHealthPayload,
+    VpcDetailPayload,
+    RdsDetailPayload,
+    AlbDetailPayload,
+    EcsDetailPayload
 } from '../models/observability.model';
 
 @Injectable({
@@ -116,6 +121,23 @@ export class ObservabilityService {
         );
     }
 
+    getAcpSecurityPosture(region: string = 'us-east-1', cluster: string = 'acp-cluster'): Observable<AcpSecurityPosture> {
+        const params = new HttpParams()
+            .set('region', region)
+            .set('cluster', cluster);
+        return this.http.get<AcpSecurityPosture>(
+            `${this.apiBase}security/acp-security-posture`,
+            { params }
+        );
+    }
+
+    pollAcpSecurityPosture(region: string = 'us-east-1', cluster: string = 'acp-cluster'): Observable<AcpSecurityPosture> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getAcpSecurityPosture(region, cluster)),
+            shareReplay(1)
+        );
+    }
+
     // ADD after pollAcpAlbHealth():
 
     // ── User infra VPC health (account-scoped, no acp- prefix filter) ────────────
@@ -168,6 +190,42 @@ export class ObservabilityService {
             switchMap(() => this.getInfraEcsHealth(accountId, region)),
             shareReplay(1)
         );
+    }
+
+    // ── User infra VPC detail (single VPC drill-down) ─────────────────────────────
+    getInfraVpcDetail(accountId: string, region: string, vpcId: string): Observable<VpcDetailPayload> {
+        const params = new HttpParams()
+            .set('accountId', accountId)
+            .set('region', region)
+            .set('vpcId', vpcId);
+        return this.http.get<VpcDetailPayload>(`${this.apiBase}observability/infra-vpc-detail`, { params });
+    }
+
+    // ── User infra RDS detail ─────────────────────────────────────────────────────
+    getInfraRdsDetail(accountId: string, region: string, dbIdentifier: string): Observable<RdsDetailPayload> {
+        const params = new HttpParams()
+            .set('accountId', accountId)
+            .set('region', region)
+            .set('dbIdentifier', dbIdentifier);
+        return this.http.get<RdsDetailPayload>(`${this.apiBase}observability/infra-rds-detail`, { params });
+    }
+
+    // ── User infra ALB detail ─────────────────────────────────────────────────────
+    getInfraAlbDetail(accountId: string, region: string, albArn: string): Observable<AlbDetailPayload> {
+        const params = new HttpParams()
+            .set('accountId', accountId)
+            .set('region', region)
+            .set('albArn', albArn);
+        return this.http.get<AlbDetailPayload>(`${this.apiBase}observability/infra-alb-detail`, { params });
+    }
+
+    // ── User infra ECS detail ─────────────────────────────────────────────────────
+    getInfraEcsDetail(accountId: string, region: string, clusterArn: string): Observable<EcsDetailPayload> {
+        const params = new HttpParams()
+            .set('accountId', accountId)
+            .set('region', region)
+            .set('clusterArn', clusterArn);
+        return this.http.get<EcsDetailPayload>(`${this.apiBase}observability/infra-ecs-detail`, { params });
     }
 
 

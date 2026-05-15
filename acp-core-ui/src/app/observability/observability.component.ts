@@ -9,6 +9,10 @@ import {
     RdsHealthPayload,
     AlbHealthPayload,
     EcsHealthPayload,
+    VpcDetailPayload,
+    RdsDetailPayload,
+    AlbDetailPayload,
+    EcsDetailPayload
 } from '../models/observability.model';
 import { HttpClient } from '@angular/common/http';
 import { EnvService } from 'src/environments/env.service';
@@ -34,21 +38,43 @@ export class ObservabilityComponent implements OnInit, OnDestroy {
     vpcLoading = false;
     vpcError = '';
     private vpcSub: Subscription | null = null;
+    // ── VPC detail panel state ─────────────────────────────────────────────────
+    selectedVpc: import('../models/observability.model').VpcInfo | null = null;
+    vpcDetail: VpcDetailPayload | null = null;
+    vpcDetailLoading = false;
+    vpcDetailError = '';
 
     rdsHealth: RdsHealthPayload | null = null;
     rdsLoading = false;
     rdsError = '';
     private rdsSub: Subscription | null = null;
+    // ── RDS detail panel state ─────────────────────────────────────────────────
+    selectedRds: any = null;
+    rdsDetail: RdsDetailPayload | null = null;
+    rdsDetailLoading = false;
+    rdsDetailError = '';
+    copiedEndpoint = false;
 
     albHealth: AlbHealthPayload | null = null;
     albLoading = false;
     albError = '';
     private albSub: Subscription | null = null;
+    // ── ALB detail panel state ─────────────────────────────────────────────────
+    selectedAlb: any = null;
+    albDetail: AlbDetailPayload | null = null;
+    albDetailLoading = false;
+    albDetailError = '';
+    copiedAlbDns = false;
 
     ecsHealth: EcsHealthPayload | null = null;
     ecsLoading = false;
     ecsError = '';
     private ecsSub: Subscription | null = null;
+    // ── ECS detail panel state ─────────────────────────────────────────────────
+    selectedEcsCluster: any = null;
+    ecsDetail: EcsDetailPayload | null = null;
+    ecsDetailLoading = false;
+    ecsDetailError = '';
 
     // ── Apps tab state (all existing — untouched) ─────────────────────────────
     allHealth: DeploymentHealthSummary[] = [];
@@ -344,5 +370,118 @@ export class ObservabilityComponent implements OnInit, OnDestroy {
 
     countByStatus(status: string): number {
         return this.allHealth.filter(h => h.status === status).length;
+    }
+
+    openVpcDetail(vpc: any): void {
+        this.selectedVpc = vpc;
+        this.vpcDetail = null;
+        this.vpcDetailLoading = true;
+        this.vpcDetailError = '';
+        const region = this.selectedAccount?.region || 'us-east-1';
+        const accountId = this.selectedAccount?.accountId || '';
+        this.observabilityService.getInfraVpcDetail(accountId, region, vpc.vpcId).subscribe({
+            next: (data) => { this.vpcDetail = data; this.vpcDetailLoading = false; },
+            error: (err) => { this.vpcDetailError = err?.error?.error || 'Failed to load VPC detail'; this.vpcDetailLoading = false; }
+        });
+    }
+
+    closeVpcDetail(): void {
+        this.selectedVpc = null;
+        this.vpcDetail = null;
+        this.vpcDetailError = '';
+    }
+
+    openRdsDetail(db: any): void {
+        this.selectedRds = db;
+        this.rdsDetail = null;
+        this.rdsDetailLoading = true;
+        this.rdsDetailError = '';
+        const region = this.selectedAccount?.region || 'us-east-1';
+        const accountId = this.selectedAccount?.accountId || '';
+        this.observabilityService.getInfraRdsDetail(accountId, region, db.identifier).subscribe({
+            next: (data) => { this.rdsDetail = data; this.rdsDetailLoading = false; },
+            error: (err) => { this.rdsDetailError = err?.error?.error || 'Failed to load RDS detail'; this.rdsDetailLoading = false; }
+        });
+    }
+
+    closeRdsDetail(): void {
+        this.selectedRds = null;
+        this.rdsDetail = null;
+        this.rdsDetailError = '';
+        this.copiedEndpoint = false;
+    }
+
+    copyEndpoint(endpoint: string): void {
+        navigator.clipboard.writeText(endpoint).then(() => {
+            this.copiedEndpoint = true;
+            setTimeout(() => this.copiedEndpoint = false, 2000);
+        });
+    }
+
+    openAlbDetail(lb: any): void {
+        this.selectedAlb = lb;
+        this.albDetail = null;
+        this.albDetailLoading = true;
+        this.albDetailError = '';
+        const region = this.selectedAccount?.region || 'us-east-1';
+        const accountId = this.selectedAccount?.accountId || '';
+        this.observabilityService.getInfraAlbDetail(accountId, region, lb.arn).subscribe({
+            next: (data) => { this.albDetail = data; this.albDetailLoading = false; },
+            error: (err) => { this.albDetailError = err?.error?.error || 'Failed to load ALB detail'; this.albDetailLoading = false; }
+        });
+    }
+
+    closeAlbDetail(): void {
+        this.selectedAlb = null;
+        this.albDetail = null;
+        this.albDetailError = '';
+        this.copiedAlbDns = false;
+    }
+
+    copyAlbDns(dns: string): void {
+        navigator.clipboard.writeText(dns).then(() => {
+            this.copiedAlbDns = true;
+            setTimeout(() => this.copiedAlbDns = false, 2000);
+        });
+    }
+
+    getAlbHealthClass(status: string): string {
+        if (status === 'healthy') return 'status-healthy';
+        if (status === 'degraded') return 'status-degraded';
+        return 'status-unhealthy';
+    }
+
+    openEcsDetail(cluster: any): void {
+        this.selectedEcsCluster = cluster;
+        this.ecsDetail = null;
+        this.ecsDetailLoading = true;
+        this.ecsDetailError = '';
+        const region = this.selectedAccount?.region || 'us-east-1';
+        const accountId = this.selectedAccount?.accountId || '';
+        this.observabilityService.getInfraEcsDetail(accountId, region, cluster.arn).subscribe({
+            next: (data) => { this.ecsDetail = data; this.ecsDetailLoading = false; },
+            error: (err) => { this.ecsDetailError = err?.error?.error || 'Failed to load ECS detail'; this.ecsDetailLoading = false; }
+        });
+    }
+
+    closeEcsDetail(): void {
+        this.selectedEcsCluster = null;
+        this.ecsDetail = null;
+        this.ecsDetailError = '';
+    }
+
+    getEcsStatusClass(status: string): string {
+        return status === 'ACTIVE' ? 'status-healthy' : 'status-unhealthy';
+    }
+
+    getTaskStatusClass2(status: string): string {
+        const s = (status || '').toUpperCase();
+        if (s === 'RUNNING') return 'task-running';
+        if (s === 'STOPPED') return 'task-stopped';
+        return 'task-pending';
+    }
+
+    getSubnetsByType(vpc: any, type: 'public' | 'private'): number {
+        return (vpc.subnets || []).filter((s: any) => s.type === type).length;
     }
 }

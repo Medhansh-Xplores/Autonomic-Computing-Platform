@@ -33,6 +33,12 @@ data "aws_subnets" "private" {
 }
 
 # -----------------------------
+# Caller Identity (for account ID)
+# -----------------------------
+
+data "aws_caller_identity" "current" {}
+
+# -----------------------------
 # NAT Gateway
 # -----------------------------
 
@@ -146,7 +152,6 @@ resource "aws_security_group" "ecs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # ALB → ECS internal traffic (self-referencing; apps override container_port via their own SG rules if needed)
   ingress {
     from_port = 0
     to_port   = 0
@@ -167,6 +172,50 @@ resource "aws_security_group" "ecs" {
 }
 
 # -----------------------------
+# S3 Bucket for ALB Access Logs
+# -----------------------------
+
+resource "aws_s3_bucket" "alb_logs" {
+  bucket        = "${var.cluster_name}-alb-access-logs"
+  force_destroy = true
+
+  tags = {
+    CreatedBy = var.created_by
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  rule {
+    id     = "expire-logs"
+    status = "Enabled"
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${var.elb_account_id}:root"
+        }
+        Action   = "s3:PutObject"
+        Resource = "arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/${var.cluster_name}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+      }
+    ]
+  })
+}
+
+# -----------------------------
 # ALB (shared across apps)
 # -----------------------------
 
@@ -177,20 +226,25 @@ resource "aws_lb" "ecs" {
   security_groups    = [aws_security_group.ecs.id]
   internal           = false
 
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.bucket
+    prefix  = var.cluster_name
+    enabled = true
+  }
+
   tags = {
     CreatedBy = var.created_by
   }
+
+  depends_on = [aws_s3_bucket_policy.alb_logs]
 }
 
-# Default HTTP listener — forwards to a placeholder / first app target group.
-# Individual app stacks add listener rules via aws_lb_listener_rule pointing
-# at this listener's ARN (exposed via output).
+# Default HTTP listener
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.ecs.arn
   port              = 80
   protocol          = "HTTP"
 
-  # Default action returns 404 until an app registers a rule.
   default_action {
     type = "fixed-response"
     fixed_response {
