@@ -54,10 +54,11 @@
 }
 
 .header-subtitle {
-    font-size: 13px;
+    font-size: 14px;
     letter-spacing: 1px;
     color: #003160;
     margin-bottom: 4px;
+    font-weight: 600;
 }
 
 .header-hint {

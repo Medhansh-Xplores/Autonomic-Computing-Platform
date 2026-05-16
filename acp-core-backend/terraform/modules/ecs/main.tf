@@ -39,12 +39,6 @@ data "aws_subnets" "private" {
 data "aws_caller_identity" "current" {}
 
 # -----------------------------
-# ELB Service Account (region-aware, replaces var.elb_account_id)
-# -----------------------------
-
-data "aws_elb_service_account" "main" {}
-
-# -----------------------------
 # NAT Gateway
 # -----------------------------
 
@@ -182,60 +176,6 @@ resource "aws_security_group" "ecs" {
 }
 
 # -----------------------------
-# S3 Bucket for ALB Access Logs
-# -----------------------------
-
-resource "aws_s3_bucket" "alb_logs" {
-  bucket        = "${var.cluster_name}-alb-access-logs"
-  force_destroy = true # ensures bucket is emptied and deleted cleanly on destroy
-
-  tags = {
-    CreatedBy = var.created_by
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
-
-  block_public_acls       = true
-  block_public_policy     = false # must be false: ALB service account needs to put the bucket policy
-  ignore_public_acls      = true
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
-
-  rule {
-    id     = "expire-logs"
-    status = "Enabled"
-
-    expiration {
-      days = 90
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "alb_logs" {
-  bucket     = aws_s3_bucket.alb_logs.id
-  depends_on = [aws_s3_bucket_public_access_block.alb_logs] # block config must exist before policy is applied
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          AWS = data.aws_elb_service_account.main.arn # region-aware, replaces hardcoded var.elb_account_id
-        }
-        Action   = "s3:PutObject"
-        Resource = "arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/${var.cluster_name}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
-      }
-    ]
-  })
-}
-
-# -----------------------------
 # ALB (shared across apps)
 # -----------------------------
 
@@ -246,17 +186,9 @@ resource "aws_lb" "ecs" {
   security_groups    = [aws_security_group.ecs.id]
   internal           = false
 
-  access_logs {
-    bucket  = aws_s3_bucket.alb_logs.bucket
-    prefix  = var.cluster_name
-    enabled = true
-  }
-
   tags = {
     CreatedBy = var.created_by
   }
-
-  depends_on = [aws_s3_bucket_policy.alb_logs] # bucket policy must be in place before ALB starts writing logs
 }
 
 # Default HTTP listener

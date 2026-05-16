@@ -8,6 +8,11 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "region" {
+  description = "AWS region to deploy resources into"
+  type        = string
+}
+
 variable "created_by" {
   description = "Tag value for CreatedBy"
   type        = string

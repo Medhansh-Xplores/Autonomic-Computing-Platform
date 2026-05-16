@@ -15,7 +15,7 @@ RUN npm run build -- --configuration production
 # FIX: switched from nginx:alpine to nginx:unprivileged-alpine
 # This image runs nginx as UID 101 (non-root) out of the box
 # and moves all writable paths to locations a non-root user can access
-FROM nginx:alpine-unprivileged
+FROM nginxinc/nginx-unprivileged:alpine
 
 # Remove default nginx page
 RUN rm -rf /usr/share/nginx/html/*
