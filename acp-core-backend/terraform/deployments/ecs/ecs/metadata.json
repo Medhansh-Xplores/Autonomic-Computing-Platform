@@ -1,0 +1,14 @@
+{
+  "id": "cefe14d9-41a5-4fe3-ab7a-f96384dad566",
+  "name": "ecs",
+  "type": "ECS",
+  "region": "us-east-1",
+  "account": "997053010568",
+  "awsAccountId": "997053010568",
+  "status": "Creating",
+  "cloud": "AWS",
+  "vpcId": "vpc-017c7e510a82b9d4c",
+  "clusterName": "ecs",
+  "cpu": "256",
+  "memory": "512"
+}

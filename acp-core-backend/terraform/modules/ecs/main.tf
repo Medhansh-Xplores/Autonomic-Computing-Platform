@@ -39,11 +39,17 @@ data "aws_subnets" "private" {
 data "aws_caller_identity" "current" {}
 
 # -----------------------------
+# ELB Service Account (region-aware, replaces var.elb_account_id)
+# -----------------------------
+
+data "aws_elb_service_account" "main" {}
+
+# -----------------------------
 # NAT Gateway
 # -----------------------------
 
 resource "aws_eip" "nat" {
-  domain = "vpc"
+  domain     = "vpc"
 
   tags = {
     CreatedBy = var.created_by
@@ -78,6 +84,7 @@ resource "aws_route_table_association" "private" {
   count          = length(data.aws_subnets.private.ids)
   subnet_id      = data.aws_subnets.private.ids[count.index]
   route_table_id = aws_route_table.private.id
+  depends_on     = [aws_route_table.private] # ensures associations detach before table is destroyed
 }
 
 # -----------------------------
@@ -102,7 +109,9 @@ resource "aws_ecs_cluster" "main" {
 # -----------------------------
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name = "/ecs/${var.cluster_name}"
+  name              = "/ecs/${var.cluster_name}"
+  retention_in_days = 7     # prevents log accumulation across test cycles
+  skip_destroy      = false # explicit: log group is fully destroyed on teardown
 
   tags = {
     CreatedBy = var.created_by
@@ -135,6 +144,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  depends_on = [aws_iam_role.ecs_task_execution_role] # ensures policy detaches before role is deleted
 }
 
 # -----------------------------
@@ -177,11 +187,20 @@ resource "aws_security_group" "ecs" {
 
 resource "aws_s3_bucket" "alb_logs" {
   bucket        = "${var.cluster_name}-alb-access-logs"
-  force_destroy = true
+  force_destroy = true # ensures bucket is emptied and deleted cleanly on destroy
 
   tags = {
     CreatedBy = var.created_by
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "alb_logs" {
+  bucket = aws_s3_bucket.alb_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = false # must be false: ALB service account needs to put the bucket policy
+  ignore_public_acls      = true
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
@@ -198,7 +217,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "alb_logs" {
 }
 
 resource "aws_s3_bucket_policy" "alb_logs" {
-  bucket = aws_s3_bucket.alb_logs.id
+  bucket     = aws_s3_bucket.alb_logs.id
+  depends_on = [aws_s3_bucket_public_access_block.alb_logs] # block config must exist before policy is applied
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -206,7 +226,7 @@ resource "aws_s3_bucket_policy" "alb_logs" {
       {
         Effect = "Allow"
         Principal = {
-          AWS = "arn:aws:iam::${var.elb_account_id}:root"
+          AWS = data.aws_elb_service_account.main.arn # region-aware, replaces hardcoded var.elb_account_id
         }
         Action   = "s3:PutObject"
         Resource = "arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/${var.cluster_name}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
@@ -236,7 +256,7 @@ resource "aws_lb" "ecs" {
     CreatedBy = var.created_by
   }
 
-  depends_on = [aws_s3_bucket_policy.alb_logs]
+  depends_on = [aws_s3_bucket_policy.alb_logs] # bucket policy must be in place before ALB starts writing logs
 }
 
 # Default HTTP listener

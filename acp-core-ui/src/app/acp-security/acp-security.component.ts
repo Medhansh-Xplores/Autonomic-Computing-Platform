@@ -67,12 +67,12 @@ export class AcpSecurityComponent implements OnInit, OnDestroy {
 
     get scoreDashOffset(): number {
         const score = this.posture?.overall?.score ?? 0;
-        const circumference = 2 * Math.PI * 36; // r=36
+        const circumference = 2 * Math.PI * 42; // r=42
         return circumference - (score / 100) * circumference;
     }
 
     get circumference(): number {
-        return 2 * Math.PI * 36;
+        return 2 * Math.PI * 42;
     }
 
     // ── Section fail-count helpers (for card badges) ──────────────────────────

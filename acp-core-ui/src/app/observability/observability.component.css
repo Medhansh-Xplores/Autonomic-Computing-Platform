@@ -882,7 +882,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: 560px;
+    width: 760px;
     background: rgba(0, 0, 0, 0.35);
     z-index: 1000;
     display: flex;
@@ -890,7 +890,7 @@
 }
 
 .detail-panel {
-    width: 560px;
+    width: 760px;
     background: white;
     height: 100%;
     overflow-y: auto;
