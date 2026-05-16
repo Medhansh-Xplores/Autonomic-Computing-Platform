@@ -694,7 +694,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
 
 resource "aws_secretsmanager_secret" "acp_db" {
   name                    = "acp/db-credentials"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
   tags                    = { Name = "acp-db-credentials" }
 }
 
@@ -708,7 +708,7 @@ resource "aws_secretsmanager_secret_version" "acp_db" {
 
 resource "aws_secretsmanager_secret" "acp_cognito" {
   name                    = "acp/cognito"
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
   tags                    = { Name = "acp-cognito" }
 }
 
@@ -911,27 +911,4 @@ resource "aws_ecs_service" "acp_frontend" {
 }
 
 # ── FIX: GuardDuty ───────────────────────────────────────────────────────────
-# ADDED: GuardDuty detector was not enabled
-resource "aws_guardduty_detector" "acp" {
-  enable = true
-
-  datasources {
-    s3_logs {
-      enable = true
-    }
-    kubernetes {
-      audit_logs {
-        enable = false  # Not using EKS
-      }
-    }
-    malware_protection {
-      scan_ec2_instance_with_findings {
-        ebs_volumes {
-          enable = true
-        }
-      }
-    }
-  }
-
-  tags = { Name = "acp-guardduty" }
-}
+data "aws_guardduty_detector" "acp" {}
