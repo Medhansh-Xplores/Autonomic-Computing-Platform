@@ -12,13 +12,14 @@ COPY . .
 RUN npm run build -- --configuration production
 
 # Stage 2 — Serve with nginx (unprivileged)
-# FIX: switched from nginx:alpine to nginx:unprivileged-alpine
-# This image runs nginx as UID 101 (non-root) out of the box
-# and moves all writable paths to locations a non-root user can access
+# nginxinc/nginx-unprivileged runs as UID 101 (non-root)
 FROM nginxinc/nginx-unprivileged:alpine
 
-# Remove default nginx page
+# FIX 1: Switch to root only to clean the default html files,
+# then switch back to the unprivileged user (101)
+USER root
 RUN rm -rf /usr/share/nginx/html/*
+USER 101
 
 # Copy built Angular app
 COPY --from=builder /app/dist/acp-core-ui /usr/share/nginx/html
@@ -26,8 +27,7 @@ COPY --from=builder /app/dist/acp-core-ui /usr/share/nginx/html
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# FIX: nginx:alpine-unprivileged listens on 8080 by default, not 80
-# (ports below 1024 require root). Update EXPOSE accordingly.
+# FIX 2: unprivileged nginx listens on 8080, not 80
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
