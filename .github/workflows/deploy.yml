@@ -48,7 +48,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: acp-terraform
-        run: terraform init
+        run: terraform init -upgrade
 
       # FIX: Import CloudWatch log groups if they already exist in AWS but not
       # in state. This happens after terraform destroy because skip_destroy=true
