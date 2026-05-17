@@ -719,6 +719,8 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "ecs:DescribeTasks",
           "ecs:ListTasks",
           "ecs:ListServices"
+          "ecs:DescribeTaskDefinition",  
+          "ecs:ListClusters"        
         ]
         Resource = "*"
       },
@@ -732,7 +734,13 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "rds:ListTagsForResource"
         ]
         Resource = "*"
-      }
+      },
+      # STS — required for cross-account AssumeRole into customer accounts
+      {
+        Effect = "Allow"
+        Action = ["sts:AssumeRole"]
+        Resource = "arn:aws:iam::*:role/ACPDeploymentRole"
+      },
     ]
   })
 }
