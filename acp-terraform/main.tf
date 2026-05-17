@@ -718,7 +718,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "ecs:DescribeServices",
           "ecs:DescribeTasks",
           "ecs:ListTasks",
-          "ecs:ListServices"
+          "ecs:ListServices",
           "ecs:DescribeTaskDefinition",  
           "ecs:ListClusters"        
         ]
