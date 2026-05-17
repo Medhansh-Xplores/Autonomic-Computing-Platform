@@ -30,9 +30,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       # ── ECR Login ───────────────────────────────────────────────────────────
       - name: Login to Amazon ECR
@@ -50,13 +50,33 @@ jobs:
         working-directory: acp-terraform
         run: terraform init
 
+      # FIX: Import CloudWatch log groups if they already exist in AWS but not
+      # in state. This happens after terraform destroy because skip_destroy=true
+      # leaves the log groups in AWS. The "|| true" silently skips if they
+      # don't exist yet (first-ever run).
+      - name: Import orphaned CloudWatch log groups
+        working-directory: acp-terraform
+        run: |
+          terraform import \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
+            -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}" \
+            aws_cloudwatch_log_group.acp_vpc_flow_logs /aws/vpc/acp-flow-logs 2>/dev/null || true
+
+          terraform import \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
+            -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}" \
+            aws_cloudwatch_log_group.acp /ecs/acp 2>/dev/null || true
+
       - name: Terraform Apply (infra)
         working-directory: acp-terraform
         run: |
           terraform apply -auto-approve \
-              -var="db_password=${{ secrets.DB_PASSWORD }}" \
-              -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
-              -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}"
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
+            -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}"
+
       # ── Build and Push Backend ───────────────────────────────────────────────
       - name: Build and push backend image
         working-directory: acp-core-backend
@@ -87,15 +107,15 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: backend-task-def.json
-          container-name:  acp-backend
-          image:           ${{ env.BACKEND_IMAGE }}
+          container-name: acp-backend
+          image: ${{ env.BACKEND_IMAGE }}
 
       - name: Deploy backend to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition:          ${{ steps.backend-task-def.outputs.task-definition }}
-          service:                  ${{ env.BACKEND_SERVICE }}
-          cluster:                  ${{ env.ECS_CLUSTER }}
+          task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
+          service: ${{ env.BACKEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
       # ── Deploy Frontend to ECS ───────────────────────────────────────────────
@@ -110,15 +130,15 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: frontend-task-def.json
-          container-name:  acp-frontend
-          image:           ${{ env.FRONTEND_IMAGE }}
+          container-name: acp-frontend
+          image: ${{ env.FRONTEND_IMAGE }}
 
       - name: Deploy frontend to ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          task-definition:          ${{ steps.frontend-task-def.outputs.task-definition }}
-          service:                  ${{ env.FRONTEND_SERVICE }}
-          cluster:                  ${{ env.ECS_CLUSTER }}
+          task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
+          service: ${{ env.FRONTEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
 
       # ── Done ─────────────────────────────────────────────────────────────────

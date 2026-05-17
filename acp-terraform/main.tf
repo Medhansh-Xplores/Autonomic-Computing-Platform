@@ -83,6 +83,10 @@ resource "aws_route_table_association" "acp_private" {
 resource "aws_cloudwatch_log_group" "acp_vpc_flow_logs" {
   name              = "/aws/vpc/acp-flow-logs"
   retention_in_days = 30
+
+  lifecycle {
+    skip_destroy = true
+  }
 }
 
 resource "aws_iam_role" "acp_vpc_flow_logs" {
@@ -508,6 +512,10 @@ resource "aws_ecs_cluster" "acp" {
 resource "aws_cloudwatch_log_group" "acp" {
   name              = "/ecs/acp"
   retention_in_days = 7
+
+  lifecycle {
+    skip_destroy = true
+  }
 }
 
 # ── IAM ───────────────────────────────────────────────────────────────────────
