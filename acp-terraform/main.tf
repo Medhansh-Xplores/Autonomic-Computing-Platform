@@ -464,21 +464,19 @@ resource "aws_lb_target_group" "acp_frontend" {
   tags = { Name = "acp-frontend-tg" }
 }
 
-# FIX: HTTP listener — was forwarding to frontend directly
-# CHANGED: Now redirects all HTTP traffic to HTTPS (fixes "HTTP → HTTPS redirect" FAIL)
 resource "aws_lb_listener" "acp_http" {
   load_balancer_arn = aws_lb.acp.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-  type             = "forward"
-  target_group_arn = aws_lb_target_group.acp_frontend.arn
-}
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.acp_frontend.arn
+  }
 }
 
 resource "aws_lb_listener_rule" "acp_backend" {
-  listener_arn = aws_lb_listener.acp_http.arn  
+  listener_arn = aws_lb_listener.acp_http.arn
   priority     = 10
 
   condition {
@@ -595,13 +593,11 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         Resource = "${aws_cloudwatch_log_group.acp.arn}:*"
       },
 
-      # ECR — scoped to this account's repositories
+      # ECR — GetAuthorizationToken does not support resource scoping
       {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken"
-        ]
-        Resource = "*"   # GetAuthorizationToken does not support resource scoping
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
+        Resource = "*"
       },
       {
         Effect = "Allow"
@@ -616,7 +612,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         ]
       },
 
-      # Security dashboard read permissions — scoped as tightly as possible
+      # IAM — scoped to acp-* roles only
       {
         Effect = "Allow"
         Action = [
@@ -627,6 +623,8 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         ]
         Resource = "arn:aws:iam::*:role/acp-*"
       },
+
+      # Secrets Manager — scoped to acp/* secrets
       {
         Effect = "Allow"
         Action = [
@@ -635,6 +633,8 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         ]
         Resource = "arn:aws:secretsmanager:${var.aws_region}:*:secret:acp/*"
       },
+
+      # GuardDuty — does not support resource-level restrictions
       {
         Effect = "Allow"
         Action = [
@@ -642,31 +642,37 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "guardduty:ListFindings",
           "guardduty:GetFindings"
         ]
-        Resource = "*"   # GuardDuty does not support resource-level restrictions
+        Resource = "*"
       },
+
+      # CloudTrail — DescribeTrails requires "*"
       {
         Effect = "Allow"
         Action = [
           "cloudtrail:DescribeTrails",
           "cloudtrail:GetTrailStatus"
         ]
-        Resource = "*"   # CloudTrail DescribeTrails requires "*"
+        Resource = "*"
       },
+
+      # ACM — ListCertificates requires "*"
       {
         Effect = "Allow"
         Action = [
           "acm:ListCertificates",
           "acm:DescribeCertificate"
         ]
-        Resource = "*"   # ACM ListCertificates requires "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "wafv2:GetWebACLForResource"
-        ]
         Resource = "*"
       },
+
+      # WAF
+      {
+        Effect   = "Allow"
+        Action   = ["wafv2:GetWebACLForResource"]
+        Resource = "*"
+      },
+
+      # ELB — Describe actions require "*"
       {
         Effect = "Allow"
         Action = [
@@ -674,13 +680,56 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
           "elasticloadbalancing:DescribeListeners",
           "elasticloadbalancing:DescribeTargetGroups"
         ]
-        Resource = "*"   # ELB Describe actions require "*"
+        Resource = "*"
       },
+
+      # CloudWatch metrics
       {
         Effect = "Allow"
         Action = [
           "cloudwatch:GetMetricData",
           "cloudwatch:ListMetrics"
+        ]
+        Resource = "*"
+      },
+
+      # FIX: EC2/VPC — required for security dashboard VPC panel
+      # ec2:Describe* actions do not support resource-level restrictions
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeInternetGateways",
+          "ec2:DescribeNatGateways",
+          "ec2:DescribeFlowLogs"
+        ]
+        Resource = "*"
+      },
+
+      # FIX: ECS — required for dashboard container/service panel
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeClusters",
+          "ecs:DescribeServices",
+          "ecs:DescribeTasks",
+          "ecs:ListTasks",
+          "ecs:ListServices"
+        ]
+        Resource = "*"
+      },
+
+      # FIX: RDS — required for dashboard database panel
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBClusters",
+          "rds:ListTagsForResource"
         ]
         Resource = "*"
       }
@@ -849,9 +898,9 @@ resource "aws_ecs_task_definition" "acp_frontend" {
 
     linuxParameters = {
       tmpfs = [
-        { containerPath = "/tmp",              size = 64  },
-        { containerPath = "/var/cache/nginx",  size = 64  },
-        { containerPath = "/var/run",          size = 16  }
+        { containerPath = "/tmp",             size = 64 },
+        { containerPath = "/var/cache/nginx", size = 64 },
+        { containerPath = "/var/run",         size = 16 }
       ]
     }
 
