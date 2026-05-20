@@ -29,6 +29,7 @@ import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { AcpSecurityComponent } from './acp-security/acp-security.component';
+import { InfraAppSecurityComponent } from './infra-app-security/infra-app-security.component';
 
 
 const routes: Routes = [
@@ -61,6 +62,7 @@ const routes: Routes = [
   { path: 'contact', component: ContactComponent },
   { path: 'forgotpassword', component: ForgotPasswordComponent },
   { path: 'security/acp-security', component: AcpSecurityComponent, canActivate: [AuthGuardService] },
+  { path: 'security-compliance/infra-app', component: InfraAppSecurityComponent, canActivate: [AuthGuardService] },
 ];
 
 @NgModule({

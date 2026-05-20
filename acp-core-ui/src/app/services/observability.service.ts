@@ -3,7 +3,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, timer } from 'rxjs';
 import { switchMap, shareReplay } from 'rxjs/operators';
 import { EnvService } from 'src/environments/env.service';
-import { AcpSecurityPosture } from '../models/security.model';
+import {
+    AcpSecurityPosture, VpcSecurityPayload, RdsSecurityPayload,
+    AlbSecurityPayload, EcsSecurityPayload
+} from '../models/security.model';
 import {
     ObservabilityHealth, DeploymentHealthSummary,
     VpcHealthPayload, RdsHealthPayload, AlbHealthPayload, EcsHealthPayload,
@@ -226,6 +229,56 @@ export class ObservabilityService {
             .set('region', region)
             .set('clusterArn', clusterArn);
         return this.http.get<EcsDetailPayload>(`${this.apiBase}observability/infra-ecs-detail`, { params });
+    }
+
+    // ── Infra & App Deployment Security ──────────────────────────────────────────
+
+    getInfraVpcSecurity(accountId: string, region: string): Observable<VpcSecurityPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<VpcSecurityPayload>(`${this.apiBase}security/infra-vpc-security`, { params });
+    }
+
+    pollInfraVpcSecurity(accountId: string, region: string): Observable<VpcSecurityPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraVpcSecurity(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    getInfraRdsSecurity(accountId: string, region: string): Observable<RdsSecurityPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<RdsSecurityPayload>(`${this.apiBase}security/infra-rds-security`, { params });
+    }
+
+    pollInfraRdsSecurity(accountId: string, region: string): Observable<RdsSecurityPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraRdsSecurity(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    getInfraAlbSecurity(accountId: string, region: string): Observable<AlbSecurityPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<AlbSecurityPayload>(`${this.apiBase}security/infra-alb-security`, { params });
+    }
+
+    pollInfraAlbSecurity(accountId: string, region: string): Observable<AlbSecurityPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraAlbSecurity(accountId, region)),
+            shareReplay(1)
+        );
+    }
+
+    getInfraEcsSecurity(accountId: string, region: string): Observable<EcsSecurityPayload> {
+        const params = new HttpParams().set('accountId', accountId).set('region', region);
+        return this.http.get<EcsSecurityPayload>(`${this.apiBase}security/infra-ecs-security`, { params });
+    }
+
+    pollInfraEcsSecurity(accountId: string, region: string): Observable<EcsSecurityPayload> {
+        return timer(0, 60000).pipe(
+            switchMap(() => this.getInfraEcsSecurity(accountId, region)),
+            shareReplay(1)
+        );
     }
 
 

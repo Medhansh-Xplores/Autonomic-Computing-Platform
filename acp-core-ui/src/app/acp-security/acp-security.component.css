@@ -9,17 +9,17 @@
     align-items: center;
     gap: 12px;
     background: #fffbea;
-    border: 1px solid #f0a500;
-    border-left: 4px solid #f0a500;
+    border: 1px solid #ca8a04;
+    border-left: 4px solid #ca8a04;
     border-radius: 8px;
     padding: 12px 18px;
     margin-bottom: 20px;
     color: #7a4f00;
-    font-size: 13px;
+    font-size: 15px;
 }
 
 .mock-icon {
-    font-size: 20px;
+    font-size: 22px;
     flex-shrink: 0;
 }
 
@@ -32,7 +32,7 @@
     padding: 2px 6px;
     border-radius: 4px;
     font-family: monospace;
-    font-size: 12px;
+    font-size: 14px;
     color: #5a3800;
 }
 
@@ -48,13 +48,13 @@
 }
 
 .create-header-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 750;
     color: #003160;
 }
 
 .header-subtitle {
-    font-size: 14px;
+    font-size: 16px;
     letter-spacing: 1px;
     color: #003160;
     margin-bottom: 4px;
@@ -62,7 +62,7 @@
 }
 
 .header-hint {
-    font-size: 12px;
+    font-size: 14px;
     color: #555;
 }
 
@@ -98,7 +98,7 @@
     border-radius: 8px;
     padding: 12px 18px;
     color: #7f1d1d;
-    font-size: 13px;
+    font-size: 15px;
     margin-bottom: 20px;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .score-ring-label {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -156,35 +156,35 @@
 }
 
 .score-number {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     color: currentColor;
     line-height: 1;
 }
 
 .score-percent-sign {
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 600;
     vertical-align: super;
     line-height: 1;
 }
 
 .score-pct-label {
-    font-size: 10px;
+    font-size: 12px;
     color: #999;
     letter-spacing: 0.04em;
     margin-top: 1px;
 }
 
 .score-label {
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 700;
     color: inherit;
     margin-top: 4px;
 }
 
 .score-meta {
-    font-size: 11px;
+    font-size: 13px;
     color: #888;
 }
 
@@ -193,7 +193,7 @@
 }
 
 .score-degraded {
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .score-unhealthy {
@@ -216,7 +216,7 @@
 }
 
 .quick-stat-value {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: #003160;
     line-height: 1;
@@ -231,11 +231,11 @@
 }
 
 .quick-stat-value.warn {
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .quick-stat-label {
-    font-size: 11px;
+    font-size: 13px;
     color: #888;
     margin-top: 4px;
 }
@@ -244,7 +244,7 @@
     position: absolute;
     top: 12px;
     right: 18px;
-    font-size: 11px;
+    font-size: 13px;
     color: #aaa;
 }
 
@@ -280,26 +280,26 @@
 }
 
 .section-card-icon {
-    font-size: 22px;
+    font-size: 24px;
     margin-bottom: 8px;
 }
 
 .section-card-title {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #003160;
     margin-bottom: 2px;
 }
 
 .section-card-subtitle {
-    font-size: 11px;
+    font-size: 13px;
     color: #888;
     margin-bottom: 10px;
 }
 
 .section-card-badge {
     display: inline-block;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
     padding: 2px 10px;
     border-radius: 12px;
@@ -321,7 +321,7 @@
     position: absolute;
     top: 14px;
     right: 14px;
-    font-size: 10px;
+    font-size: 12px;
     color: #aaa;
 }
 
@@ -366,14 +366,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     color: #003160;
     margin-bottom: 12px;
 }
 
 .panel-group-icon {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .panel-group-name {
@@ -392,7 +392,7 @@
 .panel-meta-row {
     display: flex;
     gap: 12px;
-    font-size: 12px;
+    font-size: 14px;
     margin-bottom: 6px;
     align-items: flex-start;
 }
@@ -413,7 +413,7 @@
 .meta-value.mono,
 .mono {
     font-family: monospace;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 /* ── Check list ── */
@@ -429,7 +429,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    font-size: 13px;
+    font-size: 15px;
     padding: 10px 12px;
     border-radius: 8px;
     background: #fff;
@@ -448,7 +448,7 @@
 }
 
 .row-check-warn {
-    border-left: 3px solid #d97706;
+    border-left: 3px solid #ca8a04;
     background: #fffdf4;
 }
 
@@ -467,7 +467,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     flex-shrink: 0;
 }
@@ -484,7 +484,7 @@
 
 .check-icon-box.check-warn {
     background: #fef3c7;
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .check-content {
@@ -497,12 +497,12 @@
 .check-topic {
     font-weight: 600;
     color: #1a1a2e;
-    font-size: 12.5px;
+    font-size: 14px;
     letter-spacing: 0.01em;
 }
 
 .check-finding {
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.4;
     white-space: nowrap;
     overflow: hidden;
@@ -522,7 +522,7 @@
 }
 
 .check-status-pill {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 10px;
@@ -540,7 +540,7 @@
 }
 
 .check-warn {
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .check-pass.check-status-pill {
@@ -557,8 +557,8 @@
 
 .check-warn.check-status-pill {
     background: #fffbeb;
-    color: #d97706;
-    border: 1px solid #fcd34d;
+    color: #ca8a04;
+    border: 1px solid #fde047;
 }
 
 /* ── Tags ── */
@@ -567,7 +567,7 @@
     background: #eef2ff;
     color: #3730a3;
     border-radius: 4px;
-    font-size: 11px;
+    font-size: 13px;
     padding: 2px 6px;
     margin-right: 4px;
     margin-bottom: 2px;
@@ -575,7 +575,7 @@
 
 /* ── Secrets table ── */
 .secrets-table {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .secrets-table-header,
@@ -590,7 +590,7 @@
 .secrets-table-header {
     font-weight: 600;
     color: #666;
-    font-size: 11px;
+    font-size: 13px;
     border-bottom: 1px solid #e5e7eb;
     margin-bottom: 4px;
 }
@@ -614,7 +614,7 @@
 }
 
 .gd-stat-value {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
     color: #003160;
     display: block;
@@ -625,11 +625,11 @@
 }
 
 .gd-stat-value.warn {
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .gd-stat-label {
-    font-size: 11px;
+    font-size: 13px;
     color: #888;
 }
 
@@ -638,7 +638,7 @@
 }
 
 .findings-header {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     color: #666;
     margin-bottom: 8px;
@@ -653,11 +653,11 @@
     border: 1px solid #eee;
     border-radius: 8px;
     margin-bottom: 6px;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .severity-badge {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 10px;
@@ -673,8 +673,8 @@
 
 .severity-medium {
     background: #fffbeb;
-    color: #d97706;
-    border: 1px solid #fcd34d;
+    color: #ca8a04;
+    border: 1px solid #fde047;
 }
 
 .finding-details {
@@ -692,12 +692,12 @@
 .finding-type {
     color: #888;
     font-family: monospace;
-    font-size: 11px;
+    font-size: 13px;
 }
 
 .finding-time {
     color: #aaa;
-    font-size: 11px;
+    font-size: 13px;
     flex-shrink: 0;
     white-space: nowrap;
 }
@@ -708,7 +708,7 @@
 }
 
 .expiry-warning strong {
-    color: #d97706;
+    color: #ca8a04;
 }
 
 .expiry-ok strong {
@@ -717,7 +717,7 @@
 
 /* ── Panel empty ── */
 .panel-empty {
-    font-size: 13px;
+    font-size: 15px;
     color: #888;
     text-align: center;
     padding: 16px;

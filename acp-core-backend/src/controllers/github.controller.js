@@ -292,15 +292,16 @@ exports.deployToEcs = async (req, res) => {
             });
 
             // STEP 3: Assume role and set AWS secrets (same as before)
+            // AFTER (fixed):
             const creds = {
                 AccessKeyId: appCredentials.accessKeyId,
                 SecretAccessKey: appCredentials.secretAccessKey,
-                SessionToken: appCredentials.sessionToken
+                SessionToken: appCredentials.sessionToken || null   // null for static keys
             };
 
             await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_ACCESS_KEY_ID', secretValue: creds.AccessKeyId });
             await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_SECRET_ACCESS_KEY', secretValue: creds.SecretAccessKey });
-            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_SESSION_TOKEN', secretValue: creds.SessionToken });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AWS_SESSION_TOKEN', secretValue: creds.SessionToken || '' });
 
             // STEP 3a: RDS secrets (same as before)
             if (rdsInstance) {

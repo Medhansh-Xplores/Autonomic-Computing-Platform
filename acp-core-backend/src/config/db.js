@@ -58,7 +58,8 @@ exports.initSchema = async () => {
     cloud       TEXT,
     created_at  TIMESTAMPTZ DEFAULT NOW(),
     updated_at  TIMESTAMPTZ DEFAULT NOW(),
-    data        JSONB
+    data        JSONB,
+    user_id     TEXT
   )
 `);
 

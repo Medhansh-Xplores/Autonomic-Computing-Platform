@@ -126,3 +126,89 @@ export interface AcpSecurityPosture {
     certificates: CertificateSecurity[];
     _mock?: boolean;
 }
+
+// ── Infra & App Deployment Security models ────────────────────────────────────
+
+export interface VpcSecurityResult {
+    vpcId: string;
+    name: string;
+    cidr: string;
+    state: string;
+    flowLogs: { enabled: boolean; trafficType?: string; destination?: string };
+    openSecurityGroups: { groupId: string; groupName: string }[];
+    checks: SecurityCheck[];
+    overall: SecurityOverall;
+}
+
+export interface VpcSecurityPayload {
+    vpcs: VpcSecurityResult[];
+    overall: SecurityOverall;
+    fetchedAt: string;
+}
+
+export interface RdsSecurityInstance {
+    identifier: string;
+    engine: string;
+    engineVersion: string;
+    status: string;
+    publiclyAccessible: boolean;
+    storageEncrypted: boolean;
+    deletionProtection: boolean;
+    backupRetentionDays: number;
+    multiAz: boolean;
+    checks: SecurityCheck[];
+    overall: SecurityOverall;
+}
+
+export interface RdsSecurityPayload {
+    instances: RdsSecurityInstance[];
+    overall: SecurityOverall;
+    fetchedAt: string;
+}
+
+export interface AlbSecurityResult {
+    name: string;
+    arn: string;
+    dns: string;
+    scheme: string;
+    state: string;
+    httpsOnly: boolean;
+    httpRedirectPresent: boolean;
+    tlsPolicy: string | null;
+    modernTls: boolean;
+    wafAttached: boolean;
+    accessLogsEnabled: boolean;
+    checks: SecurityCheck[];
+    overall: SecurityOverall;
+}
+
+export interface AlbSecurityPayload {
+    loadBalancers: AlbSecurityResult[];
+    overall: SecurityOverall;
+    fetchedAt: string;
+}
+
+export interface EcsServiceSecurity {
+    name: string;
+    taskDefinition: string | null;
+    taskRoleArn: string | null;
+    runningCount: number;
+    desiredCount: number;
+    taskDefinitionChecks: SecurityCheck[];
+    iamChecks: SecurityCheck[];
+    overall: SecurityOverall;
+}
+
+export interface EcsClusterSecurity {
+    clusterName: string;
+    clusterArn: string;
+    status: string;
+    services: EcsServiceSecurity[];
+    overall: SecurityOverall;
+}
+
+export interface EcsSecurityPayload {
+    clusters: EcsClusterSecurity[];
+    overall: SecurityOverall;
+    fetchedAt: string;
+}

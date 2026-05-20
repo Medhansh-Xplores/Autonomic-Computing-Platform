@@ -5,7 +5,7 @@ const deploymentService = require("./deployments.service");
 const USE_DB = process.env.USE_DB === 'true';
 let logs = [];
 
-exports.createVPC = (data, credentials) => {
+exports.createVPC = (data, credentials, userID) => {
 
   logs = [];
 
@@ -55,7 +55,8 @@ az_2             = "${data.az_2}"
     account: data.accountID,
     awsAccountId: data.awsAccountId || data.accountID,
     status: "Creating",
-    cloud: data.cloud || "AWS"
+    cloud: data.cloud || "AWS",
+    userId: userID
   };
 
   fs.writeFileSync(
@@ -112,11 +113,11 @@ az_2             = "${data.az_2}"
         try {
           const db = require('../config/db');
           await db.query(
-            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data, user_id)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+   ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8, user_id = $9`,
             [metadata.id, metadata.name, metadata.type, metadata.status,
-            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata), metadata.userId]
           );
         } catch (e) {
           console.error('Failed to save VPC to DB:', e.message);
@@ -139,13 +140,16 @@ exports.getLogs = () => {
   }
 };
 
-exports.getDeployments = async () => {
+exports.getDeployments = async (userId) => {
 
   if (USE_DB) {
     const db = require('../config/db');
-    const result = await db.query(
-      'SELECT id, data FROM infra_deployments ORDER BY created_at DESC'
-    );
+    const result = userId
+      ? await db.query(
+        `SELECT id, data FROM infra_deployments WHERE user_id = $1 ORDER BY created_at DESC`,
+        [userId]
+      )
+      : await db.query('SELECT id, data FROM infra_deployments ORDER BY created_at DESC');
     return result.rows.map(row => ({ id: row.id, ...row.data }));
   }
 
@@ -190,7 +194,7 @@ exports.getDeployments = async () => {
 
 };
 
-exports.createECS = (data, credentials) => {
+exports.createECS = (data, credentials, userID) => {
 
   logs = [];
 
@@ -229,7 +233,8 @@ exports.createECS = (data, credentials) => {
     vpcId: data.vpcId,
     clusterName: data.clusterName,
     cpu: data.cpu,
-    memory: data.memory
+    memory: data.memory,
+    userId: userID
   };
 
   fs.writeFileSync(
@@ -286,11 +291,11 @@ created_by   = "ACP-Portal"
         try {
           const db = require('../config/db');
           await db.query(
-            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data, user_id)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+   ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8, user_id = $9`,
             [metadata.id, metadata.name, metadata.type, metadata.status,
-            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata), metadata.userId]
           );
         } catch (e) {
           console.error('Failed to save ECS to DB:', e.message);
@@ -303,7 +308,7 @@ created_by   = "ACP-Portal"
 
 };
 
-exports.deployAwsRds = (data, credentials) => {
+exports.deployAwsRds = (data, credentials, userID) => {
 
   logs = [];
 
@@ -340,7 +345,8 @@ exports.deployAwsRds = (data, credentials) => {
     vpcId: data.vpcId,
     dbUsername: data.username,
     dbPassword: data.password,
-    dbName: data.initialDbName || ''
+    dbName: data.initialDbName || '',
+    userId: userID
   };
 
   fs.writeFileSync(
@@ -426,12 +432,12 @@ db_port         = ${dbPort}
         try {
           const db = require('../config/db');
           await db.query(
-            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8`,
+            `INSERT INTO infra_deployments (id, name, type, status, region, account, cloud, data, user_id)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+   ON CONFLICT (id) DO UPDATE SET status = $4, updated_at = NOW(), data = $8, user_id = $9`,
             // Use metadata.id (fixed uuid) not uuidv4() (new uuid every time)
             [metadata.id, metadata.name, metadata.type, metadata.status,
-            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata)]
+            metadata.region, metadata.account, metadata.cloud, JSON.stringify(metadata), metadata.userId]
           );
         } catch (e) {
           console.error('Failed to save RDS to DB:', e.message);

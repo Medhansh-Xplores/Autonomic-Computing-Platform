@@ -49,7 +49,7 @@ exports.createVPC = async (req, res) => {
     const userId = req.user?.username;
 
     const credentials = await resolveCredentials(data.accountID, userId, data.region);
-    await terraformService.createVPC(data, credentials);
+    await terraformService.createVPC(data, credentials, userId);
 
     res.send({ message: "VPC deployment started" });
 
@@ -72,7 +72,8 @@ exports.getLogs = (req, res) => {
 
 exports.getDeployments = async (req, res) => {
   try {
-    const deployments = await terraformService.getDeployments();
+    const userId = req.user?.username;
+    const deployments = await terraformService.getDeployments(userId);
     res.json(deployments);
   } catch (err) {
     res.status(500).send(err);
@@ -200,7 +201,7 @@ exports.createECS = async (req, res) => {
 
     const credentials = await resolveCredentials(data.accountID, userId, data.region);
 
-    await terraformService.createECS(data, credentials);
+    await terraformService.createECS(data, credentials, userId);
 
     res.send({ message: "ECS deployment started" });
   } catch (err) {
@@ -245,7 +246,7 @@ exports.deployAwsRds = async (req, res) => {
 
     data.subnet_ids = subnetIds;
 
-    await terraformService.deployAwsRds(data, credentials);
+    await terraformService.deployAwsRds(data, credentials, userId);
 
     res.send({
       message: "RDS deployment started"
@@ -268,8 +269,8 @@ exports.deleteInfra = async (req, res) => {
   try {
     // 1. Fetch the record from DB
     const result = await db.query(
-      `SELECT * FROM infra_deployments WHERE id = $1`,
-      [id]
+      `SELECT * FROM infra_deployments WHERE id = $1 AND user_id = $2`,
+      [id, userId]
     );
     if (!result.rows.length) {
       return res.status(404).json({ error: "Deployment not found" });

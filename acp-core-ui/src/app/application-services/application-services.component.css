@@ -1,0 +1,29 @@
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 24px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #003160;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 600px) {
+    .create-header-box {
+        width: 100%;
+    }
+}

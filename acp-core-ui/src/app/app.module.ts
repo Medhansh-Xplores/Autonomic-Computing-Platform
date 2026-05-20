@@ -42,6 +42,7 @@ import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { AcpSecurityComponent } from './acp-security/acp-security.component';
+import { InfraAppSecurityComponent } from './infra-app-security/infra-app-security.component';
 
 @NgModule({
   declarations: [
@@ -74,6 +75,7 @@ import { AcpSecurityComponent } from './acp-security/acp-security.component';
     ContactComponent,
     ForgotPasswordComponent,
     AcpSecurityComponent,
+    InfraAppSecurityComponent,
   ],
   imports: [
     BrowserModule,
