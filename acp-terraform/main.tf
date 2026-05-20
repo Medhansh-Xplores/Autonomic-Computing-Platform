@@ -778,6 +778,27 @@ resource "aws_secretsmanager_secret_version" "acp_cognito" {
   })
 }
 
+#EFS
+resource "aws_efs_access_point" "acp_terraform" {
+  file_system_id = aws_efs_file_system.acp.id
+
+  posix_user {
+    uid = 1000
+    gid = 1000
+  }
+
+  root_directory {
+    path = "/terraform/deployments"
+    creation_info {
+      owner_uid   = 1000
+      owner_gid   = 1000
+      permissions = "755"
+    }
+  }
+
+  tags = { Name = "acp-efs-terraform-ap" }
+}
+
 # ── ECS TASK DEFINITIONS ──────────────────────────────────────────────────────
 
 resource "aws_ecs_task_definition" "acp_backend" {
@@ -789,12 +810,16 @@ resource "aws_ecs_task_definition" "acp_backend" {
   execution_role_arn       = aws_iam_role.acp_ecs_execution.arn
   task_role_arn            = aws_iam_role.acp_ecs_task.arn
 
-  volume {
+    volume {
     name = "acp-efs"
 
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.acp.id
-      root_directory = "/"
+      file_system_id          = aws_efs_file_system.acp.id
+      transit_encryption      = "ENABLED"               # required for access points
+      authorization_config {
+        access_point_id = aws_efs_access_point.acp_terraform.id
+        iam             = "ENABLED"
+      }
     }
   }
 
