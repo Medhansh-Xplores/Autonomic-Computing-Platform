@@ -27,6 +27,8 @@
     "@aws-sdk/client-secrets-manager": "^3.1047.0",
     "@aws-sdk/client-sts": "^3.1027.0",
     "@aws-sdk/client-wafv2": "^3.1047.0",
+    "@google/adk": "^1.1.0",
+    "@google/genai": "^2.4.0",
     "adm-zip": "^0.5.17",
     "aws-jwt-verify": "^5.1.1",
     "aws-sdk": "^2.1693.0",

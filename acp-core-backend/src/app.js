@@ -21,6 +21,7 @@ const authRoutes = require('./routes/auth.routes');
 const cloudAccountRoutes = require('./routes/cloudAccount.routes');
 const observabilityRoutes = require('./routes/observability.routes');
 const securityRoutes = require('./routes/security.routes');
+const aiopsRoutes = require('./routes/aiops.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -35,6 +36,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cloud-accounts', cloudAccountRoutes);
 app.use('/api/v1/observability', observabilityRoutes);
 app.use('/api/v1/security', securityRoutes);
+app.use('/api/v1/aiops', aiopsRoutes);
 
 // Health
 app.get("/health", (req, res) => {

@@ -63,6 +63,36 @@ exports.initSchema = async () => {
   )
 `);
 
+  // AI Ops — incidents logged by agents
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS aiops_incidents (
+    id                SERIAL PRIMARY KEY,
+    user_id           VARCHAR(255)  NOT NULL,
+    title             TEXT          NOT NULL,
+    severity          VARCHAR(20)   NOT NULL CHECK (severity IN ('critical','high','medium','low')),
+    affected_resource TEXT          NOT NULL,
+    root_cause        TEXT          NOT NULL,
+    action_taken      TEXT          DEFAULT 'none',
+    status            VARCHAR(20)   NOT NULL DEFAULT 'open' CHECK (status IN ('open','acknowledged','resolved')),
+    created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ
+  )
+`);
+
+  // AI Ops — audit trail of every agent action
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS aiops_audit_log (
+    id          SERIAL PRIMARY KEY,
+    user_id     VARCHAR(255)  NOT NULL,
+    action      VARCHAR(100)  NOT NULL,
+    target      TEXT          NOT NULL,
+    reason      TEXT,
+    approved    BOOLEAN       NOT NULL DEFAULT FALSE,
+    result      JSONB,
+    created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+  )
+`);
+
   console.log('DB schema ready');
 };
 

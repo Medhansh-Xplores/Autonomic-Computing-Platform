@@ -1,0 +1,339 @@
+<div class="container">
+
+    <!-- ── Page Header ── -->
+    <div class="create-header-box">
+        <div class="create-header-title">AIOPS MAPE-K OBSERVABILITY AGENTS</div>
+        <div class="header-subtitle">Monitor · Analyze · Plan · Execute · Knowledge</div>
+    </div>
+
+    <!-- ── Controls Bar ── -->
+    <div class="controls-bar">
+
+        <!-- Account Selector -->
+        <div class="account-selector" *ngIf="cloudAccounts.length > 1">
+            <span class="mode-label">Account</span>
+            <select class="account-select" (change)="onAccountChange($any($event.target).value)">
+                <option *ngFor="let a of cloudAccounts" [value]="a.accountId"
+                    [selected]="a.accountId === selectedAccount?.accountId">
+                    {{ a.accountName }} ({{ a.region }})
+                </option>
+            </select>
+        </div>
+        <div class="account-tag" *ngIf="cloudAccounts.length === 1 && selectedAccount">
+            <span class="mode-label">Account</span>
+            <span class="account-pill">{{ selectedAccount.accountName }} · {{ selectedAccount.region }}</span>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <span class="mode-label">Mode</span>
+            <div class="mode-tabs">
+                <button class="mode-tab" [class.active]="selectedMode === 'observe'" (click)="setMode('observe')">
+                    👁 Observe Only
+                </button>
+                <button class="mode-tab" [class.active]="selectedMode === 'full'" (click)="setMode('full')">
+                    ⚡ Full Auto-Remediate
+                </button>
+            </div>
+        </div>
+
+        <!-- Run Button -->
+        <button class="run-btn" (click)="runScan()" [disabled]="scanning">
+            <span *ngIf="!scanning">▶ Run Agents</span>
+            <span *ngIf="scanning" class="btn-spinner"></span>
+        </button>
+
+        <!-- Last Run -->
+        <div class="last-run" *ngIf="lastRunAt">
+            Last scan: {{ lastRunAt | date:'HH:mm:ss' }}
+        </div>
+    </div>
+
+    <!-- ── Scanning Banner ── -->
+    <div class="scanning-banner" *ngIf="scanning">
+        <div class="scan-spinner"></div>
+        <div>
+            <div class="scan-title">Agents running…</div>
+            <div class="scan-sub">{{ scanPhase }}</div>
+        </div>
+    </div>
+
+    <!-- ── Error Banner ── -->
+    <div class="error-banner" *ngIf="scanError">
+        ⚠ {{ scanError }}
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Results — only shown after a scan                      -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div *ngIf="scanResult">
+
+        <!-- ── Summary Cards ── -->
+        <div class="summary-row">
+
+            <div class="summary-card">
+                <div class="summary-icon">🖥</div>
+                <div class="summary-body">
+                    <div class="summary-label">Infra Findings</div>
+                    <div class="summary-count" [class.count-red]="infraFindings.length > 0">
+                        {{ infraFindings.length }}
+                    </div>
+                    <div class="summary-sub">{{ infraFindings.length === 0 ? 'All healthy' : 'Issues found' }}</div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon">📦</div>
+                <div class="summary-body">
+                    <div class="summary-label">App Findings</div>
+                    <div class="summary-count" [class.count-red]="appFindings.length > 0">
+                        {{ appFindings.length }}
+                    </div>
+                    <div class="summary-sub">{{ appFindings.length === 0 ? 'All healthy' : 'Issues found' }}</div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon">✅</div>
+                <div class="summary-body">
+                    <div class="summary-label">Actions Taken</div>
+                    <div class="summary-count" [class.count-green]="actionsTaken.length > 0">
+                        {{ actionsTaken.length }}
+                    </div>
+                    <div class="summary-sub">Auto-remediated</div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon">⏳</div>
+                <div class="summary-body">
+                    <div class="summary-label">Pending Approval</div>
+                    <div class="summary-count" [class.count-amber]="pendingApprovals.length > 0">
+                        {{ pendingApprovals.length }}
+                    </div>
+                    <div class="summary-sub">Needs your review</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Section Tabs ── -->
+        <div class="section-tabs">
+            <button class="section-tab" [class.active]="activeSection === 'findings'"
+                (click)="activeSection = 'findings'">
+                🔍 Findings
+                <span class="tab-badge" *ngIf="totalFindings > 0">{{ totalFindings }}</span>
+            </button>
+            <button class="section-tab" [class.active]="activeSection === 'approvals'"
+                (click)="activeSection = 'approvals'">
+                ⏳ Pending Approvals
+                <span class="tab-badge amber" *ngIf="pendingApprovals.length > 0">{{ pendingApprovals.length }}</span>
+            </button>
+            <button class="section-tab" [class.active]="activeSection === 'incidents'"
+                (click)="loadIncidents(); activeSection = 'incidents'">
+                🚨 Incidents
+            </button>
+            <button class="section-tab" [class.active]="activeSection === 'audit'"
+                (click)="loadAuditLog(); activeSection = 'audit'">
+                📋 Audit Log
+            </button>
+        </div>
+
+        <!-- ══ FINDINGS TAB ══ -->
+        <div *ngIf="activeSection === 'findings'">
+
+            <!-- No issues -->
+            <div class="empty-state" *ngIf="infraFindings.length === 0 && appFindings.length === 0">
+                <div class="empty-icon">✅</div>
+                <div class="empty-title">Everything looks healthy</div>
+                <div class="empty-sub">No issues were found across infra and applications.</div>
+            </div>
+
+            <!-- Infra Findings -->
+            <div *ngIf="infraFindings.length > 0">
+                <div class="findings-group-label">🖥 Infrastructure</div>
+                <div class="finding-card" *ngFor="let f of infraFindings" [class]="'sev-' + f.severity">
+                    <div class="finding-header">
+                        <span class="sev-badge" [class]="'badge-' + f.severity">{{ f.severity | uppercase }}</span>
+                        <span class="finding-resource">{{ f.resourceType }} — {{ f.resourceId }}</span>
+                        <span class="finding-status" [class]="'status-' + f.status">{{ f.status }}</span>
+                    </div>
+                    <div class="finding-cause">
+                        <span class="cause-label">Root Cause</span>
+                        {{ f.rootCause }}
+                    </div>
+                    <div class="finding-action">
+                        <span class="action-label">Recommended</span>
+                        <code>{{ f.recommendedAction }}</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Findings -->
+            <div *ngIf="appFindings.length > 0">
+                <div class="findings-group-label">📦 Applications</div>
+                <div class="finding-card" *ngFor="let f of appFindings" [class]="'sev-' + f.severity">
+                    <div class="finding-header">
+                        <span class="sev-badge" [class]="'badge-' + f.severity">{{ f.severity | uppercase }}</span>
+                        <span class="finding-resource">{{ f.appName }}</span>
+                        <span class="finding-status" [class]="'status-' + f.status">{{ f.status }}</span>
+                    </div>
+                    <div class="finding-tasks" *ngIf="f.runningCount !== undefined">
+                        Tasks: <strong>{{ f.runningCount }}</strong> running / <strong>{{ f.desiredCount }}</strong>
+                        desired
+                    </div>
+                    <div class="finding-cause">
+                        <span class="cause-label">Root Cause</span>
+                        {{ f.rootCause }}
+                    </div>
+                    <div class="finding-action">
+                        <span class="action-label">Recommended</span>
+                        <code>{{ f.recommendedAction }}</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions taken by remediation agent -->
+            <div *ngIf="actionsTaken.length > 0">
+                <div class="findings-group-label">✅ Actions Taken by Agents</div>
+                <div class="action-card" *ngFor="let a of actionsTaken">
+                    <span class="action-icon" [class.fail]="a.result === 'failed'">
+                        {{ a.result === 'success' ? '✔' : '✖' }}
+                    </span>
+                    <div class="action-detail">
+                        <div class="action-name">{{ a.action }}</div>
+                        <div class="action-target">{{ a.target }}</div>
+                        <div class="action-msg">{{ a.message }}</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ══ APPROVALS TAB ══ -->
+        <div *ngIf="activeSection === 'approvals'">
+            <div class="empty-state" *ngIf="pendingApprovals.length === 0">
+                <div class="empty-icon">👍</div>
+                <div class="empty-title">No pending approvals</div>
+                <div class="empty-sub">All agent actions were either auto-approved or not required.</div>
+            </div>
+
+            <div class="approval-card" *ngFor="let a of pendingApprovals">
+                <div class="approval-header">
+                    <span class="approval-icon">⚠</span>
+                    <div>
+                        <div class="approval-action">{{ a.action }}</div>
+                        <div class="approval-target">Target: <strong>{{ a.target }}</strong></div>
+                    </div>
+                </div>
+                <div class="approval-reason">{{ a.reason }}</div>
+                <div class="approval-warning">
+                    This action may cause a brief outage. Review carefully before approving.
+                </div>
+                <div class="approval-btns">
+                    <button class="btn-approve" (click)="approveAction(a)" [disabled]="a.processing">
+                        {{ a.processing ? '…' : '✔ Approve' }}
+                    </button>
+                    <button class="btn-reject" (click)="rejectAction(a)" [disabled]="a.processing">
+                        {{ a.processing ? '…' : '✖ Reject' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ INCIDENTS TAB ══ -->
+        <div *ngIf="activeSection === 'incidents'">
+            <div class="spinner" *ngIf="incidentsLoading"></div>
+
+            <div class="empty-state" *ngIf="!incidentsLoading && incidents.length === 0">
+                <div class="empty-icon">🎉</div>
+                <div class="empty-title">No incidents</div>
+                <div class="empty-sub">No open incidents logged by agents.</div>
+            </div>
+
+            <table class="data-table" *ngIf="incidents.length > 0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Severity</th>
+                        <th>Title</th>
+                        <th>Resource</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let inc of incidents">
+                        <td>{{ inc.id }}</td>
+                        <td><span class="sev-badge" [class]="'badge-' + inc.severity">{{ inc.severity | uppercase
+                                }}</span></td>
+                        <td class="td-title">{{ inc.title }}</td>
+                        <td class="td-mono">{{ inc.affected_resource }}</td>
+                        <td><span class="inc-status" [class]="'inc-' + inc.status">{{ inc.status }}</span></td>
+                        <td class="td-date">{{ inc.created_at | date:'dd MMM HH:mm' }}</td>
+                        <td>
+                            <select class="status-select" [(ngModel)]="inc.status" (change)="updateIncident(inc)">
+                                <option value="open">Open</option>
+                                <option value="acknowledged">Acknowledged</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ══ AUDIT LOG TAB ══ -->
+        <div *ngIf="activeSection === 'audit'">
+            <div class="spinner" *ngIf="auditLoading"></div>
+
+            <div class="empty-state" *ngIf="!auditLoading && auditLog.length === 0">
+                <div class="empty-icon">📋</div>
+                <div class="empty-title">No audit entries yet</div>
+                <div class="empty-sub">Agent actions will appear here after the first scan.</div>
+            </div>
+
+            <table class="data-table" *ngIf="auditLog.length > 0">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>Target</th>
+                        <th>Approved</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let log of auditLog">
+                        <td class="td-date">{{ log.created_at | date:'dd MMM HH:mm:ss' }}</td>
+                        <td class="td-mono">{{ log.action }}</td>
+                        <td class="td-mono">{{ log.target }}</td>
+                        <td>
+                            <span class="approved-badge" [class.yes]="log.approved">
+                                {{ log.approved ? '✔ Yes' : '✖ No' }}
+                            </span>
+                        </td>
+                        <td class="td-result">
+                            {{ log.result?.success ? '✔ Success' : '✖ ' + (log.result?.message || 'Failed') }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- /scanResult -->
+
+    <!-- ── No account configured ── -->
+    <div class="error-banner" *ngIf="accountsError">
+        ⚠ {{ accountsError }} — <a routerLink="/cloud-setup">Set up a cloud account</a>
+    </div>
+
+    <!-- ── Initial state — before first scan ── -->
+    <div class="initial-state" *ngIf="!scanResult && !scanning && !accountsError">
+        <div class="initial-icon">🤖</div>
+        <div class="initial-title">Agents ready</div>
+        <div class="initial-sub">Choose a mode above and click <strong>Run Agents</strong> to start the scan.</div>
+    </div>
+
+</div>
