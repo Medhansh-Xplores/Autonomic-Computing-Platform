@@ -117,3 +117,18 @@ exports.updateIncident = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getScanRuns = async (req, res) => {
+    const userId = req.user?.username;
+    const { limit = 20 } = req.query;
+    try {
+        const result = await db.query(
+            `SELECT id, session_id, account_id, region, mode, status, scan_meta, started_at, completed_at
+             FROM aiops_scan_runs WHERE user_id = $1 ORDER BY started_at DESC LIMIT $2`,
+            [userId, limit]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

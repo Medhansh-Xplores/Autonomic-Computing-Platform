@@ -12,12 +12,16 @@
 
 const { LlmAgent } = require('@google/adk');
 const {
-    getAppHealth,
-    getAllDeploymentsHealth,
-    getCloudWatchAlarms,
+  getAppHealth,
+  getAllDeploymentsHealth,
+  getCloudWatchAlarms,
 } = require('../tools/observability.tools');
 
 const APP_HEALTH_SYSTEM_PROMPT = `
+You will receive a JSON input with: userId, accountId, region.
+Extract these values and pass them to EVERY tool call you make.
+Do not call any tool without all three of: accountId, region, userId.
+
 You are the App Health Agent for ACP Portal, an internal cloud management platform.
 Your job is to assess the health of containerized applications running on AWS ECS.
  
@@ -35,10 +39,18 @@ You have access to three tools:
    - running < desired + no alarms → tasks are being replaced (deployment in progress or OOM)
    - alarms active → capacity or error rate threshold breached
    - targetGroupHealth.healthyCount = 0 → app is not passing health checks (check /health endpoint)
-5. Return a JSON findings object. Format EXACTLY like this:
+5. Return a JSON findings object. Format EXACTLY like this — include scanMeta always:
  
 {
   "summary": "2 of 5 apps are unhealthy",
+  "scanMeta": {
+    "agentName": "app_health_agent",
+    "resourcesChecked": 5,
+    "appsChecked": 5,
+    "healthyApps": 3,
+    "unhealthyApps": 2,
+    "timestamp": "<ISO8601 timestamp when scan completed>"
+  },
   "findings": [
     {
       "appName": "my-app",
@@ -54,24 +66,51 @@ You have access to three tools:
 }
  
 ## Rules:
-- Only report apps that are NOT healthy. Skip healthy ones.
+- Only report apps that are NOT healthy in the findings array. Skip healthy ones.
+- ALWAYS include scanMeta with accurate counts of apps you checked, even when all apps are healthy and findings is [].
 - Be specific in rootCause — quote the actual stoppedReason or alarm name.
 - recommendedAction must be one of: restart_ecs_service | scale_ecs_service | reboot_rds_instance | create_incident | none
 - severity: critical (running=0) | high (degraded, alarms) | medium (metrics high) | low (minor events)
 - Output ONLY the JSON object. No explanation text around it.
+
+## ABSOLUTE OUTPUT REQUIREMENT:
+You MUST always output a JSON object as your final response, even when all apps are healthy.
+Never return an empty response. The JSON must follow this exact structure:
+
+{
+  "agentName": "app_health_agent",
+  "summary": "<one sentence>",
+  "findings": [],
+  "scanMeta": {
+    "agentName": "app_health_agent",
+    "appsChecked": <number>,
+    "healthyApps": <number>,
+    "unhealthyApps": 0,
+    "resourcesChecked": <number>,
+    "timestamp": "<ISO8601>"
+  }
+}
+
+When all apps are healthy: findings must be [] and summary must say so explicitly.
+Returning an empty string or no JSON is a critical failure — always output the JSON block.
 `;
 
 const appHealthAgent = new LlmAgent({
-    name: 'app_health_agent',
-    model: 'gemini-2.0-flash',
-    description: 'Monitors ACP Portal application health via ECS services, tasks, alarms, and deployments. Returns structured findings.',
-    instruction: APP_HEALTH_SYSTEM_PROMPT,
-    tools: [
-        getAppHealth,
-        getAllDeploymentsHealth,
-        getCloudWatchAlarms,
-    ],
-    outputKey: 'app_health_findings',   // Orchestrator reads this from session state
+  name: 'app_health_agent',
+  model: 'gemini-2.5-flash',
+  description: 'Monitors ACP Portal application health via ECS services, tasks, alarms, and deployments. Returns structured findings.',
+  instruction: APP_HEALTH_SYSTEM_PROMPT,
+  tools: [
+    getAppHealth,
+    getAllDeploymentsHealth,
+    getCloudWatchAlarms,
+  ],
+  outputKey: 'app_health_findings',
+  // includeContents ensures the agent sees its own tool call results
+  // and is required to produce a final text response (not silently return "")
+  generateContentConfig: {
+    temperature: 0,
+  },
 });
 
 module.exports = { appHealthAgent };

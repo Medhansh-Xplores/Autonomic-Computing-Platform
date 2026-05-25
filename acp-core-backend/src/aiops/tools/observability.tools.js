@@ -29,6 +29,14 @@ const {
     STSClient,
     AssumeRoleCommand,
 } = require('@aws-sdk/client-sts');
+const {
+    EC2Client,
+    DescribeVpcsCommand,
+    DescribeSubnetsCommand,
+    DescribeRouteTablesCommand,
+    DescribeInternetGatewaysCommand,
+    DescribeNatGatewaysCommand,
+} = require('@aws-sdk/client-ec2');
 
 // ── Credential helper (same pattern as observability.controller.js) ───────────
 async function resolveCredentials(accountId, userId, region) {
@@ -166,14 +174,24 @@ Returns an array of { id, name, status, runningCount, desiredCount }.`,
     },
 
     handler: async ({ userId }) => {
+        console.log('[app-agent] getAllDeploymentsHealth called for userId:', userId);
         try {
             const deploymentModel = require('../../models/deployment.model');
             const deployments = await deploymentModel.getDeployments(userId);
+            console.log('[app-agent] deployments found:', deployments.length);
 
             const results = await Promise.all(deployments.map(async (d) => {
-                const { id, name, ecsCluster, region, accountID } = d;
+                const id = d.id;
+                const name = d.name;
+                const ecsCluster = d.ecsCluster || d.cluster || d.clusterName;
+                const region = d.region;
+                const accountID = d.accountID || d.account || d.awsAccountId;
+                // Log ALL keys present in this deployment blob so mismatches are visible in backend logs
+                console.log(`[app-agent] deployment "${name}" keys:`, Object.keys(d).join(', '));
+                console.log(`[app-agent] resolved — ecsCluster=${ecsCluster}, region=${region}, accountID=${accountID}`);
                 if (!ecsCluster || !region || !accountID) {
-                    return { id, name, status: 'unknown', reason: 'Missing ECS metadata' };
+                    console.warn(`[app-agent] SKIPPING "${name}" (${id}) — missing ECS metadata. Keys in data blob: ${Object.keys(d).join(', ')}`);
+                    return { id, name, status: 'unknown', reason: `Missing ECS metadata (ecsCluster=${ecsCluster}, region=${region}, accountID=${accountID})` };
                 }
                 try {
                     const credentials = await resolveCredentials(accountID, userId, region);
@@ -386,11 +404,131 @@ Returns alarm name, description, and stateReason. An empty array means no active
     },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL 7 — get_vpc_health
+// Used by: Infra Monitoring Agent
+// ─────────────────────────────────────────────────────────────────────────────
+const getVpcHealth = {
+    name: 'get_vpc_health',
+    description: `Fetch health status for all VPCs in an AWS account/region.
+For each VPC returns: state, subnets (with AZ, type, available IPs, state),
+whether an Internet Gateway is attached, NAT gateway count and states, and route table count.
+Use this to detect VPC misconfigurations that could cause ECS or RDS connectivity issues.`,
+
+    parameters: {
+        type: 'object',
+        properties: {
+            accountId: { type: 'string', description: 'AWS account ID or cloud_accounts DB id' },
+            region: { type: 'string', description: 'AWS region, e.g. us-east-1' },
+            userId: { type: 'string', description: 'ACP Portal username, used for credential lookup' },
+        },
+        required: ['accountId', 'region', 'userId'],
+    },
+
+    handler: async ({ accountId, region, userId }) => {
+        try {
+            const credentials = await resolveCredentials(accountId, userId, region);
+            const ec2 = new EC2Client({ region, credentials });
+
+            const vpcsResp = await ec2.send(new DescribeVpcsCommand({}));
+            const vpcList = vpcsResp.Vpcs || [];
+
+            const vpcs = await Promise.all(vpcList.map(async vpc => {
+                const nameTag = vpc.Tags?.find(t => t.Key === 'Name')?.Value || vpc.VpcId;
+
+                const [subnetsResp, rtResp, igwResp, natResp] = await Promise.all([
+                    ec2.send(new DescribeSubnetsCommand({
+                        Filters: [{ Name: 'vpc-id', Values: [vpc.VpcId] }],
+                    })),
+                    ec2.send(new DescribeRouteTablesCommand({
+                        Filters: [{ Name: 'vpc-id', Values: [vpc.VpcId] }],
+                    })),
+                    ec2.send(new DescribeInternetGatewaysCommand({
+                        Filters: [{ Name: 'attachment.vpc-id', Values: [vpc.VpcId] }],
+                    })),
+                    ec2.send(new DescribeNatGatewaysCommand({
+                        Filter: [{ Name: 'vpc-id', Values: [vpc.VpcId] }],
+                    })),
+                ]);
+
+                const subnets = (subnetsResp.Subnets || []).map(s => ({
+                    subnetId: s.SubnetId,
+                    name: s.Tags?.find(t => t.Key === 'Name')?.Value || s.SubnetId,
+                    az: s.AvailabilityZone,
+                    type: s.MapPublicIpOnLaunch ? 'public' : 'private',
+                    cidr: s.CidrBlock,
+                    availableIps: s.AvailableIpAddressCount,
+                    state: s.State,
+                }));
+
+                const natGateways = (natResp.NatGateways || [])
+                    .filter(n => n.State !== 'deleted')
+                    .map(n => ({ natGatewayId: n.NatGatewayId, state: n.State }));
+
+                const internetGatewayAttached = (igwResp.InternetGateways || []).length > 0;
+                const routeTableCount = (rtResp.RouteTables || []).length;
+
+                // Detect issues
+                const issues = [];
+                if (vpc.State !== 'available') issues.push(`VPC state is '${vpc.State}'`);
+                const unavailableSubnets = subnets.filter(s => s.state !== 'available');
+                if (unavailableSubnets.length > 0)
+                    issues.push(`${unavailableSubnets.length} subnet(s) not available: ${unavailableSubnets.map(s => s.subnetId).join(', ')}`);
+                if (!internetGatewayAttached)
+                    issues.push('No Internet Gateway attached — public subnets cannot reach the internet');
+                const unhealthyNats = natGateways.filter(n => n.state !== 'available');
+                if (unhealthyNats.length > 0)
+                    issues.push(`${unhealthyNats.length} NAT Gateway(s) not available: ${unhealthyNats.map(n => `${n.natGatewayId}(${n.state})`).join(', ')}`);
+
+                return {
+                    vpcId: vpc.VpcId,
+                    name: nameTag,
+                    cidr: vpc.CidrBlock,
+                    state: vpc.State,
+                    internetGatewayAttached,
+                    natGateways,
+                    routeTableCount,
+                    subnets,
+                    healthy: issues.length === 0,
+                    issues,
+                };
+            }));
+
+            const unhealthyVpcs = vpcs.filter(v => !v.healthy);
+            return {
+                vpcs,
+                vpcsChecked: vpcs.length,
+                unhealthyCount: unhealthyVpcs.length,
+                unhealthyVpcs,
+            };
+        } catch (err) {
+            return { error: err.message };
+        }
+    },
+};
+
+// ── Wrap plain tool objects as ADK FunctionTool instances ─────────────────────
+// ADK dispatches tool calls via tool.runAsync(). Plain {name, handler} objects
+// don't have runAsync, so Gemini's functionCall events are silently swallowed
+// and agents produce zero output. FunctionTool adds the required runAsync method.
+const { FunctionTool } = require('@google/adk');
+
+// WITH this — use the 3-argument FunctionTool constructor:
+function toFunctionTool(toolDef) {
+    return new FunctionTool({
+        name: toolDef.name,
+        description: toolDef.description,
+        parameters: toolDef.parameters,
+        execute: toolDef.handler,   // ADK calls this via runAsync → execute(args, toolContext)
+    });
+}
+
 module.exports = {
-    getAppHealth,
-    getAllDeploymentsHealth,
-    getEcsClusterHealth,
-    getRdsHealth,
-    getAlbHealth,
-    getCloudWatchAlarms,
+    getAppHealth: toFunctionTool(getAppHealth),
+    getAllDeploymentsHealth: toFunctionTool(getAllDeploymentsHealth),
+    getEcsClusterHealth: toFunctionTool(getEcsClusterHealth),
+    getRdsHealth: toFunctionTool(getRdsHealth),
+    getAlbHealth: toFunctionTool(getAlbHealth),
+    getCloudWatchAlarms: toFunctionTool(getCloudWatchAlarms),
+    getVpcHealth: toFunctionTool(getVpcHealth),
 };

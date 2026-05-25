@@ -37,4 +37,7 @@ router.patch('/incidents/:id', aiopsController.updateIncident);
 // GET /api/v1/aiops/audit-log?limit=100
 router.get('/audit-log', aiopsController.getAuditLog);
 
+// GET /api/v1/aiops/runs
+router.get('/runs', aiopsController.getScanRuns);
+
 module.exports = router;

@@ -38,4 +38,8 @@ export class AiopsService {
     getAuditLog(): Observable<any[]> {
         return this.http.get<any[]>(`${this.apiBase}aiops/audit-log`);
     }
+
+    getScanRuns(): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiBase}aiops/runs`);
+    }
 }

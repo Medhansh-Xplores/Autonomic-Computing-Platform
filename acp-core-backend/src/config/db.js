@@ -93,6 +93,24 @@ exports.initSchema = async () => {
   )
 `);
 
+  await pool.query(`
+  CREATE TABLE IF NOT EXISTS aiops_scan_runs (
+    id              SERIAL PRIMARY KEY,
+    session_id      TEXT          NOT NULL,
+    user_id         TEXT          NOT NULL,
+    account_id      TEXT          NOT NULL,
+    region          TEXT          NOT NULL,
+    mode            TEXT          NOT NULL,
+    status          TEXT          NOT NULL DEFAULT 'completed',
+    infra_findings  JSONB,
+    app_findings    JSONB,
+    remediation     JSONB,
+    scan_meta       JSONB,
+    started_at      TIMESTAMPTZ   NOT NULL,
+    completed_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+  )
+`);
+
   console.log('DB schema ready');
 };
 

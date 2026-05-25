@@ -267,9 +267,24 @@ Severity: 'critical' | 'high' | 'medium' | 'low'.`,
     },
 };
 
+// ── Wrap plain tool objects as ADK FunctionTool instances ─────────────────────
+// ADK dispatches tool calls via tool.runAsync(). Plain {name, handler} objects
+// don't have runAsync, so Gemini's functionCall events are silently swallowed
+// and agents produce zero output. FunctionTool adds the required runAsync method.
+const { FunctionTool } = require('@google/adk');
+
+function toFunctionTool(toolDef) {
+    return new FunctionTool({
+        name: toolDef.name,
+        description: toolDef.description,
+        parameters: toolDef.parameters,
+        execute: toolDef.handler,   // ADK calls this via runAsync → execute(args, toolContext)
+    });
+}
+
 module.exports = {
-    restartEcsService,
-    scaleEcsService,
-    rebootRdsInstance,
-    createIncident,
+    restartEcsService: toFunctionTool(restartEcsService),
+    scaleEcsService: toFunctionTool(scaleEcsService),
+    rebootRdsInstance: toFunctionTool(rebootRdsInstance),
+    createIncident: toFunctionTool(createIncident),
 };

@@ -3,7 +3,7 @@ import { AiopsService } from '../services/aiops.service';
 import { CloudAccountService, CloudAccount } from '../services/cloud-account.service';
 
 export type ScanMode = 'observe' | 'full';
-export type SectionTab = 'findings' | 'approvals' | 'incidents' | 'audit';
+export type SectionTab = 'findings' | 'approvals' | 'incidents' | 'audit' | 'runs';
 
 @Component({
     selector: 'app-aiops-observability',
@@ -16,7 +16,7 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
     selectedMode: ScanMode = 'observe';
     activeSection: SectionTab = 'findings';
 
-    // ── Cloud account (same pattern as ObservabilityComponent) ────────────────
+    // ── Cloud account ─────────────────────────────────────────────────────────
     cloudAccounts: CloudAccount[] = [];
     selectedAccount: CloudAccount | null = null;
     accountsLoading = true;
@@ -24,9 +24,10 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     // ── Scan state ────────────────────────────────────────────────────────────
     scanning = false;
-    scanError = '';
+    scanError = ''
     scanResult: any = null;
     lastRunAt: Date | null = null;
+    scanDurationMs: number | null = null;
     scanPhase = 'Starting agents…';
     currentSessionId = '';
 
@@ -36,21 +37,28 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
     actionsTaken: any[] = [];
     pendingApprovals: any[] = [];
 
+    // ── Scan metadata (from backend scanMeta) ─────────────────────────────────
+    scanMeta: any = null;
+    scanRuns: any[] = [];
+    runsLoading = false;
+
+    // ── Phase steps (shown with checkmarks as scan progresses) ───────────────
+    phaseSteps = [
+        { label: 'Starting agents…', done: false },
+        { label: 'Infra Monitor scanning ECS, RDS, ALB…', done: false },
+        { label: 'App Health scanning deployments…', done: false },
+        { label: 'Agents analyzing findings…', done: false },
+        { label: 'Remediation Agent deciding actions…', done: false },
+        { label: 'Finalizing report…', done: false },
+    ];
+    currentPhaseIndex = 0;
+    private phaseInterval: any;
+
     // ── Incidents & Audit ─────────────────────────────────────────────────────
     incidents: any[] = [];
     auditLog: any[] = [];
     incidentsLoading = false;
     auditLoading = false;
-
-    private phaseMessages = [
-        'Starting agents…',
-        'Infra Monitor Agent scanning ECS, RDS, ALB…',
-        'App Health Agent scanning deployments…',
-        'Agents analyzing findings…',
-        'Remediation Agent deciding actions…',
-        'Finalizing report…',
-    ];
-    private phaseInterval: any;
 
     constructor(
         private aiopsService: AiopsService,
@@ -65,7 +73,7 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
         this.stopPhaseAnimation();
     }
 
-    // ── Load cloud accounts first, then auto-run ──────────────────────────────
+    // ── Load cloud accounts ───────────────────────────────────────────────────
     loadCloudAccounts(): void {
         this.accountsLoading = true;
         this.cloudAccountService.getAccounts().subscribe({
@@ -76,10 +84,7 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
                     || null;
                 this.accountsLoading = false;
 
-                if (this.selectedAccount) {
-                    // Auto-run scan once we have an account
-                    this.runScan();
-                } else {
+                if (!this.selectedAccount) {
                     this.accountsError = 'No cloud account configured. Please set up a cloud account first.';
                 }
             },
@@ -92,11 +97,8 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     onAccountChange(accountId: string): void {
         this.selectedAccount = this.cloudAccounts.find(a => a.accountId === accountId) || null;
-        // Re-run scan with new account
-        if (this.selectedAccount) this.runScan();
     }
 
-    // ── Mode toggle ───────────────────────────────────────────────────────────
     setMode(mode: ScanMode): void {
         this.selectedMode = mode;
     }
@@ -112,8 +114,12 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
         this.appFindings = [];
         this.actionsTaken = [];
         this.pendingApprovals = [];
+        this.scanMeta = null;
+        this.scanDurationMs = null;
         this.activeSection = 'findings';
+        this.resetPhaseSteps();
 
+        const scanStart = Date.now();
         this.startPhaseAnimation();
 
         this.aiopsService.runScan(
@@ -124,7 +130,9 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
             next: (result) => {
                 this.scanning = false;
                 this.scanResult = result;
+                this.scanRuns = []; 
                 this.lastRunAt = new Date();
+                this.scanDurationMs = Date.now() - scanStart;
                 this.currentSessionId = result.sessionId || '';
                 this.stopPhaseAnimation();
                 this.parseResult(result);
@@ -146,6 +154,14 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
             this.actionsTaken = rem?.actionsAttempted || [];
             this.pendingApprovals = (rem?.pendingApproval || []).map((a: any) => ({ ...a, processing: false }));
         } catch { this.actionsTaken = []; this.pendingApprovals = []; }
+
+        // Merge scanMeta from backend (runner.js) with local timing
+        this.scanMeta = {
+            ...(result.scanMeta || {}),
+            durationMs: this.scanDurationMs,
+            sessionId: this.currentSessionId,
+            mode: this.selectedMode,
+        };
 
         if (this.pendingApprovals.length > 0) this.activeSection = 'approvals';
     }
@@ -194,22 +210,58 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
         });
     }
 
-    // ── Phase animation ───────────────────────────────────────────────────────
+    loadScanRuns(): void {
+        if (this.runsLoading || this.scanRuns.length > 0) return;
+        this.runsLoading = true;
+        this.aiopsService.getScanRuns().subscribe({
+            next: (data) => { this.scanRuns = data; this.runsLoading = false; },
+            error: () => { this.runsLoading = false; }
+        });
+    }
+
+    // ── Phase animation with step checkmarks ──────────────────────────────────
+    private resetPhaseSteps(): void {
+        this.currentPhaseIndex = 0;
+        this.phaseSteps.forEach(s => s.done = false);
+        this.scanPhase = this.phaseSteps[0].label;
+    }
+
     private startPhaseAnimation(): void {
-        let i = 0;
-        this.scanPhase = this.phaseMessages[0];
         this.phaseInterval = setInterval(() => {
-            i = (i + 1) % this.phaseMessages.length;
-            this.scanPhase = this.phaseMessages[i];
+            // Mark current step done, advance
+            this.phaseSteps[this.currentPhaseIndex].done = true;
+            this.currentPhaseIndex = (this.currentPhaseIndex + 1) % this.phaseSteps.length;
+            this.scanPhase = this.phaseSteps[this.currentPhaseIndex].label;
         }, 4000);
     }
 
     private stopPhaseAnimation(): void {
         if (this.phaseInterval) clearInterval(this.phaseInterval);
+        // Mark all steps done when scan completes
+        this.phaseSteps.forEach(s => s.done = true);
     }
 
-    // ── Computed ──────────────────────────────────────────────────────────────
+    // ── Computed helpers ──────────────────────────────────────────────────────
     get totalFindings(): number {
         return this.infraFindings.length + this.appFindings.length;
+    }
+
+    get scanDurationLabel(): string {
+        if (this.scanDurationMs === null) return '';
+        const s = Math.round(this.scanDurationMs / 1000);
+        return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
+    }
+
+    get totalResourcesChecked(): number {
+        const infra = this.scanMeta?.infraAgent?.resourcesChecked || 0;
+        const app = this.scanMeta?.appAgent?.resourcesChecked || 0;
+        return infra + app;
+    }
+
+    get orchestratorSummary(): string {
+        return this.scanResult?.report?.summary
+            || this.scanMeta?.infraSummary
+            || this.scanMeta?.appSummary
+            || '';
     }
 }

@@ -3,80 +3,113 @@
  *
  * Google ADK Agent: Orchestrator (Root Agent)
  *
- * This is the entry point for the entire AI Ops pipeline.
- * It runs the Infra Monitor and App Health agents in parallel,
- * collects their findings, then invokes the Remediation Agent.
- *
  * Flow:
- *   Orchestrator
- *     ├── [parallel] infraMonitorAgent
- *     ├── [parallel] appHealthAgent
- *     └── [sequential] remediationAgent (receives combined findings)
+ *   Orchestrator (has infra tools + app tools + remediation tool directly)
+ *     └── [tool] remediationAgent (still wrapped as AgentTool)
+ *
+ * NOTE: appHealthAgent is NOT wrapped as AgentTool anymore.
+ * AgentTool causes Gemini to invoke the sub-agent but then return {"result":""}
+ * (empty string) — the inner agent calls its tools but emits no final text.
+ * Instead we give the orchestrator the app health tools directly and instruct
+ * it to write its findings under the app_health_findings session key.
  */
 
-const { LlmAgent, ParallelAgent, SequentialAgent } = require('@google/adk');
+const { LlmAgent, AgentTool } = require('@google/adk');
 const { infraMonitorAgent } = require('./infra-monitor.agent');
-const { appHealthAgent } = require('./app-health.agent');
 const { remediationAgent } = require('./remediation.agent');
+const {
+  getAppHealth,
+  getAllDeploymentsHealth,
+  getCloudWatchAlarms,
+} = require('../tools/observability.tools');
 
-// ── Step 1: Run infra + app health checks in parallel ─────────────────────────
-const monitoringPhase = new ParallelAgent({
-    name: 'monitoring_phase',
-    description: 'Runs infra and app health checks in parallel',
-    subAgents: [infraMonitorAgent, appHealthAgent],
-});
+// Infra agent still works fine as AgentTool — keep it
+const infraTool = new AgentTool({ agent: infraMonitorAgent });
 
-// ── Step 2: Pass findings to remediation ──────────────────────────────────────
-// The SequentialAgent passes session state between steps.
-// remediationAgent reads infra_health_findings and app_health_findings from state.
-const remediationPhase = new SequentialAgent({
-    name: 'remediation_phase',
-    description: 'Decides and executes remediation based on combined findings',
-    subAgents: [remediationAgent],
-});
+// Remediation agent as AgentTool — keep it
+const remediationTool = new AgentTool({ agent: remediationAgent });
 
 // ── Root Orchestrator ─────────────────────────────────────────────────────────
 const ORCHESTRATOR_PROMPT = `
-You are the ACP Portal AI Ops Orchestrator. You coordinate the health monitoring
-and auto-remediation pipeline for cloud infrastructure and applications.
- 
-You have access to two sub-agent pipelines:
-1. monitoring_phase: Runs infra and app health checks in parallel. Call this first.
-2. remediation_phase: Uses the findings to decide and execute fixes. Call this second.
- 
-## Your process:
-1. Call monitoring_phase with the userId, accountId, and region from the input.
-2. Wait for results. Both agents store their findings in session state automatically.
-3. Call remediation_phase. It will read those findings and act.
-4. Return a consolidated report to the user with:
-   - What was found (summary from each agent)
-   - What was fixed automatically
-   - What needs human attention
-   - Any incidents created
- 
-## Input you receive will look like:
+You are the ACP Portal AI Ops Orchestrator. You coordinate health monitoring
+and auto-remediation for cloud infrastructure and applications.
+
+You have access to these tools:
+1. infra_monitor_agent — checks AWS infrastructure health (VPCs, ECS clusters, RDS, ALBs). Call this first (unless remediate-only mode).
+2. get_all_deployments_health — call this to get a summary of all app deployments health. Pass userId from the input.
+3. get_app_health — call this for each unhealthy/degraded app found in step 2. Pass accountId, region, cluster, serviceName, userId.
+4. get_cloudwatch_alarms — call this if any ECS cluster has active alarms.
+5. remediation_phase — executes fixes based on findings. Call this after monitoring (unless observe mode).
+
+## App health process (steps 2-4):
+1. Call get_all_deployments_health with userId.
+2. For each deployment that is NOT healthy, call get_app_health to get full details.
+3. Analyze results: running vs desired counts, alarms, stopped task reasons.
+4. Build the appFindings array from your analysis.
+5. Build appScanMeta with: agentName="app_health_agent", appsChecked=<total deployments found>, healthyApps=<count>, unhealthyApps=<count>, resourcesChecked=<total deployments found>, timestamp=<ISO8601 now>.
+
+## Mode handling — follow strictly:
+
+### mode = "observe"
+  1. Call infra_monitor_agent.
+  2. Run app health check (steps 2-4 above).
+  3. Return JSON summary. Do NOT call remediation_phase.
+
+### mode = "full" (default)
+  1. Call infra_monitor_agent.
+  2. Run app health check (steps 2-4 above).
+  3. Call remediation_phase.
+  4. Return consolidated JSON report.
+
+### mode = "remediate-only"
+  1. Do NOT call infra_monitor_agent or app health tools.
+  2. Call remediation_phase.
+  3. Return remediation JSON report.
+
+## Input format:
 {
   "userId": "john.doe",
   "accountId": "123456789012",
   "region": "us-east-1",
-  "mode": "full"   // or "observe" (skip remediation) or "remediate-only"
+  "mode": "observe" | "full" | "remediate-only"
 }
- 
-## Mode handling:
-- "full": run monitoring then remediation (default)
-- "observe": run monitoring only, no remediation — just return findings
-- "remediate-only": skip monitoring, run remediation on last known findings
- 
-Always be transparent about what actions were taken and what requires human review.
+
+## Output — always return valid JSON, never null fields:
+{
+  "mode": "<mode used>",
+  "summary": "<one sentence summary>",
+  "infraSummary": "<from infra agent or null>",
+  "appSummary": "<one sentence describing app health results>",
+  "appFindings": [],
+  "appScanMeta": {
+    "agentName": "app_health_agent",
+    "appsChecked": <number>,
+    "healthyApps": <number>,
+    "unhealthyApps": <number>,
+    "resourcesChecked": <number>,
+    "timestamp": "<ISO8601>"
+  },
+  "remediationSummary": "<from remediation agent or null>",
+  "pendingApprovals": [],
+  "incidentsCreated": []
+}
+
+CRITICAL: appScanMeta must always be present with accurate counts. Never omit it.
 `;
 
 const orchestratorAgent = new LlmAgent({
-    name: 'acp_aiops_orchestrator',
-    model: 'gemini-2.0-flash',
-    description: 'Root AI Ops orchestrator for ACP Portal. Coordinates health monitoring and auto-remediation.',
-    instruction: ORCHESTRATOR_PROMPT,
-    subAgents: [monitoringPhase, remediationPhase],
-    outputKey: 'orchestrator_report',
+  name: 'acp_aiops_orchestrator',
+  model: 'gemini-2.5-flash',
+  description: 'Root AI Ops orchestrator for ACP Portal.',
+  instruction: ORCHESTRATOR_PROMPT,
+  tools: [
+    infraTool,
+    getAllDeploymentsHealth,   // app health tools directly on orchestrator
+    getAppHealth,
+    getCloudWatchAlarms,
+    remediationTool,
+  ],
+  outputKey: 'orchestrator_report',
 });
 
 module.exports = { orchestratorAgent };

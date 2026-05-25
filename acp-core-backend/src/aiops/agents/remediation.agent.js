@@ -12,10 +12,10 @@
 
 const { LlmAgent } = require('@google/adk');
 const {
-    restartEcsService,
-    scaleEcsService,
-    rebootRdsInstance,
-    createIncident,
+  restartEcsService,
+  scaleEcsService,
+  rebootRdsInstance,
+  createIncident,
 } = require('../tools/remediation.tools');
 
 const REMEDIATION_SYSTEM_PROMPT = `
@@ -79,17 +79,17 @@ After taking actions, return a JSON summary:
 `;
 
 const remediationAgent = new LlmAgent({
-    name: 'remediation_agent',
-    model: 'gemini-2.0-flash',
-    description: 'Executes remediation actions based on monitoring findings. Restarts ECS services, scales tasks, reboots RDS, creates incidents.',
-    instruction: REMEDIATION_SYSTEM_PROMPT,
-    tools: [
-        restartEcsService,
-        scaleEcsService,
-        rebootRdsInstance,
-        createIncident,
-    ],
-    outputKey: 'remediation_results',
+  name: 'remediation_agent',
+  model: 'gemini-2.5-flash',
+  description: 'Executes remediation actions based on monitoring findings. Restarts ECS services, scales tasks, reboots RDS, creates incidents.',
+  instruction: REMEDIATION_SYSTEM_PROMPT,
+  tools: [
+    restartEcsService,
+    scaleEcsService,
+    rebootRdsInstance,
+    createIncident,
+  ],
+  outputKey: 'remediation_results',
 });
 
 module.exports = { remediationAgent };
