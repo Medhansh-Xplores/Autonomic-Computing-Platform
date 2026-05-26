@@ -174,7 +174,8 @@
                     <span class="ns-dot" [class.ns-teal]="true"></span>
                     <span *ngIf="scanning && currentPhaseIndex === 2">Scanning…</span>
                     <span *ngIf="scanResult && scanMeta?.appAgent">
-                        ✓ {{ scanMeta.appAgent.appsChecked || scanMeta.appAgent.resourcesChecked || 0 }} apps
+                        ✓ {{ scanMeta.appAgent.appsChecked > 0 ? scanMeta.appAgent.appsChecked + ' apps' : 'No apps
+                        deployed' }}
                     </span>
                     <span *ngIf="scanResult && !scanMeta?.appAgent">✓ Completed</span>
                     <span *ngIf="scanning && currentPhaseIndex !== 2">Waiting…</span>
@@ -196,8 +197,8 @@
                         <span class="nsi-label">Unhealthy</span>
                     </div>
                     <div class="ns-item" *ngIf="scanMeta.appAgent.appsChecked === 0">
-                        <span class="nsi-icon">⚠️</span>
-                        <span class="nsi-label">No deployments found in DB</span>
+                        <span class="nsi-count">—</span>
+                        <span class="nsi-label">No apps deployed yet</span>
                     </div>
                 </div>
                 <div class="node-tasks" *ngIf="!scanResult">
@@ -295,8 +296,8 @@
             </div>
             <div class="stat-sub">
                 <ng-container *ngIf="appFindings.length === 0">
-                    {{ scanMeta?.appAgent?.appsChecked ? (scanMeta.appAgent.appsChecked + ' apps healthy') : 'All
-                    healthy' }}
+                    {{ scanMeta?.appAgent?.appsChecked > 0 ? (scanMeta.appAgent.healthyApps + ' of ' +
+                    scanMeta.appAgent.appsChecked + ' apps healthy') : 'No apps deployed.' }}
                 </ng-container>
                 <ng-container *ngIf="appFindings.length > 0">Issues detected</ng-container>
             </div>

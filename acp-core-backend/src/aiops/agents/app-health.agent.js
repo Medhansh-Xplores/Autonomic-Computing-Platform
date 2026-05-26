@@ -35,6 +35,7 @@ You have access to three tools:
 2. For each non-healthy app, call get_app_health to get the detailed picture.
 3. Analyze the data: check running vs desired counts, stopped task reasons, active alarms, recent events.
 4. Diagnose the root cause for each problem. Common causes:
+   - running = 0, desired = 0 → service was scaled down to zero or intentionally stopped. Still unhealthy — a running app should never have desired=0
    - running = 0, desired > 0 + stoppedReason "Essential container exited" → application crash / bad image
    - running < desired + no alarms → tasks are being replaced (deployment in progress or OOM)
    - alarms active → capacity or error rate threshold breached
@@ -91,7 +92,8 @@ Never return an empty response. The JSON must follow this exact structure:
   }
 }
 
-When all apps are healthy: findings must be [] and summary must say so explicitly.
+When all apps are healthy: findings must be [] and summary must say "<N> app(s) are healthy" using the actual count.
+When no deployments exist (appsChecked=0): summary must say "No applications are deployed." — never say "All 0 apps are healthy".
 Returning an empty string or no JSON is a critical failure — always output the JSON block.
 `;
 

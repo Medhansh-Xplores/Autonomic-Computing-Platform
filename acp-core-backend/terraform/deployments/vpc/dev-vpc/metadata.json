@@ -1,0 +1,11 @@
+{
+  "id": "0f9caa91-cfa5-4176-a3a3-60fa73d5c825",
+  "name": "dev-vpc",
+  "type": "VPC",
+  "region": "us-east-1",
+  "account": "997053010568",
+  "awsAccountId": "997053010568",
+  "status": "Active",
+  "cloud": "AWS",
+  "userId": "acpuser"
+}

@@ -1,115 +1,92 @@
 /**
  * orchestrator.agent.js
  *
- * Google ADK Agent: Orchestrator (Root Agent)
+ * Architecture: SequentialAgent (root)
+ *   Step 1: infraMonitorAgent  → writes 'infra_health_findings' to session state
+ *   Step 2: appHealthAgent     → writes 'app_health_findings' to session state
+ *   Step 3: orchestratorAgent  → reads both, writes 'orchestrator_report' to state
  *
- * Flow:
- *   Orchestrator (has infra tools + app tools + remediation tool directly)
- *     └── [tool] remediationAgent (still wrapped as AgentTool)
- *
- * NOTE: appHealthAgent is NOT wrapped as AgentTool anymore.
- * AgentTool causes Gemini to invoke the sub-agent but then return {"result":""}
- * (empty string) — the inner agent calls its tools but emits no final text.
- * Instead we give the orchestrator the app health tools directly and instruct
- * it to write its findings under the app_health_findings session key.
+ * WHY: AgentTool wrapping causes Gemini to return {"result":""} (empty string)
+ * for sub-agents that call tools. SequentialAgent + outputKey is the correct
+ * ADK pattern — each agent writes to shared session state, the next reads it.
+ * No AgentTool, no mixed tool types, no 400 proto errors.
  */
 
-const { LlmAgent, AgentTool } = require('@google/adk');
+const { LlmAgent, SequentialAgent } = require('@google/adk');
 const { infraMonitorAgent } = require('./infra-monitor.agent');
+const { appHealthAgent } = require('./app-health.agent');
 const { remediationAgent } = require('./remediation.agent');
-const {
-  getAppHealth,
-  getAllDeploymentsHealth,
-  getCloudWatchAlarms,
-} = require('../tools/observability.tools');
 
-// Infra agent still works fine as AgentTool — keep it
-const infraTool = new AgentTool({ agent: infraMonitorAgent });
-
-// Remediation agent as AgentTool — keep it
-const remediationTool = new AgentTool({ agent: remediationAgent });
-
-// ── Root Orchestrator ─────────────────────────────────────────────────────────
+// ── Step 3: Orchestrator — reads from state, synthesizes final report ─────────
 const ORCHESTRATOR_PROMPT = `
-You are the ACP Portal AI Ops Orchestrator. You coordinate health monitoring
-and auto-remediation for cloud infrastructure and applications.
+You are the ACP Portal AI Ops Orchestrator. The previous agents have already
+run and stored their findings in session state. Your job is to read those
+findings and produce the final consolidated report.
 
-You have access to these tools:
-1. infra_monitor_agent — checks AWS infrastructure health (VPCs, ECS clusters, RDS, ALBs). Call this first (unless remediate-only mode).
-2. get_all_deployments_health — call this to get a summary of all app deployments health. Pass userId from the input.
-3. get_app_health — call this for each unhealthy/degraded app found in step 2. Pass accountId, region, cluster, serviceName, userId.
-4. get_cloudwatch_alarms — call this if any ECS cluster has active alarms.
-5. remediation_phase — executes fixes based on findings. Call this after monitoring (unless observe mode).
+The session state contains:
+- infra_health_findings: JSON from the Infra Monitor Agent
+- app_health_findings: JSON from the App Health Agent
 
-## App health process (steps 2-4):
-1. Call get_all_deployments_health with userId.
-2. For each deployment that is NOT healthy, call get_app_health to get full details.
-3. Analyze results: running vs desired counts, alarms, stopped task reasons.
-4. Build the appFindings array from your analysis.
-5. Build appScanMeta with: agentName="app_health_agent", appsChecked=<total deployments found>, healthyApps=<count>, unhealthyApps=<count>, resourcesChecked=<total deployments found>, timestamp=<ISO8601 now>.
-
-## Mode handling — follow strictly:
+## Mode handling:
 
 ### mode = "observe"
-  1. Call infra_monitor_agent.
-  2. Run app health check (steps 2-4 above).
-  3. Return JSON summary. Do NOT call remediation_phase.
+  Read infra_health_findings and app_health_findings from state.
+  Do NOT call remediation_phase. Produce final JSON report.
 
-### mode = "full" (default)
-  1. Call infra_monitor_agent.
-  2. Run app health check (steps 2-4 above).
-  3. Call remediation_phase.
-  4. Return consolidated JSON report.
+### mode = "full"
+  Read infra_health_findings and app_health_findings from state.
+  Call remediation_phase with the findings.
+  Produce final JSON report.
 
 ### mode = "remediate-only"
-  1. Do NOT call infra_monitor_agent or app health tools.
-  2. Call remediation_phase.
-  3. Return remediation JSON report.
+  Skip infra and app findings.
+  Call remediation_phase.
+  Produce final JSON report.
 
 ## Input format:
 {
   "userId": "john.doe",
   "accountId": "123456789012",
   "region": "us-east-1",
-  "mode": "observe" | "full" | "remediate-only"
+  "mode": "observe" | "full" | "remediate-only",
+  "infra_health_findings": { ...from state... },
+  "app_health_findings": { ...from state... }
 }
 
-## Output — always return valid JSON, never null fields:
+## Output — always return ONLY valid JSON, no markdown fences:
 {
   "mode": "<mode used>",
-  "summary": "<one sentence summary>",
-  "infraSummary": "<from infra agent or null>",
-  "appSummary": "<one sentence describing app health results>",
-  "appFindings": [],
-  "appScanMeta": {
-    "agentName": "app_health_agent",
-    "appsChecked": <number>,
-    "healthyApps": <number>,
-    "unhealthyApps": <number>,
-    "resourcesChecked": <number>,
-    "timestamp": "<ISO8601>"
-  },
-  "remediationSummary": "<from remediation agent or null>",
+  "summary": "<one sentence overall summary>",
+  "infraSummary": "<summary from infra_health_findings.summary or null>",
+  "appSummary": "<summary from app_health_findings.summary or null>",
+  "appFindings": "<findings array from app_health_findings.findings or []>",
+  "remediationSummary": null,
   "pendingApprovals": [],
   "incidentsCreated": []
 }
 
-CRITICAL: appScanMeta must always be present with accurate counts. Never omit it.
+CRITICAL: Copy infraSummary from infra_health_findings.summary exactly.
+CRITICAL: Copy appSummary from app_health_findings.summary exactly.
+CRITICAL: Copy appFindings from app_health_findings.findings exactly.
+CRITICAL: Output ONLY the JSON object. No explanation. No markdown fences.
 `;
 
 const orchestratorAgent = new LlmAgent({
   name: 'acp_aiops_orchestrator',
   model: 'gemini-2.5-flash',
-  description: 'Root AI Ops orchestrator for ACP Portal.',
+  description: 'Synthesizes infra and app health findings into a final report.',
   instruction: ORCHESTRATOR_PROMPT,
-  tools: [
-    infraTool,
-    getAllDeploymentsHealth,   // app health tools directly on orchestrator
-    getAppHealth,
-    getCloudWatchAlarms,
-    remediationTool,
-  ],
+  tools: [],  // No tools — reads from state, synthesizes only
   outputKey: 'orchestrator_report',
 });
 
-module.exports = { orchestratorAgent };
+// ── Root: SequentialAgent runs all three in order ─────────────────────────────
+// outputKey on each LlmAgent writes to session state automatically.
+// The next agent in sequence can read it via state injection or prompt reference.
+const acpAiOpsAgent = new SequentialAgent({
+  name: 'acp_aiops_pipeline',
+  description: 'ACP AI Ops pipeline: infra scan → app scan → remediation → orchestration',
+  subAgents: [infraMonitorAgent, appHealthAgent, remediationAgent, orchestratorAgent],
+});
+
+module.exports = { orchestratorAgent: acpAiOpsAgent };

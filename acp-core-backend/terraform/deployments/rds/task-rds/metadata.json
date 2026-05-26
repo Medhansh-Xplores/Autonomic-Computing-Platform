@@ -1,0 +1,19 @@
+{
+  "id": "e33e6f71-0097-4981-a29f-99be5b7f0e12",
+  "name": "task-rds",
+  "type": "RDS",
+  "region": "us-east-1",
+  "account": "997053010568",
+  "awsAccountId": "997053010568",
+  "status": "Active",
+  "cloud": "AWS",
+  "rdsIdentifier": "task-rds",
+  "dbEngine": "mysql",
+  "vpcId": "vpc-001c9ee3c0e4c3db2",
+  "dbUsername": "appuser",
+  "dbPassword": "password",
+  "dbName": "appdb",
+  "userId": "acpuser",
+  "rdsEndpoint": "task-rds.cqxemo4ma19c.us-east-1.rds.amazonaws.com",
+  "rdsPort": "3306"
+}

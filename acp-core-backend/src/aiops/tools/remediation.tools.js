@@ -20,6 +20,7 @@ const {
 const {
     RDSClient,
     RebootDBInstanceCommand,
+    StartDBInstanceCommand,
     DescribeDBInstancesCommand,
 } = require('@aws-sdk/client-rds');
 const {
@@ -88,12 +89,24 @@ Both backend and frontend services for an app will be restarted if serviceSuffix
             cluster: { type: 'string', description: 'ECS cluster name' },
             serviceName: { type: 'string', description: 'Full ECS service name, e.g. myapp-backend' },
             reason: { type: 'string', description: 'Why the restart is needed — logged in audit trail' },
+            approvedByUser: { type: 'boolean', description: 'Must be true. Human must confirm before restart.' },
         },
-        required: ['accountId', 'region', 'userId', 'cluster', 'serviceName', 'reason'],
+        required: ['accountId', 'region', 'userId', 'cluster', 'serviceName', 'reason', 'approvedByUser'],
     },
 
-    handler: async ({ accountId, region, userId, cluster, serviceName, reason }) => {
+    handler: async ({ accountId, region, userId, cluster, serviceName, reason, approvedByUser }) => {
         const target = `${cluster}/${serviceName}`;
+
+        if (!approvedByUser) {
+            return {
+                success: false,
+                requiresApproval: true,
+                action: 'restart_ecs_service',
+                target,
+                message: 'ECS service restart requires human approval. Set approvedByUser=true after confirming in ACP Portal.',
+            };
+        }
+
         try {
             const credentials = await resolveCredentials(accountId, userId, region);
             const ecs = new ECSClient({ region, credentials });
@@ -216,9 +229,23 @@ Use only when: RDS status is not 'available', connections are maxed out, or ther
             const credentials = await resolveCredentials(accountId, userId, region);
             const rds = new RDSClient({ region, credentials });
 
-            await rds.send(new RebootDBInstanceCommand({ DBInstanceIdentifier: dbIdentifier }));
+            // Describe first to check actual status
+            const desc = await rds.send(new DescribeDBInstancesCommand({
+                DBInstanceIdentifier: dbIdentifier
+            }));
+            const status = desc.DBInstances?.[0]?.DBInstanceStatus;
 
-            const result = { success: true, action: 'reboot_rds_instance', target, message: `Reboot initiated for ${dbIdentifier}` };
+            let message;
+            if (status === 'stopped') {
+                // Can't reboot a stopped instance — start it instead
+                await rds.send(new StartDBInstanceCommand({ DBInstanceIdentifier: dbIdentifier }));
+                message = `Start initiated for stopped instance ${dbIdentifier}`;
+            } else {
+                await rds.send(new RebootDBInstanceCommand({ DBInstanceIdentifier: dbIdentifier }));
+                message = `Reboot initiated for ${dbIdentifier}`;
+            }
+
+            const result = { success: true, action: 'reboot_rds_instance', target, message };
             await auditLog({ userId, action: 'reboot_rds_instance', target, reason, approved: true, result });
             return result;
         } catch (err) {
