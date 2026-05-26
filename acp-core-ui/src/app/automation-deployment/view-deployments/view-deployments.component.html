@@ -1,0 +1,107 @@
+<div class="container">
+
+    <div class="create-header-box">
+        <div class="header-subtitle">AUTOMATION AND DEPLOYMENT SERVICES</div>
+        <div class="create-header-title">
+            VIEW DEPLOYMENTS
+        </div>
+    </div>
+
+    <!-- No Deployments -->
+    <div *ngIf="deployments.length === 0" class="empty">
+        No Deployments Found
+    </div>
+
+    <!-- Table -->
+    <div class="infra-table" *ngIf="deployments.length > 0">
+
+        <!-- Header -->
+        <div class="table-header">
+            <th>Deployment</th>
+            <th>Cloud</th>
+            <th>
+                GitHub
+                <div class="header-sub">Account / Repo / Workflow</div>
+            </th>
+            <th>Status</th>
+            <th>Deployed At</th>
+            <th>App URL</th>
+            <th>Actions</th>
+        </div>
+
+        <!-- Rows -->
+        <div class="table-body">
+            <div class="table-row" *ngFor="let d of deployments">
+
+                <!-- Deployment -->
+                <div>
+                    <div class="deployment-name">
+                        {{ d.name || '—' }}
+                    </div>
+                </div>
+
+                <!-- Cloud -->
+                <div>
+                    {{ d.cloud || '—' }}
+                </div>
+
+                <!-- GitHub -->
+                <div class="deployment-cell">
+
+                    <div class="deployment-sub">
+                        {{ d.account || '—' }}<span *ngIf="d.account"> /</span>
+                    </div>
+
+                    <div class="deployment-sub">
+
+                        <a *ngIf="d.repoUrl" [href]="d.repoUrl" target="_blank" rel="noopener" class="repo-link">
+
+                            {{ d.repoName || '—' }}
+
+                        </a>
+
+                        <span *ngIf="!d.repoUrl">
+                            {{ d.repoName || '—' }}
+                        </span>
+
+                        <span *ngIf="d.repoName"> /</span>
+
+                    </div>
+
+                    <div class="deployment-sub">
+                        {{ d.workflow || '—' }}
+                    </div>
+
+                </div>
+
+                <!-- Status -->
+                <div class="status" [ngClass]="getStatusClass(d)">
+                    {{ getStatusLabel(d) }}
+                </div>
+
+                <!-- Deployed At -->
+                <div>
+                    {{ d.deployedAt ? (d.deployedAt | date:'medium') : '—' }}
+                </div>
+
+                <!-- App URL -->
+                <div>
+                    <a *ngIf="d.url" [href]="d.url" target="_blank" rel="noopener" class="app-link">
+                        Open
+                    </a>
+
+                    <span *ngIf="!d.url">—</span>
+                </div>
+                <div>
+                    <button class="delete-btn" [disabled]="d.status === 'Deleting' || d.status === 'running'"
+                        (click)="deleteDeployment($event, d)">
+                        {{ d.status === 'Deleting' ? 'Deleting...' : 'Delete' }}
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>

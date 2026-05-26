@@ -1,0 +1,71 @@
+<div class="usa-overlay"></div>
+
+<header>
+
+  <!-- TOP HEADER -->
+  <div class="header-container">
+
+    <!-- LOGO -->
+    <div class="logo-container">
+      <a class="logo" [routerLink]="['/']" title="Navigate to Home Page">
+        <img src="../../assets/img/autonomic_solutions_logo.JPG" id="as-logo-img" alt="Cloud Accelerator Logo">
+      </a>
+    </div>
+
+    <!-- TOP MENU -->
+    <div class="navbar">
+      <div class="menu">
+        <ul>
+          <li><a routerLink="services">SERVICES</a></li>
+          <li><a routerLink="about">ABOUT</a></li>
+          <li><a routerLink="contact">RESOURCES</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- USER NAVBAR -->
+  <div *ngIf="this.curUser" class="usa-nav">
+
+    <ul class="usa-nav__primary">
+
+      <!-- LEFT -->
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__link" routerLink="services">
+          <fa-icon [icon]="faHome"></fa-icon> Home
+        </a>
+      </li>
+
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__link" routerLink="/cloud-setup">
+          <fa-icon [icon]="faCloud"></fa-icon> Cloud Accounts
+        </a>
+      </li>
+
+      <!-- RIGHT (auto pushed) -->
+      <li class="usa-nav__primary-item right-item">
+        <a class="usa-nav__link">
+          <fa-icon [icon]="faUserCircle"></fa-icon> {{curUser.userName}}
+        </a>
+      </li>
+
+      <li class="usa-nav__primary-item">
+        <a class="usa-nav__logout__link" (click)="logOutUser()">
+          <fa-icon [icon]="faSignOutAlt"></fa-icon> Logout
+        </a>
+      </li>
+
+    </ul>
+
+  </div>
+
+  <!-- PLATFORM TITLE BANNER -->
+  <!-- PLATFORM TITLE BANNER -->
+  <!-- PLATFORM TITLE BANNER -->
+  <div class="platform-title-bar" *ngIf="!isLoginPage && showTitleBanner">
+    <span>Autonomic Computing Platform (ACP)</span>
+    <span class="platform-subtitle">Self-Manageable &#124; Software Driven &#124; Reusable Engineering</span>
+  </div>
+
+</header>

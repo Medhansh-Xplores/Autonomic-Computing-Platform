@@ -1,0 +1,13 @@
+{
+  "user": {
+    "username": "user",
+    "firstname": "Raghu Ram",
+    "lastname": "Tumu",
+    "email": "tumuraghuram",
+    "passwordHash": "10c603e3a0e66fbba01c52817afbfa3808b3cb220e6835f7e818b63a23341c474592de133a12098e505c2eccd4e2955bfacd196c7f09493b317cee69fabb4608",
+    "passwordSalt": "9d5882f55950ee396bb75e14476b09e4",
+    "confirmed": true,
+    "createdAt": "2026-05-22T19:32:37.770Z",
+    "confirmedAt": "2026-05-22T19:33:07.154Z"
+  }
+}

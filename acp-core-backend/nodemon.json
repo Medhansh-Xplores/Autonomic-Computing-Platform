@@ -1,0 +1,9 @@
+{
+  "watch": ["src"],
+  "ignore": [
+    "terraform/deployments/**",
+    "terraform/templates/**",
+    "node_modules/**"
+  ],
+  "ext": "js,json"
+}

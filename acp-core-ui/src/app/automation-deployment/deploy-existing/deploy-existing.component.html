@@ -1,0 +1,603 @@
+<div class="container">
+
+    <div class="create-header-box">
+        <div class="header-subtitle">AUTOMATION AND DEPLOYMENT SERVICES</div>
+        <div class="create-header-title">DEPLOY APPLICATION</div>
+    </div>
+
+
+    <!-- ── STEP 1: SOURCE & MODE ──────────────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 1">
+
+        <!-- Application Source -->
+        <div class="form-panel">
+            <div class="form-panel-header">Application Source</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Select Source</label>
+                    <label class="radio-option">
+                        <input type="radio" name="source" (change)="setSource('GitHub')">
+                        GitHub Repository
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="source" (change)="setSource('Docker')">
+                        Docker Image
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="source" (change)="setSource('ZIP')">
+                        Upload ZIP
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deployment Mode (GitHub only) -->
+        <div class="form-panel" *ngIf="source === 'GitHub'">
+            <div class="form-panel-header">Deployment Mode</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="radio-option">
+                        <input type="radio" name="mode" (change)="deploymentMode='repo'">
+                        Use Repository YAML
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="mode" (change)="deploymentMode='acp'">
+                        Configure via ACP
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Cloud Platform (ACP mode only) -->
+        <div *ngIf="deploymentMode === 'acp'">
+
+            <div class="form-panel" [class.disabled-section]="deploymentMode !== 'acp'">
+                <div class="form-panel-header">Cloud Platform &amp; Deployment Target</div>
+                <div class="form-panel-body">
+
+                    <div class="form-group">
+                        <label class="form-label">Target Cloud Platform</label>
+                        <label class="radio-option">
+                            <input type="radio" name="cloud" [disabled]="deploymentMode !== 'acp'"
+                                (change)="setCloud('AWS')"> AWS
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="cloud" [disabled]="deploymentMode !== 'acp'"
+                                (change)="setCloud('Azure')"> Azure
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="cloud" [disabled]="deploymentMode !== 'acp'"
+                                (change)="setCloud('GCP')"> GCP
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Deployment Target</label>
+                        <select class="usa-select" [(ngModel)]="deployment" [disabled]="deploymentMode !== 'acp'">
+                            <option value="" disabled>Select Deployment Target</option>
+                            <option *ngFor="let d of deploymentOptions" [value]="d">{{ d }}</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" routerLink="/automation-deployment">Cancel</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 2: TARGET DETAILS / APP DETAILS ───────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 2">
+
+        <!-- ACP AWS ECS: Target Selection -->
+        <div *ngIf="isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Deployment Target Details</div>
+            <div class="form-panel-body">
+
+                <div class="form-group">
+                    <label class="form-label">Account</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="account" (change)="loadRegions()"
+                            [disabled]="loadingAccounts || !accountOptions.length">
+                            <option value="">
+                                {{ loadingAccounts ? 'Loading accounts...' :
+                                (accountOptions.length ? 'Select Account' : 'No accounts available') }}
+                            </option>
+                            <option *ngFor="let acc of accountOptions" [value]="acc.accountID">
+                                {{ acc.accountName }} ({{ acc.accountID }})
+                            </option>
+                        </select>
+                        <div *ngIf="loadingAccounts" class="small-spinner"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Region</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="region" (change)="loadEcsClusters(); loadRdsInstances()"
+                            [disabled]="loadingRegions || !account">
+                            <option value="">{{ loadingRegions ? 'Loading regions...' : 'Select Region' }}</option>
+                            <option *ngFor="let r of regionOptions" [value]="r">{{ r }}</option>
+                        </select>
+                        <div *ngIf="loadingRegions" class="small-spinner"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ECS Cluster</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="ecsCluster" (ngModelChange)="loadListenerRules()"
+                            [disabled]="loadingEcs || !region">
+                            <option value="">{{ loadingEcs ? 'Loading ECS clusters...' : 'Select ECS Cluster' }}
+                            </option>
+                            <option *ngFor="let ecs of ecsOptions" [value]="ecs">{{ ecs }}</option>
+                        </select>
+                        <div *ngIf="loadingEcs" class="small-spinner"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="useRds" [(ngModel)]="useRds">
+                    <label for="useRds" class="form-label" style="margin:0;cursor:pointer;">Use RDS</label>
+                </div>
+
+                <div class="form-group" *ngIf="useRds">
+                    <label class="form-label">RDS Instance</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="rdsInstance" [disabled]="loadingRds || !region">
+                            <option value="">{{ loadingRds ? 'Loading RDS...' : 'Select RDS Instance' }}</option>
+                            <option *ngFor="let rds of rdsOptions" [value]="rds">{{ rds }}</option>
+                        </select>
+                        <div *ngIf="loadingRds" class="small-spinner"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- GitHub non-ACP: Deployment Details -->
+        <div *ngIf="source === 'GitHub' && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Deployment Details</div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Deployment Name</label>
+                        <input type="text" class="usa-input" [(ngModel)]="appName" placeholder="Enter deployment name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cloud Platform</label>
+                        <select class="usa-select" [(ngModel)]="cloud">
+                            <option value="">Select Cloud</option>
+                            <option value="AWS">AWS</option>
+                            <option value="Azure">Azure</option>
+                            <option value="GCP">GCP</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- GitHub non-ACP: GitHub Details -->
+        <div *ngIf="source === 'GitHub' && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">GitHub Details</div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Repository URL</label>
+                        <input type="text" class="usa-input" [(ngModel)]="repoUrl"
+                            placeholder="https://github.com/org/repo">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Branch</label>
+                        <input type="text" class="usa-input" [(ngModel)]="branch" placeholder="main">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- GitHub non-ACP: Repository Access -->
+        <div *ngIf="source === 'GitHub' && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Repository Access</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Repository Type</label>
+                    <label class="radio-option">
+                        <input type="radio" name="repoType" (change)="repoType='public'">
+                        Public Repository
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="repoType" (change)="repoType='private'">
+                        Private Repository
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- GitHub non-ACP: Private Token -->
+        <div *ngIf="source === 'GitHub' && repoType === 'private' && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Authentication</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">GitHub Token</label>
+                    <input type="password" class="usa-input" [(ngModel)]="githubToken"
+                        placeholder="GitHub Personal Access Token">
+                </div>
+            </div>
+        </div>
+
+        <!-- Docker -->
+        <div *ngIf="source === 'Docker'" class="form-panel">
+            <div class="form-panel-header">Docker Details</div>
+            <div class="form-panel-body">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Docker Image</label>
+                        <input type="text" class="usa-input" [(ngModel)]="dockerImage">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="text" class="usa-input" [(ngModel)]="port">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZIP -->
+        <div *ngIf="source === 'ZIP'" class="form-panel">
+            <div class="form-panel-header">ZIP Upload</div>
+            <div class="form-panel-body">
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Upload ZIP</label>
+                        <input type="file" class="usa-input" style="padding:5px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Start Command</label>
+                        <input type="text" class="usa-input" [(ngModel)]="startCommand">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="backPage()">Back</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 3: GITHUB DETAILS (ACP ECS) / SUMMARY + WORKFLOWS ─── -->
+    <div class="form-page" [hidden]="divToShow != 3">
+
+        <!-- ACP ECS: GitHub Details -->
+        <div *ngIf="isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">GitHub Details</div>
+            <div class="form-panel-body">
+
+                <div class="form-group">
+                    <label class="form-label">Application Repository URL</label>
+                    <input type="text" class="usa-input" [(ngModel)]="repoUrl"
+                        placeholder="https://github.com/org/repo  or  .../tree/main/subfolder">
+                    <div class="field-hint">Paste a full repo URL or a /tree/branch/subfolder URL — branch is detected
+                        automatically.</div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Frontend Codebase Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="frontendPath"
+                            placeholder="frontend (subfolder with Dockerfile)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Backend Codebase Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="backendPath"
+                            placeholder="backend (subfolder with Dockerfile)">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ACP ECS: Repository Access -->
+        <div *ngIf="isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Repository Access</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Repository Type</label>
+                    <label class="radio-option">
+                        <input type="radio" name="repoTypeStep3" (change)="repoType='public'">
+                        Public Repository
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="repoTypeStep3" (change)="repoType='private'">
+                        Private Repository
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACP ECS: GitHub Token (private only) -->
+        <div *ngIf="isAcpAwsEcsFlow() && repoType === 'private'" class="form-panel">
+            <div class="form-panel-header">Authentication</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">GitHub Token</label>
+                    <input type="password" class="usa-input" [(ngModel)]="githubToken"
+                        placeholder="GitHub Personal Access Token">
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-ACP: Loading workflows -->
+        <div *ngIf="loadingWorkflows && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-body">
+                <div class="loader-container">
+                    <div class="loader"></div>
+                    <div class="loader-text">Loading Workflows...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-ACP: Deployment Summary -->
+        <div *ngIf="!isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Deployment Summary</div>
+            <div class="form-panel-body">
+                <table class="review-table">
+                    <tr>
+                        <td>Deployment Name</td>
+                        <td>{{appName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Cloud Platform</td>
+                        <td>{{cloud}}</td>
+                    </tr>
+                    <tr>
+                        <td>GitHub Account</td>
+                        <td>{{repoUrl?.split('/')[3]}}</td>
+                    </tr>
+                    <tr>
+                        <td>Repository</td>
+                        <td>{{repoUrl?.split('/')[4]}}</td>
+                    </tr>
+                    <tr>
+                        <td>Branch</td>
+                        <td>{{branch}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Non-ACP: Available Workflows -->
+        <div *ngIf="!loadingWorkflows && !isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Available Workflows</div>
+            <div class="form-panel-body" style="padding:0;">
+                <table class="workflow-table">
+                    <tr>
+                        <th>Workflow Name</th>
+                        <th>Select</th>
+                    </tr>
+                    <tr *ngFor="let w of workflows">
+                        <td>{{ w.name }}</td>
+                        <td>
+                            <input type="radio" name="workflow" (change)="selectedWorkflow = w">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="backPage()">Back</button>
+            </div>
+            <div>
+                <button class="custombutton" *ngIf="!isAcpAwsEcsFlow()" (click)="deploy()">Deploy</button>
+                <button class="custombutton" *ngIf="isAcpAwsEcsFlow()" (click)="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 4: CONTAINER CONFIG ───────────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 4">
+
+        <!-- ACP ECS: Container config -->
+        <div *ngIf="isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Application Container Configuration</div>
+            <div class="form-panel-body">
+
+                <div class="form-group">
+                    <label class="form-label">Application Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="appName">
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Backend Port</label>
+                        <input type="text" class="usa-input" [(ngModel)]="backendPort" placeholder="3000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Frontend Base Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="frontendBasePath" placeholder="/tasks">
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Health Check Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="healthCheckPath" placeholder="/health">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">API Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="apiPath" placeholder="/api/*">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Listener Priority</label>
+                    <input type="number" class="usa-input" [(ngModel)]="priority" [class.is-invalid]="isPriorityTaken()"
+                        placeholder="100">
+                    <div *ngIf="takenPriorities.length > 0" class="field-hint">
+                        Already taken:
+                        <span *ngFor="let r of takenPriorities">
+                            <strong>{{ r.priority }}</strong> ({{ r.path }})&nbsp;
+                        </span>
+                    </div>
+                    <div *ngIf="isPriorityTaken()" class="field-error">
+                        Priority {{ priority }} is already in use for path {{ getTakenPath() }}.
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Non-ACP: App & compute config -->
+        <div *ngIf="!isAcpAwsEcsFlow()" class="form-panel">
+            <div class="form-panel-header">Application Configuration</div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Application Name</label>
+                        <input type="text" class="usa-input" [(ngModel)]="appName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port</label>
+                        <input type="text" class="usa-input" [(ngModel)]="port">
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">CPU</label>
+                        <select class="usa-select" [(ngModel)]="cpu">
+                            <option value="256">256</option>
+                            <option value="512">512</option>
+                            <option value="1024">1024</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Memory</label>
+                        <select class="usa-select" [(ngModel)]="memory">
+                            <option value="512">512</option>
+                            <option value="1024">1024</option>
+                            <option value="2048">2048</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="backPage()">Back</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="nextPage()">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 5: REVIEW & DEPLOY ────────────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 5">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review Deployment</div>
+            <div class="form-panel-body">
+                <table class="review-table">
+                    <tr>
+                        <td>Source</td>
+                        <td>{{source}}</td>
+                    </tr>
+                    <tr>
+                        <td>Cloud</td>
+                        <td>{{cloud}}</td>
+                    </tr>
+                    <tr>
+                        <td>Deployment</td>
+                        <td>{{deployment}}</td>
+                    </tr>
+                    <tr>
+                        <td>Application</td>
+                        <td>{{appName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Backend Port</td>
+                        <td>{{ isAcpAwsEcsFlow() ? backendPort : port }}</td>
+                    </tr>
+                    <tr *ngIf="frontendBasePath">
+                        <td>Frontend Base Path</td>
+                        <td>{{ frontendBasePath }}</td>
+                    </tr>
+                    <tr>
+                        <td>Health Check Path</td>
+                        <td>{{ healthCheckPath }}</td>
+                    </tr>
+                    <tr>
+                        <td>API Path</td>
+                        <td>{{ apiPath }}</td>
+                    </tr>
+                    <tr>
+                        <td>Listener Priority</td>
+                        <td>{{ priority }}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>Account</td>
+                        <td>{{account}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>Region</td>
+                        <td>{{region}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>ECS Cluster</td>
+                        <td>{{ecsCluster}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>Repository</td>
+                        <td>{{repoUrl}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>Frontend Path</td>
+                        <td>{{frontendPath}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAwsEcsFlow()">
+                        <td>Backend Path</td>
+                        <td>{{backendPath}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="backPage()">Back</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="deploy()" [disabled]="loading">
+                    {{ loading ? 'Deploying...' : 'Deploy' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

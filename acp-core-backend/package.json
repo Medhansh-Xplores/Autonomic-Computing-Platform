@@ -1,0 +1,44 @@
+{
+  "name": "acp-core-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "@aws-sdk/client-acm": "^3.1047.0",
+    "@aws-sdk/client-cloudtrail": "^3.1047.0",
+    "@aws-sdk/client-cloudwatch": "^3.1042.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1035.0",
+    "@aws-sdk/client-ec2": "^3.1028.0",
+    "@aws-sdk/client-ecs": "^3.1028.0",
+    "@aws-sdk/client-elastic-load-balancing-v2": "^3.1042.0",
+    "@aws-sdk/client-guardduty": "^3.1047.0",
+    "@aws-sdk/client-iam": "^3.1047.0",
+    "@aws-sdk/client-rds": "^3.1047.0",
+    "@aws-sdk/client-secrets-manager": "^3.1047.0",
+    "@aws-sdk/client-sts": "^3.1027.0",
+    "@aws-sdk/client-wafv2": "^3.1047.0",
+    "@google/adk": "^1.1.0",
+    "@google/genai": "^2.4.0",
+    "adm-zip": "^0.5.17",
+    "aws-jwt-verify": "^5.1.1",
+    "aws-sdk": "^2.1693.0",
+    "axios": "^1.13.6",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "libsodium-wrappers": "^0.8.3",
+    "pg": "^8.20.0",
+    "tweetsodium": "^0.0.6"
+  }
+}

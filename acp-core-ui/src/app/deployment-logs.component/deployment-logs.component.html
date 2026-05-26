@@ -1,0 +1,75 @@
+<div class="page-container">
+
+  <!-- PAGE HEADER -->
+  <div class="create-header-box">
+    <div class="create-header-title">DEPLOYMENT LOGS</div>
+  </div>
+
+  <!-- STATUS BANNER -->
+  <div class="status-banner" [ngClass]="{
+    'banner-running': !isComplete,
+    'banner-success': isComplete && !status.includes('Failed'),
+    'banner-error': isComplete && status.includes('Failed')
+  }">
+    <div class="banner-left">
+      <span class="banner-icon" *ngIf="!isComplete">
+        <span class="spinner"></span>
+      </span>
+      <span class="banner-icon" *ngIf="isComplete && !status.includes('Failed')">✅</span>
+      <span class="banner-icon" *ngIf="isComplete && status.includes('Failed')">❌</span>
+      <div class="banner-text">
+        <div class="banner-title">{{ status }}</div>
+      </div>
+    </div>
+    <div class="banner-right" *ngIf="!isComplete">
+      <span class="live-badge">● LIVE</span>
+    </div>
+  </div>
+
+  <!-- LOG PANEL -->
+  <div class="log-panel">
+
+    <div class="log-panel-header">
+      <div class="panel-title-row">
+        <div class="panel-icon">🔧</div>
+        <div>
+          <div class="panel-title">Infrastructure Provisioning</div>
+          <div class="panel-subtitle">Real-time Terraform output</div>
+        </div>
+        <div class="panel-status-badge" [ngClass]="{
+          'badge-running': !isComplete,
+          'badge-success': isComplete && !status.includes('Failed'),
+          'badge-error': isComplete && status.includes('Failed')
+        }">
+          <span *ngIf="!isComplete"><span class="spinner-sm"></span> Running</span>
+          <span *ngIf="isComplete && !status.includes('Failed')">Completed</span>
+          <span *ngIf="isComplete && status.includes('Failed')">Failed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="terminal-wrap">
+      <div class="terminal-toolbar">
+        <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+        <span class="terminal-label">terraform apply</span>
+      </div>
+      <div class="terminal-body" #scrollContainer>
+        <div *ngFor="let log of logs">
+          <pre>{{ log }}</pre>
+        </div>
+        <div *ngIf="logs.length === 0" class="no-logs">
+          <pre>Waiting for logs...</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="page-actions" *ngIf="isComplete">
+    <button class="btn-primary" (click)="goBack()">
+      View Cloud Infrastructure →
+    </button>
+  </div>
+
+</div>

@@ -1,0 +1,1579 @@
+<div class="container">
+
+    <!-- ── Page header ── -->
+    <div class="create-header-box">
+        <div class="header-subtitle">AIOps SECURITY</div>
+        <div class="create-header-title">INFRA &amp; APPS DEPLOYMENT SECURITY</div>
+        <div class="header-description">Security posture of infrastructure provisioned and apps deployed through this
+            platform</div>
+    </div>
+
+    <!-- ── Tab bar ── -->
+    <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'infra'" (click)="switchTab('infra')">
+            🏗 Deployed Infra Security
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'apps'" (click)="switchTab('apps')">
+            🚀 Deployed Apps Security
+            <span class="tab-count">{{ allHealth.length }}</span>
+        </button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         INFRA TAB
+         ════════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'infra'">
+
+        <!-- Account selector -->
+        <div class="account-selector-row" *ngIf="cloudAccounts.length > 0">
+            <span class="account-selector-label">Cloud account:</span>
+            <select class="account-select" (change)="onAccountChange($any($event.target).value)">
+                <option *ngFor="let acc of cloudAccounts" [value]="acc.accountId"
+                    [selected]="acc.accountId === selectedAccount?.accountId">
+                    {{ acc.accountName }} ({{ acc.accountId }}) — {{ acc.region }}
+                </option>
+            </select>
+        </div>
+        <div class="account-selector-row muted-hint" *ngIf="cloudAccounts.length === 0">
+            No cloud accounts registered. Add one in Cloud Accounts to view infrastructure security.
+        </div>
+
+        <p class="infra-section-hint">Click a resource card to expand its security posture</p>
+
+        <!-- Resource cards -->
+        <div class="infra-cards-grid">
+
+            <!-- VPC -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'vpc'" (click)="selectInfraCard('vpc')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">🌐</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'vpc' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">VPC</div>
+                <div class="infra-card-sub">Virtual private cloud</div>
+                <div class="infra-card-status">
+                    <div *ngIf="vpcLoading && activeInfraCard === 'vpc'" class="spinner-sm"></div>
+                    <span *ngIf="!vpcLoading || activeInfraCard !== 'vpc'" class="status-badge"
+                        [ngClass]="getStatusClass(getVpcOverallStatus())">
+                        {{ getStatusIcon(getVpcOverallStatus()) }} {{ getStatusLabel(getVpcOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="vpcSecurity">
+                    {{ vpcSecurity.vpcs.length }} VPC(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!vpcSecurity && activeInfraCard !== 'vpc'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- RDS -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'rds'" (click)="selectInfraCard('rds')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">🗄️</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'rds' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">RDS</div>
+                <div class="infra-card-sub">Relational database</div>
+                <div class="infra-card-status">
+                    <div *ngIf="rdsLoading && activeInfraCard === 'rds'" class="spinner-sm"></div>
+                    <span *ngIf="!rdsLoading || activeInfraCard !== 'rds'" class="status-badge"
+                        [ngClass]="getStatusClass(getRdsOverallStatus())">
+                        {{ getStatusIcon(getRdsOverallStatus()) }} {{ getStatusLabel(getRdsOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="rdsSecurity">
+                    {{ rdsSecurity.instances.length }} instance(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!rdsSecurity && activeInfraCard !== 'rds'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- ALB -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'alb'" (click)="selectInfraCard('alb')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"
+                            fill="currentColor">
+                            <circle cx="4" cy="12" r="2.5" />
+                            <circle cx="20" cy="6" r="2.5" />
+                            <circle cx="20" cy="12" r="2.5" />
+                            <circle cx="20" cy="18" r="2.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="6" stroke="currentColor" stroke-width="1.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="12" stroke="currentColor" stroke-width="1.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="18" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                    </div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'alb' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">ALB</div>
+                <div class="infra-card-sub">Load balancer</div>
+                <div class="infra-card-status">
+                    <div *ngIf="albLoading && activeInfraCard === 'alb'" class="spinner-sm"></div>
+                    <span *ngIf="!albLoading || activeInfraCard !== 'alb'" class="status-badge"
+                        [ngClass]="getStatusClass(getAlbOverallStatus())">
+                        {{ getStatusIcon(getAlbOverallStatus()) }} {{ getStatusLabel(getAlbOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="albSecurity">
+                    {{ albSecurity.loadBalancers.length }} load balancer(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!albSecurity && activeInfraCard !== 'alb'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- ECS -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'ecs'" (click)="selectInfraCard('ecs')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">⚙</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'ecs' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">ECS</div>
+                <div class="infra-card-sub">Container service</div>
+                <div class="infra-card-status">
+                    <div *ngIf="ecsLoading && activeInfraCard === 'ecs'" class="spinner-sm"></div>
+                    <span *ngIf="!ecsLoading || activeInfraCard !== 'ecs'" class="status-badge"
+                        [ngClass]="getStatusClass(getEcsOverallStatus())">
+                        {{ getStatusIcon(getEcsOverallStatus()) }} {{ getStatusLabel(getEcsOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="ecsSecurity">
+                    {{ ecsSecurity.clusters.length }} cluster(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!ecsSecurity && activeInfraCard !== 'ecs'">
+                    Click to load
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── VPC expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'vpc'">
+            <div *ngIf="vpcLoading" class="expand-loading">Fetching VPC security data from AWS...</div>
+            <div *ngIf="vpcError" class="expand-error">{{ vpcError }}</div>
+            <div *ngIf="vpcSecurity && !vpcLoading">
+
+                <!-- Overall summary bar -->
+                <div class="vpc-summary-bar">
+                    <div class="vpc-summary-stat">
+                        <span class="vpc-summary-val">{{ vpcSecurity.vpcs.length }}</span>
+                        <span class="vpc-summary-label">Total VPCs</span>
+                    </div>
+                    <div class="vpc-summary-stat ok">
+                        <span class="vpc-summary-val">{{ vpcSecurity.overall.passed }}</span>
+                        <span class="vpc-summary-label">Checks Passed</span>
+                    </div>
+                    <div class="vpc-summary-stat warn">
+                        <span class="vpc-summary-val">{{ countVpcOverallByStatus('warn') }}</span>
+                        <span class="vpc-summary-label">Warnings</span>
+                    </div>
+                    <div class="vpc-summary-stat fail">
+                        <span class="vpc-summary-val">{{ vpcSecurity.overall.failed }}</span>
+                        <span class="vpc-summary-label">Failures</span>
+                    </div>
+                </div>
+
+                <div class="expand-table">
+                    <!-- Header -->
+                    <div class="expand-header vpc-grid-new">
+                        <span>VPC Name / ID</span>
+                        <span>CIDR</span>
+                        <span>Flow Logs</span>
+                        <span>Open SGs</span>
+                        <span>Score</span>
+                        <span>Status</span>
+                        <span></span>
+                    </div>
+
+                    <!-- Rows -->
+                    <div class="expand-row vpc-grid-new vpc-row-hover" *ngFor="let vpc of vpcSecurity.vpcs"
+                        [class.vpc-row-selected]="selectedVpc?.vpcId === vpc.vpcId" (click)="openVpcDetail(vpc)">
+
+                        <!-- Name + ID -->
+                        <span>
+                            <div class="expand-name">{{ vpc.name }}</div>
+                            <div class="expand-muted small-text">{{ vpc.vpcId }}</div>
+                        </span>
+
+                        <!-- CIDR -->
+                        <span class="expand-muted">{{ vpc.cidr }}</span>
+
+                        <!-- Flow logs -->
+                        <span>
+                            <span *ngIf="vpc.flowLogs.enabled" class="flow-pill flow-on">
+                                ✓ {{ vpc.flowLogs.trafficType || 'Enabled' }}
+                            </span>
+                            <span *ngIf="!vpc.flowLogs.enabled" class="flow-pill flow-off">
+                                ✗ Disabled
+                            </span>
+                        </span>
+
+                        <!-- Open SGs -->
+                        <span>
+                            <span *ngIf="vpc.openSecurityGroups.length === 0" class="flow-pill flow-on">None</span>
+                            <span *ngIf="vpc.openSecurityGroups.length > 0" [class.flow-off]="hasHighRiskSg(vpc)"
+                                [class.flow-warn]="!hasHighRiskSg(vpc)" class="flow-pill">
+                                ⚠ {{ vpc.openSecurityGroups.length }}
+                            </span>
+                        </span>
+
+                        <!-- Score ring -->
+                        <span class="score-cell">
+                            <svg width="36" height="36" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#e0e0e0" stroke-width="3" />
+                                <circle cx="18" cy="18" r="14" fill="none" [attr.stroke]="getScoreStroke(vpc.overall)"
+                                    stroke-width="3" stroke-linecap="round"
+                                    [attr.stroke-dasharray]="getScoreDash(vpc.overall)" transform="rotate(-90 18 18)" />
+                            </svg>
+                            <span class="score-pct" [ngClass]="scoreClass(vpc.overall)">
+                                {{ getScorePct(vpc.overall) }}%
+                            </span>
+                        </span>
+
+                        <!-- Status badge -->
+                        <span>
+                            <span class="status-badge" [ngClass]="getStatusClass(vpc.overall.status)">
+                                {{ getStatusIcon(vpc.overall.status) }} {{ getStatusLabel(vpc.overall.status) }}
+                            </span>
+                        </span>
+
+                        <!-- View Details button -->
+                        <span>
+                            <button class="detail-btn" (click)="openVpcDetail(vpc); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+
+                    <div class="expand-empty" *ngIf="vpcSecurity.vpcs.length === 0">
+                        No VPCs found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(vpcSecurity.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── RDS expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'rds'">
+            <div *ngIf="rdsLoading" class="expand-loading">Fetching RDS security data from AWS...</div>
+            <div *ngIf="rdsError" class="expand-error">{{ rdsError }}</div>
+            <div *ngIf="rdsSecurity && !rdsLoading">
+
+                <!-- Overall summary bar -->
+                <div class="vpc-summary-bar">
+                    <div class="vpc-summary-stat">
+                        <span class="vpc-summary-val">{{ rdsSecurity.instances.length }}</span>
+                        <span class="vpc-summary-label">Total Instances</span>
+                    </div>
+                    <div class="vpc-summary-stat ok">
+                        <span class="vpc-summary-val">{{ rdsSecurity.overall.passed }}</span>
+                        <span class="vpc-summary-label">Checks Passed</span>
+                    </div>
+                    <div class="vpc-summary-stat warn">
+                        <span class="vpc-summary-val">{{ countRdsOverallByStatus('warn') }}</span>
+                        <span class="vpc-summary-label">Warnings</span>
+                    </div>
+                    <div class="vpc-summary-stat fail">
+                        <span class="vpc-summary-val">{{ rdsSecurity.overall.failed }}</span>
+                        <span class="vpc-summary-label">Failures</span>
+                    </div>
+                </div>
+
+                <div class="expand-table">
+                    <!-- Header -->
+                    <div class="expand-header rds-grid-new">
+                        <span>Identifier</span>
+                        <span>Engine</span>
+                        <span>DB Status</span>
+                        <span>Public</span>
+                        <span>Encrypted</span>
+                        <span>Multi-AZ</span>
+                        <span>Score</span>
+                        <span>Status</span>
+                        <span></span>
+                    </div>
+
+                    <!-- Rows -->
+                    <div class="expand-row rds-grid-new vpc-row-hover" *ngFor="let db of rdsSecurity.instances"
+                        [class.vpc-row-selected]="selectedRds?.identifier === db.identifier"
+                        (click)="openRdsDetail(db)">
+
+                        <!-- Identifier -->
+                        <span>
+                            <div class="expand-name">{{ db.identifier }}</div>
+                        </span>
+
+                        <!-- Engine -->
+                        <span class="expand-muted">{{ db.engine }} {{ db.engineVersion }}</span>
+
+                        <!-- DB Status -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="db.status === 'available'"
+                                [class.flow-warn]="db.status !== 'available' && db.status !== 'stopped'"
+                                [class.flow-off]="db.status === 'stopped'">
+                                {{ db.status }}
+                            </span>
+                        </span>
+
+                        <!-- Publicly Accessible -->
+                        <span>
+                            <span class="flow-pill" [class.flow-off]="db.publiclyAccessible"
+                                [class.flow-on]="!db.publiclyAccessible">
+                                {{ db.publiclyAccessible ? 'Yes ⚠' : 'No' }}
+                            </span>
+                        </span>
+
+                        <!-- Encrypted -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="db.storageEncrypted"
+                                [class.flow-off]="!db.storageEncrypted">
+                                {{ db.storageEncrypted ? 'Yes' : 'No ⚠' }}
+                            </span>
+                        </span>
+
+                        <!-- Multi-AZ -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="db.multiAz" [class.flow-warn]="!db.multiAz">
+                                {{ db.multiAz ? 'Yes' : 'No' }}
+                            </span>
+                        </span>
+
+                        <!-- Score ring -->
+                        <span class="score-cell">
+                            <svg width="36" height="36" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#e0e0e0" stroke-width="3" />
+                                <circle cx="18" cy="18" r="14" fill="none" [attr.stroke]="getScoreStroke(db.overall)"
+                                    stroke-width="3" stroke-linecap="round"
+                                    [attr.stroke-dasharray]="getScoreDash(db.overall)" transform="rotate(-90 18 18)" />
+                            </svg>
+                            <span class="score-pct" [ngClass]="scoreClass(db.overall)">
+                                {{ getScorePct(db.overall) }}%
+                            </span>
+                        </span>
+
+                        <!-- Status badge -->
+                        <span>
+                            <span class="status-badge" [ngClass]="getStatusClass(db.overall.status)">
+                                {{ getStatusIcon(db.overall.status) }} {{ getStatusLabel(db.overall.status) }}
+                            </span>
+                        </span>
+
+                        <!-- View Details button -->
+                        <span>
+                            <button class="detail-btn" (click)="openRdsDetail(db); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+
+                    <div class="expand-empty" *ngIf="rdsSecurity.instances.length === 0">
+                        No RDS instances found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(rdsSecurity.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── ALB expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'alb'">
+            <div *ngIf="albLoading" class="expand-loading">Fetching ALB security data from AWS...</div>
+            <div *ngIf="albError" class="expand-error">{{ albError }}</div>
+            <div *ngIf="albSecurity && !albLoading">
+
+                <!-- Overall summary bar -->
+                <div class="vpc-summary-bar">
+                    <div class="vpc-summary-stat">
+                        <span class="vpc-summary-val">{{ albSecurity.loadBalancers.length }}</span>
+                        <span class="vpc-summary-label">Total LBs</span>
+                    </div>
+                    <div class="vpc-summary-stat ok">
+                        <span class="vpc-summary-val">{{ albSecurity.overall.passed }}</span>
+                        <span class="vpc-summary-label">Checks Passed</span>
+                    </div>
+                    <div class="vpc-summary-stat warn">
+                        <span class="vpc-summary-val">{{ countAlbOverallByStatus('warn') }}</span>
+                        <span class="vpc-summary-label">Warnings</span>
+                    </div>
+                    <div class="vpc-summary-stat fail">
+                        <span class="vpc-summary-val">{{ albSecurity.overall.failed }}</span>
+                        <span class="vpc-summary-label">Failures</span>
+                    </div>
+                </div>
+
+                <div class="expand-table">
+                    <!-- Header -->
+                    <div class="expand-header alb-grid-new">
+                        <span>Name / ARN</span>
+                        <span>Scheme</span>
+                        <span>State</span>
+                        <span>HTTPS</span>
+                        <span>WAF</span>
+                        <span>TLS</span>
+                        <span>Score</span>
+                        <span>Status</span>
+                        <span></span>
+                    </div>
+
+                    <!-- Rows -->
+                    <div class="expand-row alb-grid-new vpc-row-hover" *ngFor="let lb of albSecurity.loadBalancers"
+                        [class.vpc-row-selected]="selectedAlb?.arn === lb.arn" (click)="openAlbDetail(lb)">
+
+                        <!-- Name + ARN -->
+                        <span>
+                            <div class="expand-name">{{ lb.name }}</div>
+                            <div class="expand-muted small-text arn-truncate">{{ lb.arn }}</div>
+                        </span>
+
+                        <!-- Scheme -->
+                        <span>
+                            <span class="scheme-pill" [class.scheme-external]="lb.scheme === 'internet-facing'"
+                                [class.scheme-internal]="lb.scheme === 'internal'">
+                                {{ lb.scheme }}
+                            </span>
+                        </span>
+
+                        <!-- State -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="lb.state === 'active'"
+                                [class.flow-warn]="lb.state === 'provisioning'"
+                                [class.flow-off]="lb.state === 'failed'">
+                                {{ lb.state }}
+                            </span>
+                        </span>
+
+                        <!-- HTTPS Only -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="lb.httpsOnly" [class.flow-off]="!lb.httpsOnly">
+                                {{ lb.httpsOnly ? 'Yes' : 'No ⚠' }}
+                            </span>
+                        </span>
+
+                        <!-- WAF -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="lb.wafAttached"
+                                [class.flow-warn]="!lb.wafAttached">
+                                {{ lb.wafAttached ? 'Attached' : 'None' }}
+                            </span>
+                        </span>
+
+                        <!-- TLS -->
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="lb.modernTls" [class.flow-warn]="!lb.modernTls">
+                                {{ lb.modernTls ? 'Modern' : 'Legacy ⚠' }}
+                            </span>
+                        </span>
+
+                        <!-- Score ring -->
+                        <span class="score-cell">
+                            <svg width="36" height="36" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#e0e0e0" stroke-width="3" />
+                                <circle cx="18" cy="18" r="14" fill="none" [attr.stroke]="getScoreStroke(lb.overall)"
+                                    stroke-width="3" stroke-linecap="round"
+                                    [attr.stroke-dasharray]="getScoreDash(lb.overall)" transform="rotate(-90 18 18)" />
+                            </svg>
+                            <span class="score-pct" [ngClass]="scoreClass(lb.overall)">
+                                {{ getScorePct(lb.overall) }}%
+                            </span>
+                        </span>
+
+                        <!-- Status badge -->
+                        <span>
+                            <span class="status-badge" [ngClass]="getStatusClass(lb.overall.status)">
+                                {{ getStatusIcon(lb.overall.status) }} {{ getStatusLabel(lb.overall.status) }}
+                            </span>
+                        </span>
+
+                        <!-- View Details button -->
+                        <span>
+                            <button class="detail-btn" (click)="openAlbDetail(lb); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+
+                    <div class="expand-empty" *ngIf="albSecurity.loadBalancers.length === 0">
+                        No load balancers found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(albSecurity.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── ECS expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'ecs'">
+            <div *ngIf="ecsLoading" class="expand-loading">Fetching ECS security data from AWS...</div>
+            <div *ngIf="ecsError" class="expand-error">{{ ecsError }}</div>
+            <div *ngIf="ecsSecurity && !ecsLoading">
+                <div class="expand-table">
+                    <div class="expand-header ecs-grid">
+                        <span>Cluster / ARN</span>
+                        <span>Status</span>
+                        <span>Services</span>
+                        <span>Score</span>
+                        <span>Security Status</span>
+                        <span></span>
+                    </div>
+                    <div class="expand-row ecs-grid vpc-row-hover" *ngFor="let cluster of ecsSecurity.clusters"
+                        [class.vpc-row-selected]="selectedEcsCluster?.clusterArn === cluster.clusterArn"
+                        (click)="openEcsDetail(cluster)">
+                        <span>
+                            <div class="expand-name">{{ cluster.clusterName }}</div>
+                            <div class="expand-muted small-text arn-truncate">{{ cluster.clusterArn }}</div>
+                        </span>
+                        <span>
+                            <span class="flow-pill" [class.flow-on]="cluster.status === 'ACTIVE'"
+                                [class.flow-off]="cluster.status !== 'ACTIVE'">
+                                {{ cluster.status }}
+                            </span>
+                        </span>
+                        <span class="expand-muted">{{ cluster.services.length }} service(s)</span>
+                        <span class="score-cell">
+                            <svg width="36" height="36" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#e0e0e0" stroke-width="3" />
+                                <circle cx="18" cy="18" r="14" fill="none"
+                                    [attr.stroke]="getScoreStroke(cluster.overall)" stroke-width="3"
+                                    stroke-linecap="round" [attr.stroke-dasharray]="getScoreDash(cluster.overall)"
+                                    transform="rotate(-90 18 18)" />
+                            </svg>
+                            <span class="score-pct" [ngClass]="scoreClass(cluster.overall)">
+                                {{ getScorePct(cluster.overall) }}%
+                            </span>
+                        </span>
+                        <span>
+                            <span class="status-badge" [ngClass]="getStatusClass(cluster.overall.status)">
+                                {{ getStatusIcon(cluster.overall.status) }} {{ getStatusLabel(cluster.overall.status) }}
+                            </span>
+                        </span>
+                        <span>
+                            <button class="detail-btn" (click)="openEcsDetail(cluster); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="ecsSecurity.clusters.length === 0">
+                        No ECS clusters found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(ecsSecurity.fetchedAt) }}</div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         APPS TAB
+         ════════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'apps'">
+
+        <!-- Summary bar -->
+        <div class="summary-bar">
+            <div class="summary-card healthy">
+                <span class="summary-dot">●</span>
+                <span class="summary-count">{{ countByStatus('healthy') }}</span>
+                <span class="summary-label">Secure</span>
+            </div>
+            <div class="summary-card degraded">
+                <span class="summary-dot">◐</span>
+                <span class="summary-count">{{ countByStatus('degraded') }}</span>
+                <span class="summary-label">At Risk</span>
+            </div>
+            <div class="summary-card unhealthy">
+                <span class="summary-dot">●</span>
+                <span class="summary-count">{{ countByStatus('unhealthy') }}</span>
+                <span class="summary-label">Vulnerable</span>
+            </div>
+            <div class="summary-card unknown">
+                <span class="summary-dot">○</span>
+                <span class="summary-count">{{ countByStatus('unknown') }}</span>
+                <span class="summary-label">Unknown</span>
+            </div>
+            <div class="refresh-note">Auto-refreshes every 30s</div>
+        </div>
+
+        <!-- Loading state -->
+        <div *ngIf="allHealthLoading && allHealth.length === 0" class="empty">
+            Loading security data...
+        </div>
+
+        <!-- Error state -->
+        <div *ngIf="allHealthError && allHealth.length === 0" class="empty error-state">
+            {{ allHealthError }}
+        </div>
+
+        <!-- Deployments security table -->
+        <div class="infra-table" *ngIf="allHealth.length > 0">
+
+            <div class="table-header">
+                <th>Deployment</th>
+                <th>Security Status</th>
+                <th>Containers</th>
+                <th>Details</th>
+            </div>
+
+            <div class="table-body">
+                <div class="table-row" *ngFor="let h of allHealth" (click)="openDetail(h)">
+
+                    <!-- Name -->
+                    <div class="deployment-name">{{ h.name }}</div>
+
+                    <!-- Status badge -->
+                    <div>
+                        <span class="status-badge" [ngClass]="getStatusClass(h.status)">
+                            {{ getStatusIcon(h.status) }} {{ getStatusLabel(h.status) }}
+                        </span>
+                        <div *ngIf="h.reason" class="reason-text">{{ h.reason }}</div>
+                    </div>
+
+                    <!-- Task count -->
+                    <div class="task-count" *ngIf="h.service; else noService">
+                        {{ h.service.runningCount }} / {{ h.service.desiredCount }} running
+                    </div>
+                    <ng-template #noService>
+                        <div>—</div>
+                    </ng-template>
+
+                    <!-- View detail -->
+                    <div>
+                        <button class="detail-btn" (click)="openDetail(h); $event.stopPropagation()">
+                            View Detail
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- end apps tab -->
+
+
+    <!-- ── Detail slide-in panel (apps) ── -->
+    <div class="detail-overlay" *ngIf="selectedDeployment">
+
+        <div class="detail-panel">
+
+            <!-- Detail header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedDeployment.name }}</div>
+                </div>
+                <button class="close-btn" (click)="closeDetail()">✕</button>
+            </div>
+
+            <!-- Detail loading -->
+            <div *ngIf="detailLoading" class="detail-loading">Fetching live security data from AWS...</div>
+
+            <!-- Detail error -->
+            <div *ngIf="detailError" class="detail-error">{{ detailError }}</div>
+
+            <!-- Detail content -->
+            <div *ngIf="detailHealth && !detailLoading">
+
+                <!-- Status + task counts row -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Security Status</div>
+                        <span class="status-badge lg" [ngClass]="getStatusClass(detailHealth.status)">
+                            {{ getStatusIcon(detailHealth.status) }} {{ getStatusLabel(detailHealth.status) }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Running</div>
+                        <div class="detail-card-value">
+                            {{ detailHealth.service.runningCount }} / {{ detailHealth.service.desiredCount }}
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Pending</div>
+                        <div class="detail-card-value">{{ detailHealth.service.pendingCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Task Definition</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.taskDefinition || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Cluster</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.cluster || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Region</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.region || '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="section-title">Metrics (last 5 min)</div>
+                <div class="detail-row">
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.cpuUtilization !== null ? detailHealth.metrics.cpuUtilization + '%'
+                            : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.cpuUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.cpuUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.cpuUtilization)"></div>
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.cpuUtilization === null && !detailHealth.metrics.cpuReservedUnits">
+                            Enable Container Insights to see metrics
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.cpuUtilization === null && detailHealth.metrics.cpuReservedUnits">
+                            {{ detailHealth.metrics.cpuReservedUnits }} CPU units reserved across {{
+                            detailHealth.tasks.length }} task(s)
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Memory Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.memoryUtilization !== null ? detailHealth.metrics.memoryUtilization
+                            + '%' : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.memoryUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.memoryUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.memoryUtilization)"></div>
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.memoryUtilization === null && !detailHealth.metrics.memoryReservedMiB">
+                            Enable Container Insights to see metrics
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.memoryUtilization === null && detailHealth.metrics.memoryReservedMiB">
+                            {{ detailHealth.metrics.memoryReservedMiB }} MiB reserved across {{
+                            detailHealth.tasks.length }} task(s)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target group health -->
+                <div *ngIf="detailHealth.targetGroupHealth">
+                    <div class="section-title">Load Balancer</div>
+                    <div class="alb-row">
+                        <span class="alb-name">{{ detailHealth.targetGroupHealth.targetGroupName }}</span>
+                        <span class="alb-count">
+                            {{ detailHealth.targetGroupHealth.healthyCount }} / {{
+                            detailHealth.targetGroupHealth.totalCount }} targets healthy
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Active alarms -->
+                <div *ngIf="detailHealth.alarms.length > 0">
+                    <div class="section-title">Active Alarms</div>
+                    <div class="alarm-row" *ngFor="let alarm of detailHealth.alarms">
+                        <span class="alarm-icon">⚠</span>
+                        <div>
+                            <div class="alarm-name">{{ alarm.name }}</div>
+                            <div class="alarm-reason">{{ alarm.stateReason }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks -->
+                <div *ngIf="detailHealth.tasks.length > 0">
+                    <div class="section-title">Running Tasks</div>
+                    <div class="tasks-table">
+                        <div class="tasks-header">
+                            <span>Task ID</span>
+                            <span>Status</span>
+                            <span>Started</span>
+                        </div>
+                        <div class="tasks-row" *ngFor="let t of detailHealth.tasks">
+                            <span class="task-id">{{ t.taskArn }}</span>
+                            <span class="task-status" [ngClass]="getTaskStatusClass(t.lastStatus)">
+                                {{ t.lastStatus }}
+                            </span>
+                            <span>{{ formatDate(t.startedAt) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent events -->
+                <div *ngIf="detailHealth.recentEvents.length > 0">
+                    <div class="section-title">Recent Events</div>
+                    <div class="event-row" *ngFor="let ev of detailHealth.recentEvents">
+                        <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+                        <span class="event-msg">{{ ev.message }}</span>
+                    </div>
+                </div>
+
+                <!-- Deployment rollout -->
+                <div *ngIf="detailHealth.deployment">
+                    <div class="section-title">Active Deployment</div>
+                    <div class="detail-row">
+                        <div class="detail-card">
+                            <div class="detail-card-label">Rollout State</div>
+                            <div class="detail-card-value">{{ detailHealth.deployment.rolloutState || '—' }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-card-label">Updated</div>
+                            <div class="detail-card-value small">{{ formatDate(detailHealth.deployment.updatedAt) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rollout-reason" *ngIf="detailHealth.deployment.rolloutStateReason">
+                        {{ detailHealth.deployment.rolloutStateReason }}
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(detailHealth.fetchedAt) }}</div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── VPC Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedVpc">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedVpc.name }}</div>
+                    <div class="expand-muted small-text">{{ selectedVpc.vpcId }} &nbsp;·&nbsp; {{
+                        selectedAccount?.region }}</div>
+                </div>
+                <button class="close-btn" (click)="closeVpcDetail()">✕</button>
+            </div>
+
+            <div *ngIf="vpcDetailLoading" class="detail-loading">Fetching VPC security details from AWS...</div>
+            <div *ngIf="vpcDetailError" class="detail-error">{{ vpcDetailError }}</div>
+
+            <div *ngIf="vpcDetail && !vpcDetailLoading">
+
+                <!-- Section 1: Security posture summary -->
+                <div class="section-title">Security Posture</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Score</div>
+                        <div class="detail-card-value" [ngClass]="scoreClass(vpcDetail.overall)">
+                            {{ getScorePct(vpcDetail.overall) }}%
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Passed</div>
+                        <div class="detail-card-value" style="color: #2e7d32">{{ vpcDetail.overall.passed }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Warnings</div>
+                        <div class="detail-card-value" style="color: #e65100">{{
+                            countVpcChecksByStatus(vpcDetail.checks, 'warn') }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Failed</div>
+                        <div class="detail-card-value" style="color: #c62828">{{ vpcDetail.overall.failed }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: VPC details -->
+                <div class="section-title">VPC Details</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">CIDR Block</div>
+                        <div class="detail-card-value small">{{ vpcDetail.cidr }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <div class="detail-card-value small">{{ vpcDetail.state }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Flow Logs -->
+                <div class="section-title">Flow Logs</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="bool-pill" [class.bool-yes]="vpcDetail.flowLogs.enabled"
+                            [class.bool-no]="!vpcDetail.flowLogs.enabled">
+                            {{ vpcDetail.flowLogs.enabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+                    <div class="detail-card" *ngIf="vpcDetail.flowLogs.enabled">
+                        <div class="detail-card-label">Traffic Type</div>
+                        <div class="detail-card-value small">{{ vpcDetail.flowLogs.trafficType || '—' }}</div>
+                    </div>
+                    <div class="detail-card" *ngIf="vpcDetail.flowLogs.enabled">
+                        <div class="detail-card-label">Destination</div>
+                        <div class="detail-card-value small">{{ vpcDetail.flowLogs.destination || '—' }}</div>
+                    </div>
+                </div>
+                <div class="vpc-inline-warn"
+                    *ngIf="vpcDetail.flowLogs.enabled && vpcDetail.flowLogs.trafficType !== 'ALL'">
+                    ⚠ Capturing {{ vpcDetail.flowLogs.trafficType }} only — change to ALL for full audit coverage.
+                </div>
+                <div class="vpc-inline-error" *ngIf="!vpcDetail.flowLogs.enabled">
+                    ✗ Flow logs are disabled. Enable VPC Flow Logs to CloudWatch or S3 immediately.
+                </div>
+
+                <!-- Section 4: Open security groups -->
+                <div class="section-title">
+                    Security Groups with Public Access
+                    <span class="section-count">{{ vpcDetail.openSecurityGroups.length }}</span>
+                </div>
+                <div class="vpc-sg-list">
+                    <div class="vpc-sg-row" *ngFor="let sg of vpcDetail.openSecurityGroups">
+                        <div>
+                            <div class="expand-name">{{ sg.groupName }}</div>
+                            <div class="expand-muted small-text">{{ sg.groupId }}</div>
+                        </div>
+                        <span class="status-badge status-unhealthy">⚠ Public ingress rules</span>
+                    </div>
+                    <div class="expand-empty" *ngIf="vpcDetail.openSecurityGroups.length === 0">
+                        ✓ No security groups with public ingress rules
+                    </div>
+                </div>
+
+                <!-- Section 5: Security checks -->
+                <div class="section-title">
+                    Security Checks
+                    <span class="section-count">{{ countFails(vpcDetail.checks) }} fail(s)</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header vpc-checks-grid">
+                        <span>Check</span>
+                        <span>Result</span>
+                    </div>
+                    <div class="tasks-row vpc-checks-grid" *ngFor="let chk of vpcDetail.checks">
+                        <span class="expand-muted">{{ chk.label }}</span>
+                        <span [ngClass]="checkClass(chk.status)">
+                            {{ checkIcon(chk.status) }} {{ chk.status | uppercase }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="vpcDetail.checks.length === 0">No checks available.</div>
+                </div>
+
+                <!-- Section 6: Recommendations -->
+                <div class="section-title">Recommendations</div>
+                <div class="vpc-recommendations">
+                    <div *ngIf="countFails(vpcDetail.checks) === 0 && countVpcChecksByStatus(vpcDetail.checks, 'warn') === 0"
+                        class="vpc-rec-ok">
+                        ✓ All checks passed. This VPC meets baseline security standards.
+                    </div>
+                    <div *ngIf="!vpcDetail.flowLogs.enabled" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Enable VPC Flow Logs to CloudWatch Logs with ALL traffic type. Required for incident response
+                        and compliance (CIS, SOC2, PCI-DSS).
+                    </div>
+                    <div *ngIf="vpcDetail.flowLogs.enabled && vpcDetail.flowLogs.trafficType !== 'ALL'"
+                        class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Change flow log traffic type from {{ vpcDetail.flowLogs.trafficType }} to ALL for a complete
+                        audit trail.
+                    </div>
+                    <div *ngIf="vpcDetail.openSecurityGroups.length > 0" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Restrict inbound 0.0.0.0/0 rules in security groups. Scope ingress to specific CIDRs or prefix
+                        lists only.
+                    </div>
+                    <div *ngIf="vpcDetail.name === 'default'" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Avoid deploying workloads into the default VPC — it lacks isolation and has permissive defaults
+                        by design.
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(vpcSecurity?.fetchedAt ?? null) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── RDS Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedRds">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedRds.identifier }}</div>
+                    <div class="expand-muted small-text">
+                        {{ selectedRds.engine }} {{ selectedRds.engineVersion }}
+                        &nbsp;·&nbsp; {{ selectedAccount?.region }}
+                    </div>
+                </div>
+                <button class="close-btn" (click)="closeRdsDetail()">✕</button>
+            </div>
+
+            <div *ngIf="rdsDetailLoading" class="detail-loading">Fetching RDS security details from AWS...</div>
+            <div *ngIf="rdsDetailError" class="detail-error">{{ rdsDetailError }}</div>
+
+            <div *ngIf="rdsDetail && !rdsDetailLoading">
+
+                <!-- Section 1: Security posture -->
+                <div class="section-title">Security Posture</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Score</div>
+                        <div class="detail-card-value" [ngClass]="scoreClass(rdsDetail.overall)">
+                            {{ getScorePct(rdsDetail.overall) }}%
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Passed</div>
+                        <div class="detail-card-value" style="color: #2e7d32">{{ rdsDetail.overall.passed }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Warnings</div>
+                        <div class="detail-card-value" style="color: #e65100">{{
+                            countVpcChecksByStatus(rdsDetail.checks, 'warn') }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Failed</div>
+                        <div class="detail-card-value" style="color: #c62828">{{ rdsDetail.overall.failed }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Instance details -->
+                <div class="section-title">Instance Details</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Identifier</div>
+                        <div class="detail-card-value small">{{ rdsDetail.identifier }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Engine</div>
+                        <div class="detail-card-value small">{{ rdsDetail.engine }} {{ rdsDetail.engineVersion }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">DB Status</div>
+                        <span class="flow-pill" [class.flow-on]="rdsDetail.status === 'available'"
+                            [class.flow-warn]="rdsDetail.status !== 'available' && rdsDetail.status !== 'stopped'"
+                            [class.flow-off]="rdsDetail.status === 'stopped'">
+                            {{ rdsDetail.status }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Multi-AZ</div>
+                        <span class="bool-pill" [class.bool-yes]="rdsDetail.multiAz"
+                            [class.bool-no]="!rdsDetail.multiAz">
+                            {{ rdsDetail.multiAz ? 'Yes' : 'No' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Section 3: Encryption & access -->
+                <div class="section-title">Encryption &amp; Access</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Publicly Accessible</div>
+                        <span class="bool-pill" [class.bool-no]="rdsDetail.publiclyAccessible"
+                            [class.bool-yes]="!rdsDetail.publiclyAccessible">
+                            {{ rdsDetail.publiclyAccessible ? 'Yes ⚠' : 'No' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Storage Encrypted</div>
+                        <span class="bool-pill" [class.bool-yes]="rdsDetail.storageEncrypted"
+                            [class.bool-no]="!rdsDetail.storageEncrypted">
+                            {{ rdsDetail.storageEncrypted ? 'Yes' : 'No ⚠' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Deletion Protection</div>
+                        <span class="bool-pill" [class.bool-yes]="rdsDetail.deletionProtection"
+                            [class.bool-no]="!rdsDetail.deletionProtection">
+                            {{ rdsDetail.deletionProtection ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Backup Retention</div>
+                        <div class="detail-card-value"
+                            [style.color]="rdsDetail.backupRetentionDays >= 7 ? '#2e7d32' : '#c62828'">
+                            {{ rdsDetail.backupRetentionDays }} day(s)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Inline alerts -->
+                <div *ngIf="rdsDetail.publiclyAccessible" class="vpc-inline-error">
+                    ✗ This RDS instance is reachable from the internet. Restrict access to VPC-only immediately — set
+                    Publicly Accessible to No.
+                </div>
+                <div *ngIf="!rdsDetail.storageEncrypted" class="vpc-inline-error">
+                    ✗ Data at rest is not encrypted. Enable storage encryption — note this requires a snapshot restore
+                    to a new encrypted instance.
+                </div>
+                <div *ngIf="!rdsDetail.deletionProtection" class="vpc-inline-warn">
+                    ⚠ Deletion protection is disabled. This instance can be permanently deleted without safeguard.
+                </div>
+                <div *ngIf="!rdsDetail.multiAz" class="vpc-inline-warn">
+                    ⚠ Multi-AZ is disabled. This is a single point of failure — a hardware issue will cause downtime.
+                </div>
+                <div *ngIf="rdsDetail.backupRetentionDays < 7" class="vpc-inline-warn">
+                    ⚠ Backup retention is {{ rdsDetail.backupRetentionDays }} day(s). Increase to at least 7 days for
+                    compliance and recovery coverage.
+                </div>
+
+                <!-- Section 5: Security checks -->
+                <div class="section-title">
+                    Security Checks
+                    <span class="section-count">{{ countFails(rdsDetail.checks) }} fail(s)</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header vpc-checks-grid">
+                        <span>Check</span>
+                        <span>Result</span>
+                    </div>
+                    <div class="tasks-row vpc-checks-grid" *ngFor="let chk of rdsDetail.checks">
+                        <span class="expand-muted">{{ chk.label }}</span>
+                        <span [ngClass]="checkClass(chk.status)">
+                            {{ checkIcon(chk.status) }} {{ chk.status | uppercase }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="rdsDetail.checks.length === 0">No checks available.</div>
+                </div>
+
+                <!-- Section 6: Recommendations -->
+                <div class="section-title">Recommendations</div>
+                <div class="vpc-recommendations">
+                    <div *ngIf="countFails(rdsDetail.checks) === 0 && countVpcChecksByStatus(rdsDetail.checks, 'warn') === 0"
+                        class="vpc-rec-ok">
+                        ✓ All checks passed. This RDS instance meets baseline security standards.
+                    </div>
+                    <div *ngIf="rdsDetail.publiclyAccessible" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Disable public accessibility on this RDS instance. Connections should only come from within the
+                        VPC via private IP or a bastion host.
+                    </div>
+                    <div *ngIf="!rdsDetail.storageEncrypted" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Enable storage encryption. Take a snapshot of this instance, restore it as a new encrypted
+                        instance, then delete the unencrypted original.
+                    </div>
+                    <div *ngIf="!rdsDetail.deletionProtection" class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Enable deletion protection to prevent accidental or unauthorized permanent deletion of this
+                        database.
+                    </div>
+                    <div *ngIf="!rdsDetail.multiAz" class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Enable Multi-AZ deployment for automatic failover and high availability. Required for production
+                        workloads.
+                    </div>
+                    <div *ngIf="rdsDetail.backupRetentionDays < 7" class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Increase backup retention to at least 7 days. Current setting of {{
+                        rdsDetail.backupRetentionDays }} day(s) is below the recommended minimum for most compliance
+                        frameworks.
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(rdsSecurity?.fetchedAt ?? null) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ALB Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedAlb">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedAlb.name }}</div>
+                    <div class="expand-muted small-text">
+                        {{ selectedAlb.scheme }} &nbsp;·&nbsp; {{ selectedAccount?.region }}
+                    </div>
+                </div>
+                <button class="close-btn" (click)="closeAlbDetail()">✕</button>
+            </div>
+
+            <div *ngIf="albDetailLoading" class="detail-loading">Fetching ALB security details from AWS...</div>
+            <div *ngIf="albDetailError" class="detail-error">{{ albDetailError }}</div>
+
+            <div *ngIf="albDetail && !albDetailLoading">
+
+                <!-- Section 1: Security posture -->
+                <div class="section-title">Security Posture</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Score</div>
+                        <div class="detail-card-value" [ngClass]="scoreClass(albDetail.overall)">
+                            {{ getScorePct(albDetail.overall) }}%
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Passed</div>
+                        <div class="detail-card-value" style="color: #2e7d32">{{ albDetail.overall.passed }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Warnings</div>
+                        <div class="detail-card-value" style="color: #e65100">{{
+                            countVpcChecksByStatus(albDetail.checks, 'warn') }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Failed</div>
+                        <div class="detail-card-value" style="color: #c62828">{{ albDetail.overall.failed }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Load balancer details -->
+                <div class="section-title">Load Balancer Details</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Name</div>
+                        <div class="detail-card-value small">{{ albDetail.name }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Scheme</div>
+                        <span class="scheme-pill" [class.scheme-external]="albDetail.scheme === 'internet-facing'"
+                            [class.scheme-internal]="albDetail.scheme === 'internal'">
+                            {{ albDetail.scheme }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="flow-pill" [class.flow-on]="albDetail.state === 'active'"
+                            [class.flow-warn]="albDetail.state === 'provisioning'"
+                            [class.flow-off]="albDetail.state === 'failed'">
+                            {{ albDetail.state }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ARN row -->
+                <div class="alb-copy-row">
+                    <span class="alb-copy-label">ARN</span>
+                    <span class="endpoint-text">{{ albDetail.arn }}</span>
+                    <button class="copy-btn" (click)="copyToClipboard(albDetail.arn)">
+                        {{ copiedArn ? '✓ Copied' : 'Copy' }}
+                    </button>
+                </div>
+
+                <!-- DNS row -->
+                <div class="alb-copy-row">
+                    <span class="alb-copy-label">DNS</span>
+                    <span class="endpoint-text">{{ albDetail.dns }}</span>
+                    <button class="copy-btn" (click)="copyAlbDns(albDetail.dns)">
+                        {{ copiedAlbDns ? '✓ Copied' : 'Copy' }}
+                    </button>
+                </div>
+
+                <!-- Section 3: HTTPS & TLS -->
+                <div class="section-title">HTTPS &amp; TLS</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">HTTPS Listener</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.httpsOnly"
+                            [class.bool-no]="!albDetail.httpsOnly">
+                            {{ albDetail.httpsOnly ? 'Enforced' : 'Missing ⚠' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">HTTP → HTTPS Redirect</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.httpRedirectPresent"
+                            [class.bool-no]="!albDetail.httpRedirectPresent">
+                            {{ albDetail.httpRedirectPresent ? 'Present' : 'Missing ⚠' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Modern TLS (1.3)</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.modernTls"
+                            [class.bool-no]="!albDetail.modernTls">
+                            {{ albDetail.modernTls ? 'Yes' : 'No ⚠' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="alb-tls-policy-row">
+                    <span class="alb-copy-label">TLS Policy</span>
+                    <span class="alb-tls-policy-val">{{ albDetail.tlsPolicy || '—' }}</span>
+                </div>
+
+                <!-- Section 4: WAF & Logging -->
+                <div class="section-title">WAF &amp; Logging</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">WAF ACL</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.wafAttached"
+                            [class.bool-no]="!albDetail.wafAttached">
+                            {{ albDetail.wafAttached ? 'Attached' : 'Not Attached' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Access Logs</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.accessLogsEnabled"
+                            [class.bool-no]="!albDetail.accessLogsEnabled">
+                            {{ albDetail.accessLogsEnabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Section 5: Inline alerts -->
+                <div *ngIf="!albDetail.httpsOnly" class="vpc-inline-error">
+                    ✗ No HTTPS listener found. All traffic to this load balancer is unencrypted in transit.
+                </div>
+                <div *ngIf="albDetail.httpsOnly && !albDetail.httpRedirectPresent" class="vpc-inline-error">
+                    ✗ HTTP traffic is not being redirected to HTTPS. Users connecting on port 80 receive unencrypted
+                    responses.
+                </div>
+                <div *ngIf="!albDetail.wafAttached && albDetail.scheme === 'internet-facing'" class="vpc-inline-warn">
+                    ⚠ No WAF ACL attached to this internet-facing load balancer. There is no protection against OWASP
+                    Top 10, SQLi, or XSS attacks.
+                </div>
+                <div *ngIf="!albDetail.accessLogsEnabled" class="vpc-inline-warn">
+                    ⚠ Access logs are disabled. You have no record of requests for debugging, auditing, or security
+                    forensics.
+                </div>
+                <div *ngIf="!albDetail.modernTls" class="vpc-inline-warn">
+                    ⚠ TLS policy does not enforce TLS 1.3. Older cipher suites may be negotiated by clients.
+                </div>
+
+                <!-- Section 6: Security checks -->
+                <div class="section-title">
+                    Security Checks
+                    <span class="section-count">{{ countFails(albDetail.checks) }} fail(s)</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header vpc-checks-grid">
+                        <span>Check</span>
+                        <span>Result</span>
+                    </div>
+                    <div class="tasks-row vpc-checks-grid" *ngFor="let chk of albDetail.checks">
+                        <span class="expand-muted">{{ chk.label }}</span>
+                        <span [ngClass]="checkClass(chk.status)">
+                            {{ checkIcon(chk.status) }} {{ chk.status | uppercase }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="albDetail.checks.length === 0">No checks available.</div>
+                </div>
+
+                <!-- Section 7: Recommendations -->
+                <div class="section-title">Recommendations</div>
+                <div class="vpc-recommendations">
+                    <div *ngIf="countFails(albDetail.checks) === 0 && countVpcChecksByStatus(albDetail.checks, 'warn') === 0"
+                        class="vpc-rec-ok">
+                        ✓ All checks passed. This load balancer meets baseline security standards.
+                    </div>
+                    <div *ngIf="!albDetail.httpsOnly" class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Add an HTTPS listener on port 443 with a valid ACM certificate. Remove or redirect any HTTP-only
+                        listeners.
+                    </div>
+                    <div *ngIf="albDetail.httpsOnly && !albDetail.httpRedirectPresent"
+                        class="vpc-rec-item vpc-rec-critical">
+                        <span class="vpc-rec-severity">Critical</span>
+                        Add an HTTP listener on port 80 with a redirect action to HTTPS. This ensures all traffic is
+                        encrypted even if users type http://.
+                    </div>
+                    <div *ngIf="!albDetail.wafAttached && albDetail.scheme === 'internet-facing'"
+                        class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Attach an AWS WAF Web ACL to this load balancer. Enable the AWS Managed Rules
+                        (AWSManagedRulesCommonRuleSet) as a baseline.
+                    </div>
+                    <div *ngIf="!albDetail.accessLogsEnabled" class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Enable access logs to an S3 bucket. Required for incident response, compliance audits, and
+                        debugging production issues.
+                    </div>
+                    <div *ngIf="!albDetail.modernTls" class="vpc-rec-item vpc-rec-warning">
+                        <span class="vpc-rec-severity">Warning</span>
+                        Upgrade the TLS policy to ELBSecurityPolicy-TLS13-1-2-2021-06 to enforce TLS 1.3 and drop legacy
+                        cipher suites.
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(albSecurity?.fetchedAt ?? null) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ECS Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedEcsCluster">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedEcsCluster.clusterName }}</div>
+                    <div class="expand-muted small-text arn-truncate">{{ selectedEcsCluster.clusterArn }}</div>
+                </div>
+                <button class="close-btn" (click)="closeEcsDetail()">✕</button>
+            </div>
+
+            <div *ngIf="ecsDetailLoading" class="detail-loading">Fetching ECS security details from AWS...</div>
+            <div *ngIf="ecsDetailError" class="detail-error">{{ ecsDetailError }}</div>
+
+            <div *ngIf="ecsDetail && !ecsDetailLoading">
+
+                <!-- Section 1: Security posture -->
+                <div class="section-title">Security Posture</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Score</div>
+                        <div class="detail-card-value" [ngClass]="scoreClass(ecsDetail.overall)">
+                            {{ getScorePct(ecsDetail.overall) }}%
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Passed</div>
+                        <div class="detail-card-value" style="color: #2e7d32">{{ ecsDetail.overall.passed }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Warnings</div>
+                        <div class="detail-card-value" style="color: #e65100">{{ countEcsChecksByStatus('warn') }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Failed</div>
+                        <div class="detail-card-value" style="color: #c62828">{{ ecsDetail.overall.failed }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Cluster Status</div>
+                        <span class="flow-pill" [class.flow-on]="ecsDetail.status === 'ACTIVE'"
+                            [class.flow-off]="ecsDetail.status !== 'ACTIVE'">
+                            {{ ecsDetail.status }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Services</div>
+                        <div class="detail-card-value">{{ ecsDetail.services.length }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Services -->
+                <div class="section-title">
+                    Services
+                    <span class="section-count">{{ ecsDetail.services.length }}</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header ecs-svc-grid">
+                        <span>Service</span>
+                        <span>Task Definition</span>
+                        <span>Running / Desired</span>
+                        <span>IAM Role</span>
+                        <span>Score</span>
+                    </div>
+                    <div class="tasks-row ecs-svc-grid" *ngFor="let svc of ecsDetail.services">
+                        <span class="expand-name">{{ svc.name }}</span>
+                        <span class="expand-muted small-text">{{ svc.taskDefinition || '—' }}</span>
+                        <span>
+                            <span class="task-count-pill"
+                                [class.task-running-pill]="svc.runningCount === svc.desiredCount"
+                                [class.task-pending-pill]="svc.runningCount < svc.desiredCount">
+                                {{ svc.runningCount }} / {{ svc.desiredCount }}
+                            </span>
+                        </span>
+                        <span>
+                            <span class="flow-pill flow-on" *ngIf="svc.taskRoleArn">✓ Set</span>
+                            <span class="flow-pill flow-off" *ngIf="!svc.taskRoleArn">✗ Missing</span>
+                        </span>
+                        <span class="score-cell">
+                            <svg width="32" height="32" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#e0e0e0" stroke-width="3" />
+                                <circle cx="18" cy="18" r="14" fill="none" [attr.stroke]="getScoreStroke(svc.overall)"
+                                    stroke-width="3" stroke-linecap="round"
+                                    [attr.stroke-dasharray]="getScoreDash(svc.overall)" transform="rotate(-90 18 18)" />
+                            </svg>
+                            <span class="score-pct" [ngClass]="scoreClass(svc.overall)">
+                                {{ getScorePct(svc.overall) }}%
+                            </span>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="ecsDetail.services.length === 0">
+                        No services found in this cluster.
+                    </div>
+                </div>
+
+                <!-- Section 3: Task definition checks (per service) -->
+                <ng-container *ngFor="let svc of ecsDetail.services">
+                    <div *ngIf="svc.taskDefinitionChecks && svc.taskDefinitionChecks.length > 0">
+                        <div class="section-title">
+                            Container Checks — {{ svc.name }}
+                            <span class="section-count">{{ countFails(svc.taskDefinitionChecks) }} fail(s)</span>
+                        </div>
+                        <div class="tasks-table">
+                            <div class="tasks-header vpc-checks-grid">
+                                <span>Check</span>
+                                <span>Result</span>
+                            </div>
+                            <div class="tasks-row vpc-checks-grid" *ngFor="let chk of svc.taskDefinitionChecks">
+                                <span class="expand-muted">{{ chk.label }}</span>
+                                <span [ngClass]="checkClass(chk.status)">
+                                    {{ checkIcon(chk.status) }} {{ chk.status | uppercase }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- Section 4: IAM checks (per service) -->
+                <ng-container *ngFor="let svc of ecsDetail.services">
+                    <div *ngIf="svc.iamChecks && svc.iamChecks.length > 0">
+                        <div class="section-title">
+                            IAM Checks — {{ svc.name }}
+                            <span class="section-count">{{ countFails(svc.iamChecks) }} fail(s)</span>
+                        </div>
+                        <div class="tasks-table">
+                            <div class="tasks-header vpc-checks-grid">
+                                <span>Check</span>
+                                <span>Result</span>
+                            </div>
+                            <div class="tasks-row vpc-checks-grid" *ngFor="let chk of svc.iamChecks">
+                                <span class="expand-muted">{{ chk.label }}</span>
+                                <span [ngClass]="checkClass(chk.status)">
+                                    {{ checkIcon(chk.status) }} {{ chk.status | uppercase }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+
+                <!-- Section 5: Recommendations -->
+                <div class="section-title">Recommendations</div>
+                <div class="vpc-recommendations">
+                    <div *ngIf="ecsDetail.overall.failed === 0 && countEcsChecksByStatus('warn') === 0"
+                        class="vpc-rec-ok">
+                        ✓ All checks passed. This cluster meets baseline security standards.
+                    </div>
+                    <ng-container *ngFor="let svc of ecsDetail.services">
+                        <div *ngIf="!svc.taskRoleArn" class="vpc-rec-item vpc-rec-critical">
+                            <span class="vpc-rec-severity">Critical</span>
+                            {{ svc.name }}: No task IAM role assigned. Tasks inherit the EC2 instance profile which
+                            grants overly broad access.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.taskDefinitionChecks, 'td_privileged')"
+                            class="vpc-rec-item vpc-rec-critical">
+                            <span class="vpc-rec-severity">Critical</span>
+                            {{ svc.name }}: Container running in privileged mode. This grants root-level host access —
+                            remove immediately.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.iamChecks, 'iam_no_wildcard')"
+                            class="vpc-rec-item vpc-rec-critical">
+                            <span class="vpc-rec-severity">Critical</span>
+                            {{ svc.name }}: Task role contains a wildcard Resource (*) in policy. Scope permissions down
+                            to specific ARNs.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.taskDefinitionChecks, 'td_no_plain_secrets')"
+                            class="vpc-rec-item vpc-rec-warning">
+                            <span class="vpc-rec-severity">Warning</span>
+                            {{ svc.name }}: Secrets detected in plain-text environment variables. Move credentials to
+                            AWS Secrets Manager.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.taskDefinitionChecks, 'td_readonly_fs')"
+                            class="vpc-rec-item vpc-rec-warning">
+                            <span class="vpc-rec-severity">Warning</span>
+                            {{ svc.name }}: Read-only root filesystem not enforced. Enable it to prevent runtime
+                            filesystem tampering.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.taskDefinitionChecks, 'td_non_root')"
+                            class="vpc-rec-item vpc-rec-warning">
+                            <span class="vpc-rec-severity">Warning</span>
+                            {{ svc.name }}: Container may run as root user. Set a non-root user in the task definition.
+                        </div>
+                        <div *ngIf="hasFailedCheck(svc.taskDefinitionChecks, 'td_log_driver')"
+                            class="vpc-rec-item vpc-rec-warning">
+                            <span class="vpc-rec-severity">Warning</span>
+                            {{ svc.name }}: No log driver configured. Container logs will not be captured — configure
+                            awslogs or fluentd.
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(ecsSecurity?.fetchedAt ?? null) }}</div>
+            </div>
+        </div>
+    </div>
+</div>

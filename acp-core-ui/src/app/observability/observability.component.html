@@ -1,0 +1,1237 @@
+<div class="container">
+
+    <!-- ── Page header ── -->
+    <div class="create-header-box">
+        <div class="header-subtitle">AIOps OBSERVABILITY</div>
+        <div class="create-header-title">INFRA &amp; APPS DEPLOYMENT HEALTH</div>
+        <div class="header-description">Infrastructure provisioned and apps deployed through this platform</div>
+    </div>
+
+    <!-- ── Tab bar ── -->
+    <div class="tab-bar">
+        <button class="tab-btn" [class.active]="activeTab === 'infra'" (click)="switchTab('infra')">
+            🏗 Deployed Infra Health
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'apps'" (click)="switchTab('apps')">
+            🚀 Deployed Apps Health
+            <span class="tab-count">{{ allHealth.length }}</span>
+        </button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         INFRA TAB
+         ════════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'infra'">
+
+        <!-- Account selector -->
+        <div class="account-selector-row" *ngIf="cloudAccounts.length > 0">
+            <span class="account-selector-label">Cloud account:</span>
+            <select class="account-select" (change)="onAccountChange($any($event.target).value)">
+                <option *ngFor="let acc of cloudAccounts" [value]="acc.accountId"
+                    [selected]="acc.accountId === selectedAccount?.accountId">
+                    {{ acc.accountName }} ({{ acc.accountId }}) — {{ acc.region }}
+                </option>
+            </select>
+        </div>
+        <div class="account-selector-row muted-hint" *ngIf="cloudAccounts.length === 0">
+            No cloud accounts registered. Add one in Cloud Accounts to view infrastructure health.
+        </div>
+
+        <p class="infra-section-hint">Click a resource card to expand its live details</p>
+
+        <!-- Resource cards -->
+        <div class="infra-cards-grid">
+
+            <!-- VPC -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'vpc'" (click)="selectInfraCard('vpc')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">🌐</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'vpc' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">VPC</div>
+                <div class="infra-card-sub">Virtual private cloud</div>
+                <div class="infra-card-status">
+                    <div *ngIf="vpcLoading && activeInfraCard === 'vpc'" class="spinner-sm"></div>
+                    <span *ngIf="!vpcLoading || activeInfraCard !== 'vpc'" class="status-badge"
+                        [ngClass]="getStatusClass(getVpcOverallStatus())">
+                        {{ getStatusIcon(getVpcOverallStatus()) }} {{ getStatusLabel(getVpcOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="vpcHealth">
+                    {{ vpcHealth.vpcs.length }} VPC(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!vpcHealth && activeInfraCard !== 'vpc'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- RDS -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'rds'" (click)="selectInfraCard('rds')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">🗄️</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'rds' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">RDS</div>
+                <div class="infra-card-sub">Relational database</div>
+                <div class="infra-card-status">
+                    <div *ngIf="rdsLoading && activeInfraCard === 'rds'" class="spinner-sm"></div>
+                    <span *ngIf="!rdsLoading || activeInfraCard !== 'rds'" class="status-badge"
+                        [ngClass]="getStatusClass(getRdsOverallStatus())">
+                        {{ getStatusIcon(getRdsOverallStatus()) }} {{ getStatusLabel(getRdsOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="rdsHealth">
+                    {{ rdsHealth.instances.length }} instance(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!rdsHealth && activeInfraCard !== 'rds'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- ALB -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'alb'" (click)="selectInfraCard('alb')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32"
+                            fill="currentColor">
+                            <circle cx="4" cy="12" r="2.5" />
+                            <circle cx="20" cy="6" r="2.5" />
+                            <circle cx="20" cy="12" r="2.5" />
+                            <circle cx="20" cy="18" r="2.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="6" stroke="currentColor" stroke-width="1.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="12" stroke="currentColor" stroke-width="1.5" />
+                            <line x1="6.5" y1="12" x2="17.5" y2="18" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                    </div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'alb' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">ALB</div>
+                <div class="infra-card-sub">Load balancer</div>
+                <div class="infra-card-status">
+                    <div *ngIf="albLoading && activeInfraCard === 'alb'" class="spinner-sm"></div>
+                    <span *ngIf="!albLoading || activeInfraCard !== 'alb'" class="status-badge"
+                        [ngClass]="getStatusClass(getAlbOverallStatus())">
+                        {{ getStatusIcon(getAlbOverallStatus()) }} {{ getStatusLabel(getAlbOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="albHealth">
+                    {{ albHealth.loadBalancers.length }} load balancer(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!albHealth && activeInfraCard !== 'alb'">
+                    Click to load
+                </div>
+            </div>
+
+            <!-- ECS -->
+            <div class="infra-card" [class.active]="activeInfraCard === 'ecs'" (click)="selectInfraCard('ecs')">
+                <div class="infra-card-top">
+                    <div class="infra-card-icon">⚙</div>
+                    <div class="infra-card-chevron">{{ activeInfraCard === 'ecs' ? '▲' : '▼' }}</div>
+                </div>
+                <div class="infra-card-name">ECS</div>
+                <div class="infra-card-sub">Container service</div>
+                <div class="infra-card-status">
+                    <div *ngIf="ecsLoading && activeInfraCard === 'ecs'" class="spinner-sm"></div>
+                    <span *ngIf="!ecsLoading || activeInfraCard !== 'ecs'" class="status-badge"
+                        [ngClass]="getStatusClass(getEcsOverallStatus())">
+                        {{ getStatusIcon(getEcsOverallStatus()) }} {{ getStatusLabel(getEcsOverallStatus()) }}
+                    </span>
+                </div>
+                <div class="infra-card-meta" *ngIf="ecsHealth">
+                    {{ ecsHealth.clusters.length }} cluster(s)
+                </div>
+                <div class="infra-card-meta muted" *ngIf="!ecsHealth && activeInfraCard !== 'ecs'">
+                    Click to load
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── VPC expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'vpc'">
+            <div *ngIf="vpcLoading" class="expand-loading">Fetching VPC data from AWS...</div>
+            <div *ngIf="vpcError" class="expand-error">{{ vpcError }}</div>
+            <div *ngIf="vpcHealth && !vpcLoading">
+                <div class="expand-table">
+                    <div class="expand-header vpc-grid">
+                        <span>VPC</span><span>CIDR</span><span>Subnets</span><span>State</span><span></span>
+                    </div>
+                    <div class="expand-row vpc-grid" *ngFor="let vpc of vpcHealth.vpcs">
+                        <span>
+                            <div class="expand-name">{{ vpc.name }}</div>
+                            <div class="expand-muted small-text">{{ vpc.vpcId }}</div>
+                        </span>
+                        <span class="expand-muted">{{ vpc.cidr }}</span>
+                        <span>
+                            <span class="subnet-count-pill">
+                                {{ vpc.subnets.length }} subnet(s)
+                            </span>
+                            <span class="subnet-pill subnet-pill-pub" *ngIf="getSubnetsByType(vpc, 'public') > 0">
+                                {{ getSubnetsByType(vpc, 'public') }} public
+                            </span>
+                            <span class="subnet-pill subnet-pill-priv" *ngIf="getSubnetsByType(vpc, 'private') > 0">
+                                {{ getSubnetsByType(vpc, 'private') }} private
+                            </span>
+                        </span>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(vpc.state === 'available' ? 'healthy' : 'degraded')">
+                            {{ getStatusIcon(vpc.state === 'available' ? 'healthy' : 'degraded') }} {{ vpc.state }}
+                        </span>
+                        <span>
+                            <button class="detail-btn" (click)="openVpcDetail(vpc); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="vpcHealth.vpcs.length === 0">
+                        No VPCs found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(vpcHealth.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── RDS expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'rds'">
+            <div *ngIf="rdsLoading" class="expand-loading">Fetching RDS data from AWS...</div>
+            <div *ngIf="rdsError" class="expand-error">{{ rdsError }}</div>
+            <div *ngIf="rdsHealth && !rdsLoading">
+                <div class="expand-table">
+                    <div class="expand-header rds-grid">
+                        <span>Identifier</span>
+                        <span>Engine</span>
+                        <span>Instance class</span>
+                        <span>State</span>
+                        <span></span>
+                    </div>
+                    <div class="expand-row rds-grid" *ngFor="let db of rdsHealth.instances">
+                        <span class="expand-name">{{ db.identifier }}</span>
+                        <span class="expand-muted">{{ db.engine }} {{ db.engineVersion }}</span>
+                        <span class="expand-muted">{{ db.instanceClass }}</span>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(db.status === 'available' ? 'healthy' : 'degraded')">
+                            {{ getStatusIcon(db.status === 'available' ? 'healthy' : 'degraded') }} {{ db.status }}
+                        </span>
+                        <span>
+                            <button class="detail-btn" (click)="openRdsDetail(db); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="rdsHealth.instances.length === 0">
+                        No RDS instances found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(rdsHealth.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── ALB expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'alb'">
+            <div *ngIf="albLoading" class="expand-loading">Fetching ALB data from AWS...</div>
+            <div *ngIf="albError" class="expand-error">{{ albError }}</div>
+            <div *ngIf="albHealth && !albLoading">
+                <div class="expand-table">
+                    <div class="expand-header alb-grid">
+                        <span>Name / ARN</span>
+                        <span>Scheme</span>
+                        <span>DNS</span>
+                        <span>State</span>
+                        <span></span>
+                    </div>
+                    <div class="expand-row alb-grid" *ngFor="let lb of albHealth.loadBalancers">
+                        <span>
+                            <div class="expand-name">{{ lb.name }}</div>
+                            <div class="expand-muted small-text arn-truncate">{{ lb.arn }}</div>
+                        </span>
+                        <span>
+                            <span class="scheme-pill" [class.scheme-external]="lb.scheme === 'internet-facing'"
+                                [class.scheme-internal]="lb.scheme === 'internal'">
+                                {{ lb.scheme }}
+                            </span>
+                        </span>
+                        <span class="dns-copy-cell">
+                            <span class="dns-truncate" [title]="lb.dns">{{ lb.dns }}</span>
+                            <button class="copy-btn" (click)="copyAlbDns(lb.dns); $event.stopPropagation()">
+                                {{ copiedAlbDns ? '✓' : 'Copy' }}
+                            </button>
+                        </span>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(lb.state === 'active' ? 'healthy' : 'unhealthy')">
+                            {{ getStatusIcon(lb.state === 'active' ? 'healthy' : 'unhealthy') }} {{ lb.state }}
+                        </span>
+                        <span>
+                            <button class="detail-btn" (click)="openAlbDetail(lb); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="albHealth.loadBalancers.length === 0">
+                        No load balancers found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(albHealth.fetchedAt) }}</div>
+            </div>
+        </div>
+
+        <!-- ── ECS expand panel ── -->
+        <div class="expand-panel" *ngIf="activeInfraCard === 'ecs'">
+            <div *ngIf="ecsLoading" class="expand-loading">Fetching ECS data from AWS...</div>
+            <div *ngIf="ecsError" class="expand-error">{{ ecsError }}</div>
+            <div *ngIf="ecsHealth && !ecsLoading">
+                <div class="expand-table">
+                    <div class="expand-header ecs-grid">
+                        <span>Cluster / ARN</span>
+                        <span>Status</span>
+                        <span>Tasks</span>
+                        <span>Services</span>
+                        <span></span>
+                    </div>
+                    <div class="expand-row ecs-grid" *ngFor="let cluster of ecsHealth.clusters">
+                        <span>
+                            <div class="expand-name">{{ cluster.name }}</div>
+                            <div class="expand-muted small-text arn-truncate">{{ cluster.arn }}</div>
+                        </span>
+                        <span>
+                            <span class="status-badge"
+                                [ngClass]="getStatusClass(cluster.status === 'ACTIVE' ? 'healthy' : 'degraded')">
+                                {{ getStatusIcon(cluster.status === 'ACTIVE' ? 'healthy' : 'degraded') }} {{
+                                cluster.status }}
+                            </span>
+                        </span>
+                        <span>
+                            <span class="task-count-pill task-running-pill">
+                                ▶ {{ cluster.runningTasksCount }} running
+                            </span>
+                            <span class="task-count-pill task-pending-pill" *ngIf="cluster.pendingTasksCount > 0">
+                                ⏳ {{ cluster.pendingTasksCount }} pending
+                            </span>
+                        </span>
+                        <span class="expand-muted">{{ cluster.activeServicesCount }} service(s)</span>
+                        <span>
+                            <button class="detail-btn" (click)="openEcsDetail(cluster); $event.stopPropagation()">
+                                View Details
+                            </button>
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="ecsHealth.clusters.length === 0">
+                        No ECS clusters found in this account/region.
+                    </div>
+                </div>
+                <div class="expand-fetched">Last fetched: {{ formatDate(ecsHealth.fetchedAt) }}</div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+         APPS TAB  — all existing HTML preserved exactly
+         ════════════════════════════════════════════════════════════════════════ -->
+    <div *ngIf="activeTab === 'apps'">
+
+        <!-- Summary bar -->
+        <div class="summary-bar">
+            <div class="summary-card healthy">
+                <span class="summary-dot">●</span>
+                <span class="summary-count">{{ countByStatus('healthy') }}</span>
+                <span class="summary-label">Healthy</span>
+            </div>
+            <div class="summary-card degraded">
+                <span class="summary-dot">◐</span>
+                <span class="summary-count">{{ countByStatus('degraded') }}</span>
+                <span class="summary-label">Degraded</span>
+            </div>
+            <div class="summary-card unhealthy">
+                <span class="summary-dot">●</span>
+                <span class="summary-count">{{ countByStatus('unhealthy') }}</span>
+                <span class="summary-label">Unhealthy</span>
+            </div>
+            <div class="summary-card unknown">
+                <span class="summary-dot">○</span>
+                <span class="summary-count">{{ countByStatus('unknown') }}</span>
+                <span class="summary-label">Unknown</span>
+            </div>
+            <div class="refresh-note">Auto-refreshes every 30s</div>
+        </div>
+
+        <!-- Loading state -->
+        <div *ngIf="allHealthLoading && allHealth.length === 0" class="empty">
+            Loading health data...
+        </div>
+
+        <!-- Error state -->
+        <div *ngIf="allHealthError && allHealth.length === 0" class="empty error-state">
+            {{ allHealthError }}
+        </div>
+
+        <!-- Deployments health table -->
+        <div class="infra-table" *ngIf="allHealth.length > 0">
+
+            <div class="table-header">
+                <th>Deployment</th>
+                <th>Status</th>
+                <th>Containers</th>
+                <th>Details</th>
+            </div>
+
+            <div class="table-body">
+                <div class="table-row" *ngFor="let h of allHealth" (click)="openDetail(h)">
+
+                    <!-- Name -->
+                    <div class="deployment-name">{{ h.name }}</div>
+
+                    <!-- Status badge -->
+                    <div>
+                        <span class="status-badge" [ngClass]="getStatusClass(h.status)">
+                            {{ getStatusIcon(h.status) }} {{ getStatusLabel(h.status) }}
+                        </span>
+                        <div *ngIf="h.reason" class="reason-text">{{ h.reason }}</div>
+                    </div>
+
+                    <!-- Task count -->
+                    <div class="task-count" *ngIf="h.service; else noService">
+                        {{ h.service.runningCount }} / {{ h.service.desiredCount }} running
+                    </div>
+                    <ng-template #noService>
+                        <div>—</div>
+                    </ng-template>
+
+                    <!-- View detail -->
+                    <div>
+                        <button class="detail-btn" (click)="openDetail(h); $event.stopPropagation()">
+                            View Detail
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- end apps tab -->
+
+
+    <!-- ── Detail slide-in panel (apps) — all existing HTML preserved exactly ── -->
+    <div class="detail-overlay" *ngIf="selectedDeployment">
+
+        <div class="detail-panel">
+
+            <!-- Detail header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedDeployment.name }}</div>
+                </div>
+                <button class="close-btn" (click)="closeDetail()">✕</button>
+            </div>
+
+            <!-- Detail loading -->
+            <div *ngIf="detailLoading" class="detail-loading">Fetching live data from AWS...</div>
+
+            <!-- Detail error -->
+            <div *ngIf="detailError" class="detail-error">{{ detailError }}</div>
+
+            <!-- Detail content -->
+            <div *ngIf="detailHealth && !detailLoading">
+
+                <!-- Status + task counts row -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="status-badge lg" [ngClass]="getStatusClass(detailHealth.status)">
+                            {{ getStatusIcon(detailHealth.status) }} {{ getStatusLabel(detailHealth.status) }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Running</div>
+                        <div class="detail-card-value">
+                            {{ detailHealth.service.runningCount }} / {{ detailHealth.service.desiredCount }}
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Pending</div>
+                        <div class="detail-card-value">{{ detailHealth.service.pendingCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Task Definition</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.taskDefinition || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Cluster</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.cluster || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Region</div>
+                        <div class="detail-card-value small">{{ detailHealth.service.region || '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="section-title">Metrics (last 5 min)</div>
+                <div class="detail-row">
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.cpuUtilization !== null ? detailHealth.metrics.cpuUtilization + '%'
+                            : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.cpuUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.cpuUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.cpuUtilization)"></div>
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.cpuUtilization === null && !detailHealth.metrics.cpuReservedUnits">
+                            Enable Container Insights to see metrics
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.cpuUtilization === null && detailHealth.metrics.cpuReservedUnits">
+                            {{ detailHealth.metrics.cpuReservedUnits }} CPU units reserved across {{
+                            detailHealth.tasks.length }} task(s)
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Memory Utilization</div>
+                        <div class="metric-value">
+                            {{ detailHealth.metrics.memoryUtilization !== null ? detailHealth.metrics.memoryUtilization
+                            + '%' : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="detailHealth.metrics.memoryUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(detailHealth.metrics.memoryUtilization)"
+                                [style.width]="getMetricBarWidth(detailHealth.metrics.memoryUtilization)"></div>
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.memoryUtilization === null && !detailHealth.metrics.memoryReservedMiB">
+                            Enable Container Insights to see metrics
+                        </div>
+                        <div class="metric-na"
+                            *ngIf="detailHealth.metrics.memoryUtilization === null && detailHealth.metrics.memoryReservedMiB">
+                            {{ detailHealth.metrics.memoryReservedMiB }} MiB reserved across {{
+                            detailHealth.tasks.length }} task(s)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target group health -->
+                <div *ngIf="detailHealth.targetGroupHealth">
+                    <div class="section-title">Load Balancer</div>
+                    <div class="alb-row">
+                        <span class="alb-name">{{ detailHealth.targetGroupHealth.targetGroupName }}</span>
+                        <span class="alb-count">
+                            {{ detailHealth.targetGroupHealth.healthyCount }} / {{
+                            detailHealth.targetGroupHealth.totalCount }} targets healthy
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Active alarms -->
+                <div *ngIf="detailHealth.alarms.length > 0">
+                    <div class="section-title">Active Alarms</div>
+                    <div class="alarm-row" *ngFor="let alarm of detailHealth.alarms">
+                        <span class="alarm-icon">⚠</span>
+                        <div>
+                            <div class="alarm-name">{{ alarm.name }}</div>
+                            <div class="alarm-reason">{{ alarm.stateReason }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks -->
+                <div *ngIf="detailHealth.tasks.length > 0">
+                    <div class="section-title">Running Tasks</div>
+                    <div class="tasks-table">
+                        <div class="tasks-header">
+                            <span>Task ID</span>
+                            <span>Status</span>
+                            <span>Started</span>
+                        </div>
+                        <div class="tasks-row" *ngFor="let t of detailHealth.tasks">
+                            <span class="task-id">{{ t.taskArn }}</span>
+                            <span class="task-status" [ngClass]="getTaskStatusClass(t.lastStatus)">
+                                {{ t.lastStatus }}
+                            </span>
+                            <span>{{ formatDate(t.startedAt) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent events -->
+                <div *ngIf="detailHealth.recentEvents.length > 0">
+                    <div class="section-title">Recent Events</div>
+                    <div class="event-row" *ngFor="let ev of detailHealth.recentEvents">
+                        <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+                        <span class="event-msg">{{ ev.message }}</span>
+                    </div>
+                </div>
+
+                <!-- Deployment rollout -->
+                <div *ngIf="detailHealth.deployment">
+                    <div class="section-title">Active Deployment</div>
+                    <div class="detail-row">
+                        <div class="detail-card">
+                            <div class="detail-card-label">Rollout State</div>
+                            <div class="detail-card-value">{{ detailHealth.deployment.rolloutState || '—' }}</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-card-label">Updated</div>
+                            <div class="detail-card-value small">{{ formatDate(detailHealth.deployment.updatedAt) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rollout-reason" *ngIf="detailHealth.deployment.rolloutStateReason">
+                        {{ detailHealth.deployment.rolloutStateReason }}
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(detailHealth.fetchedAt) }}</div>
+
+            </div>
+        </div>
+    </div>
+    <!-- ── VPC Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedVpc">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedVpc.name }}</div>
+                    <div class="expand-muted small-text">{{ selectedVpc.vpcId }}</div>
+                </div>
+                <button class="close-btn" (click)="closeVpcDetail()">✕</button>
+            </div>
+
+            <div *ngIf="vpcDetailLoading" class="detail-loading">Fetching VPC details from AWS...</div>
+            <div *ngIf="vpcDetailError" class="detail-error">{{ vpcDetailError }}</div>
+
+            <div *ngIf="vpcDetail && !vpcDetailLoading">
+
+                <!-- Header summary row -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(vpcDetail.state === 'available' ? 'healthy' : 'degraded')">
+                            {{ getStatusIcon(vpcDetail.state === 'available' ? 'healthy' : 'degraded') }} {{
+                            vpcDetail.state }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Region</div>
+                        <div class="detail-card-value">{{ vpcDetail.region }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">CIDR</div>
+                        <div class="detail-card-value">{{ vpcDetail.cidr }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Tenancy</div>
+                        <div class="detail-card-value">{{ vpcDetail.tenancy }}</div>
+                    </div>
+                </div>
+
+                <!-- Network section -->
+                <div class="section-title">Network</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">DNS Hostnames</div>
+                        <div class="detail-card-value">
+                            <span class="bool-pill" [class.bool-yes]="vpcDetail.dnsHostnames"
+                                [class.bool-no]="!vpcDetail.dnsHostnames">
+                                {{ vpcDetail.dnsHostnames ? 'Enabled' : 'Disabled' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">DNS Resolution</div>
+                        <div class="detail-card-value">
+                            <span class="bool-pill" [class.bool-yes]="vpcDetail.dnsResolution"
+                                [class.bool-no]="!vpcDetail.dnsResolution">
+                                {{ vpcDetail.dnsResolution ? 'Enabled' : 'Disabled' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Internet Gateway</div>
+                        <div class="detail-card-value">
+                            <span class="bool-pill" [class.bool-yes]="vpcDetail.internetGatewayAttached"
+                                [class.bool-no]="!vpcDetail.internetGatewayAttached">
+                                {{ vpcDetail.internetGatewayAttached ? 'Attached' : 'None' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Route Tables</div>
+                        <div class="detail-card-value">{{ vpcDetail.routeTableCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">NAT Gateways</div>
+                        <div class="detail-card-value">{{ vpcDetail.natGatewayCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Security Groups</div>
+                        <div class="detail-card-value">{{ vpcDetail.securityGroupCount }}</div>
+                    </div>
+                </div>
+
+                <!-- Subnets table -->
+                <div class="section-title">Subnets ({{ vpcDetail.subnets.length }})</div>
+                <div class="tasks-table">
+                    <div class="tasks-header vpc-detail-subnet-grid">
+                        <span>Name</span>
+                        <span>AZ</span>
+                        <span>CIDR</span>
+                        <span>Type</span>
+                        <span>Available IPs</span>
+                    </div>
+                    <div class="tasks-row vpc-detail-subnet-grid" *ngFor="let s of vpcDetail.subnets">
+                        <span class="task-id">{{ s.name }}</span>
+                        <span class="expand-muted">{{ s.az }}</span>
+                        <span class="expand-muted">{{ s.cidr }}</span>
+                        <span>
+                            <span class="subnet-pill" [ngClass]="getSubnetTypeClass(s.type)">{{ s.type }}</span>
+                        </span>
+                        <span class="expand-muted">{{ s.availableIps }}</span>
+                    </div>
+                    <div class="expand-empty" *ngIf="vpcDetail.subnets.length === 0">No subnets found.</div>
+                </div>
+
+                <!-- Flow Logs -->
+                <div *ngIf="vpcDetail.flowLogs.length > 0">
+                    <div class="section-title">Latest Flow Logs</div>
+                    <div class="tasks-table">
+                        <div class="tasks-header vpc-detail-flowlog-grid">
+                            <span>Log ID</span>
+                            <span>Traffic</span>
+                            <span>Status</span>
+                            <span>Destination</span>
+                            <span>Created</span>
+                        </div>
+                        <div class="tasks-row vpc-detail-flowlog-grid" *ngFor="let fl of vpcDetail.flowLogs">
+                            <span class="task-id">{{ fl.flowLogId }}</span>
+                            <span class="expand-muted">{{ fl.trafficType }}</span>
+                            <span class="task-status"
+                                [ngClass]="fl.status === 'ACTIVE' ? 'task-running' : 'task-stopped'">
+                                {{ fl.status }}
+                            </span>
+                            <span class="expand-muted small-text">{{ fl.destination }}</span>
+                            <span class="expand-muted">{{ formatDate(fl.createdAt) }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="vpcDetail.flowLogs.length === 0" class="expand-muted" style="margin: 8px 0 16px">
+                    No flow logs configured for this VPC.
+                </div>
+
+                <!-- Tags -->
+                <div *ngIf="vpcDetail.tags.length > 0">
+                    <div class="section-title">Tags</div>
+                    <div class="vpc-tags-grid">
+                        <div class="vpc-tag-row" *ngFor="let tag of vpcDetail.tags">
+                            <span class="vpc-tag-key">{{ tag.Key }}</span>
+                            <span class="vpc-tag-value">{{ tag.Value }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(vpcDetail.fetchedAt) }}</div>
+            </div>
+        </div>
+    </div>
+    <!-- ── RDS Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedRds">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedRds.identifier }}</div>
+                    <div class="expand-muted small-text">{{ selectedRds.engine }} {{ selectedRds.engineVersion }}</div>
+                </div>
+                <button class="close-btn" (click)="closeRdsDetail()">✕</button>
+            </div>
+
+            <div *ngIf="rdsDetailLoading" class="detail-loading">Fetching RDS details from AWS...</div>
+            <div *ngIf="rdsDetailError" class="detail-error">{{ rdsDetailError }}</div>
+
+            <div *ngIf="rdsDetail && !rdsDetailLoading">
+
+                <!-- Overview row -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(rdsDetail.status === 'available' ? 'healthy' : 'degraded')">
+                            {{ getStatusIcon(rdsDetail.status === 'available' ? 'healthy' : 'degraded') }} {{
+                            rdsDetail.status }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Instance Class</div>
+                        <div class="detail-card-value">{{ rdsDetail.instanceClass }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Storage</div>
+                        <div class="detail-card-value">{{ rdsDetail.storageGb }} GB
+                            <span class="storage-type-pill">{{ rdsDetail.storageType }}</span>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Multi-AZ</div>
+                        <span class="bool-pill" [class.bool-yes]="rdsDetail.multiAz"
+                            [class.bool-no]="!rdsDetail.multiAz">
+                            {{ rdsDetail.multiAz ? 'Yes' : 'No' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Publicly Accessible</div>
+                        <span class="bool-pill" [class.bool-yes]="rdsDetail.publiclyAccessible"
+                            [class.bool-no]="!rdsDetail.publiclyAccessible">
+                            {{ rdsDetail.publiclyAccessible ? 'Yes' : 'No' }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Created</div>
+                        <div class="detail-card-value small">{{ formatDate(rdsDetail.createdAt) }}</div>
+                    </div>
+                </div>
+
+                <!-- Network section -->
+                <div class="section-title">Network</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Endpoint</div>
+                        <div class="detail-card-value small endpoint-copy-row">
+                            <span class="endpoint-text">{{ rdsDetail.endpoint || '—' }}</span>
+                            <button *ngIf="rdsDetail.endpoint" class="copy-btn"
+                                (click)="copyEndpoint(rdsDetail.endpoint)">
+                                {{ copiedEndpoint ? '✓ Copied' : 'Copy' }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Port</div>
+                        <div class="detail-card-value">{{ rdsDetail.port || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">VPC ID</div>
+                        <div class="detail-card-value small">{{ rdsDetail.vpcId || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Subnet Group</div>
+                        <div class="detail-card-value small">{{ rdsDetail.subnetGroup || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Availability Zone</div>
+                        <div class="detail-card-value">{{ rdsDetail.availabilityZone || '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- Security Groups -->
+                <div class="section-title">
+                    Security Groups
+                    <span class="section-count">{{ rdsDetail.securityGroups.length }}</span>
+                </div>
+                <div class="vpc-tags-grid">
+                    <div class="vpc-tag-row" *ngFor="let sg of rdsDetail.securityGroups">
+                        <span class="vpc-tag-key">{{ sg.id }}</span>
+                        <span class="bool-pill" [class.bool-yes]="sg.status === 'active'"
+                            [class.bool-no]="sg.status !== 'active'">
+                            {{ sg.status }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="rdsDetail.securityGroups.length === 0">None attached.</div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="section-title">Metrics (last 5 min)</div>
+                <div class="detail-row">
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value">
+                            {{ rdsDetail.metrics.cpuUtilization !== null ? rdsDetail.metrics.cpuUtilization + '%' :
+                            'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="rdsDetail.metrics.cpuUtilization !== null">
+                            <div class="metric-bar-fill" [ngClass]="getMetricBarClass(rdsDetail.metrics.cpuUtilization)"
+                                [style.width]="getMetricBarWidth(rdsDetail.metrics.cpuUtilization)">
+                            </div>
+                        </div>
+                        <div class="metric-na" *ngIf="rdsDetail.metrics.cpuUtilization === null">
+                            No data available
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">DB Connections</div>
+                        <div class="metric-value">
+                            {{ rdsDetail.metrics.dbConnections !== null ? rdsDetail.metrics.dbConnections : 'N/A' }}
+                        </div>
+                        <div class="metric-na" *ngIf="rdsDetail.metrics.dbConnections === null">
+                            No data available
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Log Files -->
+                <div class="section-title">Latest Database Logs</div>
+                <div *ngIf="rdsDetail.logFiles.length === 0" class="expand-muted" style="margin-bottom: 16px">
+                    No log files available.
+                </div>
+                <div *ngFor="let logFile of rdsDetail.logFiles" class="log-file-block">
+                    <div class="log-file-header">
+                        <span class="log-file-name">{{ logFile.fileName }}</span>
+                        <span class="log-file-meta">{{ logFile.size | number }} bytes · last written {{
+                            formatDate(logFile.lastWritten) }}</span>
+                    </div>
+                    <div class="log-lines-block">
+                        <div class="log-line" *ngFor="let line of logFile.lines">{{ line }}</div>
+                        <div class="log-line expand-muted" *ngIf="logFile.lines.length === 0">No recent entries.</div>
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(rdsDetail.fetchedAt) }}</div>
+            </div>
+        </div>
+    </div>
+    <!-- ── ALB Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedAlb">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedAlb.name }}</div>
+                    <div class="expand-muted small-text arn-truncate">{{ selectedAlb.arn }}</div>
+                </div>
+                <button class="close-btn" (click)="closeAlbDetail()">✕</button>
+            </div>
+
+            <div *ngIf="albDetailLoading" class="detail-loading">Fetching ALB details from AWS...</div>
+            <div *ngIf="albDetailError" class="detail-error">{{ albDetailError }}</div>
+
+            <div *ngIf="albDetail && !albDetailLoading">
+
+                <!-- Overview -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(albDetail.state === 'active' ? 'healthy' : 'unhealthy')">
+                            {{ getStatusIcon(albDetail.state === 'active' ? 'healthy' : 'unhealthy') }} {{
+                            albDetail.state }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Type</div>
+                        <div class="detail-card-value">{{ albDetail.type }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Scheme</div>
+                        <span class="scheme-pill" [class.scheme-external]="albDetail.scheme === 'internet-facing'"
+                            [class.scheme-internal]="albDetail.scheme === 'internal'">
+                            {{ albDetail.scheme }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">VPC ID</div>
+                        <div class="detail-card-value small">{{ albDetail.vpcId || '—' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Created</div>
+                        <div class="detail-card-value small">{{ formatDate(albDetail.createdAt) }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Availability Zones</div>
+                        <div class="detail-card-value">
+                            <span class="az-pill" *ngFor="let az of albDetail.availabilityZones">{{ az }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DNS -->
+                <div class="section-title">DNS</div>
+                <div class="endpoint-copy-row" style="margin-bottom: 16px; padding: 0 4px">
+                    <span class="endpoint-text">{{ albDetail.dns }}</span>
+                    <button class="copy-btn" (click)="copyAlbDns(albDetail.dns)">
+                        {{ copiedAlbDns ? '✓ Copied' : 'Copy' }}
+                    </button>
+                </div>
+
+                <!-- Access Logs -->
+                <div class="section-title">Access Logs</div>
+                <div class="detail-row" style="margin-bottom: 16px">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="bool-pill" [class.bool-yes]="albDetail.accessLogs.enabled"
+                            [class.bool-no]="!albDetail.accessLogs.enabled">
+                            {{ albDetail.accessLogs.enabled ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </div>
+                    <div class="detail-card" *ngIf="albDetail.accessLogs.enabled">
+                        <div class="detail-card-label">S3 Bucket</div>
+                        <div class="detail-card-value small">{{ albDetail.accessLogs.bucket || '—' }}</div>
+                    </div>
+                    <div class="detail-card" *ngIf="albDetail.accessLogs.enabled && albDetail.accessLogs.prefix">
+                        <div class="detail-card-label">Prefix</div>
+                        <div class="detail-card-value small">{{ albDetail.accessLogs.prefix }}</div>
+                    </div>
+                </div>
+
+                <!-- Target Groups -->
+                <div class="section-title">
+                    Target Groups
+                    <span class="section-count">{{ albDetail.targetGroups.length }}</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header alb-tg-grid">
+                        <span>Name</span>
+                        <span>Protocol / Port</span>
+                        <span>Target Type</span>
+                        <span>Health Check</span>
+                        <span>Targets</span>
+                        <span>Status</span>
+                    </div>
+                    <div class="tasks-row alb-tg-grid" *ngFor="let tg of albDetail.targetGroups">
+                        <span class="task-id">{{ tg.name }}</span>
+                        <span class="expand-muted">{{ tg.protocol }} : {{ tg.port }}</span>
+                        <span class="expand-muted">{{ tg.targetType }}</span>
+                        <span class="expand-muted small-text">{{ tg.healthCheckProtocol }} {{ tg.healthCheckPath
+                            }}</span>
+                        <span class="expand-muted">{{ tg.healthyCount }} / {{ tg.totalCount }}</span>
+                        <span class="status-badge" [ngClass]="getAlbHealthClass(tg.healthCheckStatus)">
+                            {{ getStatusIcon(tg.healthCheckStatus) }} {{ tg.healthCheckStatus }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="albDetail.targetGroups.length === 0">
+                        No target groups found.
+                    </div>
+                </div>
+
+                <!-- Listeners -->
+                <div class="section-title">
+                    Listeners
+                    <span class="section-count">{{ albDetail.listeners.length }}</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header alb-listener-grid">
+                        <span>Protocol</span>
+                        <span>Port</span>
+                        <span>Default Action</span>
+                        <span>SSL Policy</span>
+                    </div>
+                    <div class="tasks-row alb-listener-grid" *ngFor="let l of albDetail.listeners">
+                        <span class="expand-muted">{{ l.protocol }}</span>
+                        <span class="expand-muted">{{ l.port }}</span>
+                        <span class="expand-muted small-text">{{ l.defaultAction }}</span>
+                        <span class="expand-muted small-text">{{ l.sslPolicy || '—' }}</span>
+                    </div>
+                    <div class="expand-empty" *ngIf="albDetail.listeners.length === 0">
+                        No listeners configured.
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div *ngIf="albDetail.tags.length > 0">
+                    <div class="section-title">Tags</div>
+                    <div class="vpc-tags-grid">
+                        <div class="vpc-tag-row" *ngFor="let tag of albDetail.tags">
+                            <span class="vpc-tag-key">{{ tag.Key }}</span>
+                            <span class="vpc-tag-value">{{ tag.Value }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(albDetail.fetchedAt) }}</div>
+            </div>
+        </div>
+    </div>
+    <!-- ── ECS Detail slide-in panel ── -->
+    <div class="detail-overlay" *ngIf="selectedEcsCluster">
+        <div class="detail-panel">
+
+            <!-- Header -->
+            <div class="detail-header">
+                <div>
+                    <div class="detail-title">{{ selectedEcsCluster.name }}</div>
+                    <div class="expand-muted small-text arn-truncate">{{ selectedEcsCluster.arn }}</div>
+                </div>
+                <button class="close-btn" (click)="closeEcsDetail()">✕</button>
+            </div>
+
+            <div *ngIf="ecsDetailLoading" class="detail-loading">Fetching ECS details from AWS...</div>
+            <div *ngIf="ecsDetailError" class="detail-error">{{ ecsDetailError }}</div>
+
+            <div *ngIf="ecsDetail && !ecsDetailLoading">
+
+                <!-- Overview -->
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="status-badge" [ngClass]="getEcsStatusClass(ecsDetail.status)">
+                            {{ ecsDetail.status }}
+                        </span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Running Tasks</div>
+                        <div class="detail-card-value">{{ ecsDetail.runningTasksCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Pending Tasks</div>
+                        <div class="detail-card-value">{{ ecsDetail.pendingTasksCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Active Services</div>
+                        <div class="detail-card-value">{{ ecsDetail.activeServicesCount }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Container Instances</div>
+                        <div class="detail-card-value">{{ ecsDetail.registeredContainerInstances }}</div>
+                    </div>
+                    <div class="detail-card" *ngIf="ecsDetail.capacityProviders.length > 0">
+                        <div class="detail-card-label">Capacity Providers</div>
+                        <div class="detail-card-value">
+                            <span class="storage-type-pill" *ngFor="let cp of ecsDetail.capacityProviders">
+                                {{ cp }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="section-title">
+                    Services
+                    <span class="section-count">{{ ecsDetail.services.length }}</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header ecs-svc-grid">
+                        <span>Service</span>
+                        <span>Task Definition</span>
+                        <span>Running / Desired</span>
+                        <span>Launch Type</span>
+                        <span>Status</span>
+                    </div>
+                    <div class="tasks-row ecs-svc-grid" *ngFor="let svc of ecsDetail.services">
+                        <span class="expand-name">{{ svc.name }}</span>
+                        <span class="expand-muted small-text">{{ svc.taskDefinition }}</span>
+                        <span>
+                            <span class="task-count-pill"
+                                [class.task-running-pill]="svc.runningCount === svc.desiredCount"
+                                [class.task-pending-pill]="svc.runningCount < svc.desiredCount">
+                                {{ svc.runningCount }} / {{ svc.desiredCount }}
+                            </span>
+                        </span>
+                        <span>
+                            <span class="storage-type-pill">{{ svc.launchType }}</span>
+                        </span>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(svc.status === 'ACTIVE' ? 'healthy' : 'degraded')">
+                            {{ getStatusIcon(svc.status === 'ACTIVE' ? 'healthy' : 'degraded') }} {{ svc.status }}
+                        </span>
+                    </div>
+                    <div class="expand-empty" *ngIf="ecsDetail.services.length === 0">
+                        No services found in this cluster.
+                    </div>
+                </div>
+
+                <!-- Tasks -->
+                <div class="section-title">
+                    Running Tasks
+                    <span class="section-count">{{ ecsDetail.tasks.length }}</span>
+                </div>
+                <div class="tasks-table">
+                    <div class="tasks-header ecs-task-grid">
+                        <span>Task ID</span>
+                        <span>Task Definition</span>
+                        <span>Status</span>
+                        <span>Started</span>
+                        <span>CPU / Memory</span>
+                    </div>
+                    <div class="tasks-row ecs-task-grid" *ngFor="let t of ecsDetail.tasks">
+                        <span class="task-id">{{ t.taskId }}</span>
+                        <span class="expand-muted small-text">{{ t.taskDefinition }}</span>
+                        <span class="task-status" [ngClass]="getTaskStatusClass2(t.lastStatus)">
+                            {{ t.lastStatus }}
+                        </span>
+                        <span class="expand-muted small-text">{{ formatDate(t.startedAt) }}</span>
+                        <span class="expand-muted">{{ t.cpu }} / {{ t.memory }}</span>
+                    </div>
+                    <div class="expand-empty" *ngIf="ecsDetail.tasks.length === 0">
+                        No running tasks found.
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                <div class="section-title">Metrics (last 5 min)</div>
+                <div class="detail-row">
+                    <div class="metric-card">
+                        <div class="metric-label">CPU Utilization</div>
+                        <div class="metric-value">
+                            {{ ecsDetail.metrics.cpuUtilization !== null ? ecsDetail.metrics.cpuUtilization + '%' :
+                            'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="ecsDetail.metrics.cpuUtilization !== null">
+                            <div class="metric-bar-fill" [ngClass]="getMetricBarClass(ecsDetail.metrics.cpuUtilization)"
+                                [style.width]="getMetricBarWidth(ecsDetail.metrics.cpuUtilization)">
+                            </div>
+                        </div>
+                        <div class="metric-na" *ngIf="ecsDetail.metrics.cpuUtilization === null">
+                            Enable Container Insights to see metrics
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Memory Utilization</div>
+                        <div class="metric-value">
+                            {{ ecsDetail.metrics.memoryUtilization !== null ? ecsDetail.metrics.memoryUtilization + '%'
+                            : 'N/A' }}
+                        </div>
+                        <div class="metric-bar-track" *ngIf="ecsDetail.metrics.memoryUtilization !== null">
+                            <div class="metric-bar-fill"
+                                [ngClass]="getMetricBarClass(ecsDetail.metrics.memoryUtilization)"
+                                [style.width]="getMetricBarWidth(ecsDetail.metrics.memoryUtilization)">
+                            </div>
+                        </div>
+                        <div class="metric-na" *ngIf="ecsDetail.metrics.memoryUtilization === null">
+                            Enable Container Insights to see metrics
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Running Tasks</div>
+                        <div class="metric-value">
+                            {{ ecsDetail.metrics.runningTaskCount !== null ? ecsDetail.metrics.runningTaskCount : 'N/A'
+                            }}
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Pending Tasks</div>
+                        <div class="metric-value">
+                            {{ ecsDetail.metrics.pendingTaskCount !== null ? ecsDetail.metrics.pendingTaskCount : 'N/A'
+                            }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Events -->
+                <div *ngIf="ecsDetail.recentEvents.length > 0">
+                    <div class="section-title">Recent Cluster Events</div>
+                    <div class="event-row" *ngFor="let ev of ecsDetail.recentEvents">
+                        <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+                        <span class="event-msg">{{ ev.message }}</span>
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div *ngIf="ecsDetail.tags.length > 0">
+                    <div class="section-title">Tags</div>
+                    <div class="vpc-tags-grid">
+                        <div class="vpc-tag-row" *ngFor="let tag of ecsDetail.tags">
+                            <span class="vpc-tag-key">{{ tag.Key }}</span>
+                            <span class="vpc-tag-value">{{ tag.Value }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fetched-at">Last fetched: {{ formatDate(ecsDetail.fetchedAt) }}</div>
+            </div>
+        </div>
+    </div>
+</div>

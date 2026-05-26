@@ -1,0 +1,145 @@
+<header>
+  <div class="menu-container">
+    <div class="menu-btn"></div>
+    <h1 class="page-title">Create Microservice and Applications</h1>
+  </div>
+</header>
+
+
+<div class="grid-container - ">
+  <div class="grid-row" *ngIf="hasErrors == true">
+    <div class="usa-alert usa-alert--error grid-col-12" role="alert">
+      <div class="usa-alert__body">
+        <h3 class="usa-alert__heading">Error status</h3>
+        <span class="usa-alert__text">
+          Please correct the following field(s):
+          <ul>
+            <li *ngIf="correctAppType == false">Application Type</li>
+            <li *ngIf="correctPlatform == false && correctAppType == true">Target Operational Platform</li>
+            <li *ngIf="correctAppName == false && correctAppType == true && correctPlatform == true">
+              Application Project Name
+            </li>
+            <li *ngIf="correctAppPort == false && correctAppType == true && correctPlatform == true">
+              Default Application Port
+            </li>
+            <li *ngIf="correctMemoryLimit == false && correctAppType == true && correctPlatform == true">
+              Container Memory Allocation
+            </li>
+            <!--<li *ngIf="correctendPoint == false">Application Endpoint</li>-->
+            <li *ngIf="correctimage == false && correctAppType == true && correctPlatform == true">
+              Container Image Tag
+            </li>
+          </ul>
+
+        </span>
+      </div>
+    </div>
+    <br>
+  </div>
+  <div class="grid-row">
+    <form class="usa-form usa-form--xlarge" style="width:100%">
+      <fieldset class="usa-fieldset" style="padding:10px">
+        <div class="grid-row">
+          <div class="grid-col-5">
+            <div class="usa-form-group"
+              [class.usa-form-group--error]="correctAppType == false && this.hasErrors === true">
+              <label class="usa-label" [class.usa-label--error]="correctAppType == false && this.hasErrors === true"
+                for="applicationType">
+                <span style="float:left">
+                  <b>Application Type:</b>
+                  <span class="usa-error-message" *ngIf="correctAppType == false && this.hasErrors === true">
+                    An option must be selected from the dropdown menu.
+                  </span>
+                </span>
+                <!--<span style="float:right">
+                    <a style="cursor:pointer;" (click)="helpMe('Application Type')">
+                      <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                    </a>
+                  </span>-->
+                <!-- <a style="cursor:pointer;" (click)="showHelpBot()">HelperBot</a> -->
+              </label>
+
+              <select class="usa-select" id="applicationType" (change)="selectType($event)" name="applicationType">
+                <option *ngFor="let t of types; let i = index" id="{{i}}-{{t}}" value={{t}}>{{t}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-row" *ngIf="typeSelected != ''">
+            <div class="grid-col-5">
+              <div class="usa-form-group">
+                <label class="usa-label">
+                  <b>Cloud Platform:</b>
+                </label>
+
+                <select class="usa-select" (change)="selectCloud($event)">
+                  <option value="">Select Cloud</option>
+                  <option value="AWS">AWS</option>
+                  <option value="Azure">Azure</option>
+                  <option value="GCP">GCP</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="grid-row" *ngIf="cloudSelected != ''">
+            <div class="grid-col-5">
+              <div class="usa-form-group">
+                <label class="usa-label">
+                  <b>Deployment Type:</b>
+                </label>
+
+                <select class="usa-select" (change)="selectDeployment($event)">
+                  <option value="">Select Deployment</option>
+                  <option *ngFor="let d of deploymentOptions" [value]="d">
+                    {{d}}
+                  </option>
+                </select>
+
+              </div>
+            </div>
+          </div>
+          <div class="grid-col-2">
+            <!--  Empty for Spacing Purposes [(ngModel)]="tripOrigin"-->
+          </div>
+          <div class="grid-col-5">
+            <!--<div class="usa-form-group"
+                   [class.usa-form-group--error]="correctPlatform == false && this.hasErrors === true">
+                <label class="usa-label"
+                       [class.usa-label--error]="correctPlatform == false && this.hasErrors === true"
+                       for="operationalPlatform">
+                  <b>Target Operational Platform:</b>
+                </label>
+                <span class="usa-error-message"
+                      *ngIf="correctPlatform == false && this.hasErrors === true">
+                  An option must be selected from the dropdown menu.
+                </span>
+                <select class="usa-select" id="operationalPlatform" (change)="selectPlatform($event)"
+                        name="operationalPlatform">
+                  <option *ngFor="let p of platforms; let i = index" id="{{i}}-{{p}}" [value]="p">{{p}}</option>
+                </select>
+              </div>-->
+          </div>
+        </div>
+
+
+
+
+
+        <div class="grid-row">
+          <div class="tablet:grid-col-2">
+            <input type="button" (click)="submit()" class="usa-button full-width-button" id="submit" value="Submit"
+              disabled="{{submitDisabled}}" style="margin-bottom: 60px;">
+          </div>
+          <div class="progress tablet:grid-col-10" id="loading-progress-bar-div" style="margin-top: 1.5rem;"
+            *ngIf="submitDisabled === true">
+            <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuemin="0"
+              aria-valuenow="100" aria-valuemax="100" style="width:100%; border-radius: 10px;">
+              <p id="loading-p" style="margin-top:10px">{{submissionInfo}}</p>
+            </div>
+          </div>
+        </div>
+
+
+      </fieldset>
+    </form>
+  </div>
+</div>

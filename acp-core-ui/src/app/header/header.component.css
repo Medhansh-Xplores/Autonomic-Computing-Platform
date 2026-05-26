@@ -1,0 +1,246 @@
+/* =========================
+   GENERAL
+========================= */
+.menu {
+  list-style-type: none;
+}
+
+.logo:hover {
+  cursor: pointer;
+}
+
+/* =========================
+   HEADER TOP SECTION
+========================= */
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* LOGO */
+.logo-container img {
+  width: 175px;
+}
+
+/* NAVBAR WRAPPER */
+.navbar {
+  width: 100%;
+  height: 100px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: rgba(253, 253, 253, 0.93);
+
+  padding-right: 100px;
+  /* 🔥 ADD THIS */
+}
+
+/* =========================
+   TOP MENU (ABOUT / CONTACT / SERVICES)
+========================= */
+.menu ul {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 60px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu ul li {
+  font-size: 18px;
+  text-align: center;
+}
+
+.menu ul li a {
+  text-decoration: none;
+  color: #003160;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+}
+
+/* 🚨 IMPORTANT: REMOVE GLOBAL UL BREAKING NAV */
+ul {
+  margin: 0;
+  padding: 0;
+}
+
+/* =========================
+   USER NAV BAR (BLUE STRIP)
+========================= */
+.usa-nav {
+  width: 100%;
+  background-color: #003160;
+  margin-bottom: 0;
+}
+
+/* MAIN FLEX ROW */
+.usa-nav__primary {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 4px 20px;
+  margin: 0;
+}
+
+/* ITEMS */
+.usa-nav__primary-item {
+  margin-right: 25px;
+}
+
+/* PUSH RIGHT SIDE */
+.right-item {
+  margin-left: auto;
+}
+
+/* LINKS */
+.usa-nav__link,
+.usa-nav__logout__link {
+  color: white;
+  font-size: 18px;
+  text-decoration: none;
+}
+
+/* HOVER */
+.usa-nav__link:hover,
+.usa-nav__logout__link:hover {
+  opacity: 0.8;
+}
+
+/* =========================
+   SUBMENU (if used later)
+========================= */
+.usa-nav__submenu {
+  list-style-type: none;
+  display: flex;
+  justify-content: center;
+  top: 85px;
+  left: 10%;
+}
+
+.usa-nav__submenu-item {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.usa-nav__primary a {
+  color: white !important;
+}
+
+.usa-nav__logout__link {
+  color: white !important;
+}
+
+/* =========================
+   PLATFORM TITLE BANNER
+========================= */
+.platform-title-bar {
+  width: 100%;
+  background-color: #ffffff;
+  text-align: center;
+  padding: 10px 0;
+  /* controls height of this strip — adjust to taste */
+  font-size: 25px;
+  font-weight: bold;
+  color: #003160;
+  font-family: Arial, Helvetica, sans-serif;
+  border-bottom: 3px solid rgb(249, 185, 21);
+  display: flex;
+  align-items: center;
+  /* vertical centering */
+  justify-content: center;
+  /* horizontal centering */
+}
+
+/* =========================
+   REMOVE OLD BROKEN POSITIONING
+========================= */
+.home__logo,
+.userName__logo,
+.logout__logo,
+.resources__logo {
+  position: static;
+  text-align: unset;
+}
+
+/* =========================
+   MOBILE STYLING
+========================= */
+@media only screen and (max-width: 600px) {
+
+  header {
+    height: auto;
+  }
+
+  /* STACK HEADER */
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* CENTER LOGO */
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .logo-container img {
+    width: 120px;
+  }
+
+  /* MENU CENTER */
+  .menu {
+    display: flex;
+    justify-content: center;
+    /* centers the whole menu block */
+    width: 100%;
+  }
+
+  .menu ul {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+    /* spacing between items */
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .menu ul li {
+    font-size: 12px;
+  }
+
+  /* USER NAV STACK */
+  .usa-nav__primary {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .right-item {
+    margin-left: 0;
+  }
+
+  .usa-nav__primary-item {
+    margin: 5px 10px;
+  }
+}
+
+/* Platform title subtitle */
+.platform-title-bar {
+  flex-direction: column;
+}
+
+.platform-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #003160;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+  font-family: Arial, Helvetica, sans-serif;
+}

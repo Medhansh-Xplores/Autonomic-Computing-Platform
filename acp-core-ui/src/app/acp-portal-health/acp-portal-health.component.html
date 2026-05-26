@@ -1,0 +1,426 @@
+<div class="container">
+
+    <!-- Mock banner -->
+    <div class="mock-banner"
+        *ngIf="backendHealth?._mock || frontendHealth?._mock || vpcHealth?._mock || rdsHealth?._mock || albHealth?._mock">
+        <span class="mock-icon">🧪</span>
+        <span><strong>Local dev mode</strong> — Showing simulated data. Real health will reflect once deployed to
+            account <code>377122171982</code>.</span>
+    </div>
+
+    <!-- Page header -->
+    <div class="create-header-box">
+        <div class="create-header-title">ACP HEALTH</div>
+        <div class="header-subtitle">AWS ACCOUNT: 377122171982</div>
+        <div class="header-hint">Click a resource card to view details</div>
+    </div>
+
+    <!-- ── Resource Summary Cards ── -->
+    <div class="resource-cards-grid">
+
+        <!-- ECS Card -->
+        <div class="resource-card" [class.active]="activeTab === 'ecs'" (click)="selectTab('ecs')">
+            <div class="resource-card-icon">⚙</div>
+            <div class="resource-card-title">ECS</div>
+            <div class="resource-card-subtitle">Elastic Container Service</div>
+            <div *ngIf="backendLoading && frontendLoading" class="resource-card-status">
+                <div class="spinner-sm"></div>
+            </div>
+            <div *ngIf="!backendLoading || !frontendLoading">
+                <span class="status-badge" [ngClass]="getStatusClass(ecsOverallStatus)">
+                    {{ getStatusIcon(ecsOverallStatus) }} {{ getStatusLabel(ecsOverallStatus) }}
+                </span>
+                <div class="resource-card-meta" *ngIf="backendHealth || frontendHealth">
+                    {{ (backendHealth?.service?.runningCount || 0) + (frontendHealth?.service?.runningCount || 0) }}
+                    tasks running
+                </div>
+            </div>
+            <div class="resource-card-chevron">{{ activeTab === 'ecs' ? '▲' : '▼' }}</div>
+        </div>
+
+        <!-- VPC Card -->
+        <div class="resource-card" [class.active]="activeTab === 'vpc'" (click)="selectTab('vpc')">
+            <div class="resource-card-icon">🌐</div>
+            <div class="resource-card-title">VPC</div>
+            <div class="resource-card-subtitle">Virtual Private Cloud</div>
+            <div *ngIf="vpcLoading" class="resource-card-status">
+                <div class="spinner-sm"></div>
+            </div>
+            <div *ngIf="vpcHealth && !vpcLoading">
+                <span class="status-badge" [ngClass]="getStatusClass(vpcOverallStatus)">
+                    {{ getStatusIcon(vpcOverallStatus) }} {{ getStatusLabel(vpcOverallStatus) }}
+                </span>
+                <div class="resource-card-meta">{{ vpcHealth.vpcs.length }} VPC(s)</div>
+            </div>
+            <div *ngIf="!vpcHealth && !vpcLoading" class="resource-card-meta muted">Click to load</div>
+            <div class="resource-card-chevron">{{ activeTab === 'vpc' ? '▲' : '▼' }}</div>
+        </div>
+
+        <!-- RDS Card -->
+        <div class="resource-card" [class.active]="activeTab === 'rds'" (click)="selectTab('rds')">
+            <div class="resource-card-icon">🗄</div>
+            <div class="resource-card-title">RDS</div>
+            <div class="resource-card-subtitle">Relational Database</div>
+            <div *ngIf="rdsLoading" class="resource-card-status">
+                <div class="spinner-sm"></div>
+            </div>
+            <div *ngIf="rdsHealth && !rdsLoading">
+                <span class="status-badge" [ngClass]="getStatusClass(rdsOverallStatus)">
+                    {{ getStatusIcon(rdsOverallStatus) }} {{ getStatusLabel(rdsOverallStatus) }}
+                </span>
+                <div class="resource-card-meta">{{ rdsHealth.instances.length }} instance(s)</div>
+            </div>
+            <div *ngIf="!rdsHealth && !rdsLoading" class="resource-card-meta muted">Click to load</div>
+            <div class="resource-card-chevron">{{ activeTab === 'rds' ? '▲' : '▼' }}</div>
+        </div>
+
+        <!-- ALB Card -->
+        <div class="resource-card" [class.active]="activeTab === 'alb'" (click)="selectTab('alb')">
+            <div class="resource-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                    <circle cx="4" cy="12" r="2.5" />
+                    <circle cx="20" cy="6" r="2.5" />
+                    <circle cx="20" cy="12" r="2.5" />
+                    <circle cx="20" cy="18" r="2.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="6" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="12" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="6.5" y1="12" x2="17.5" y2="18" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+            </div>
+            <div class="resource-card-title">ALB</div>
+            <div class="resource-card-subtitle">Load Balancer</div>
+            <div *ngIf="albLoading" class="resource-card-status">
+                <div class="spinner-sm"></div>
+            </div>
+            <div *ngIf="albHealth && !albLoading">
+                <span class="status-badge" [ngClass]="getStatusClass(albOverallStatus)">
+                    {{ getStatusIcon(albOverallStatus) }} {{ getStatusLabel(albOverallStatus) }}
+                </span>
+                <div class="resource-card-meta">{{ albHealth.loadBalancers.length }} LB(s)</div>
+            </div>
+            <div *ngIf="!albHealth && !albLoading" class="resource-card-meta muted">Click to load</div>
+            <div class="resource-card-chevron">{{ activeTab === 'alb' ? '▲' : '▼' }}</div>
+        </div>
+
+    </div>
+
+    <!-- ── Detail Panels ── -->
+
+    <!-- ECS Detail -->
+    <div class="detail-panel" *ngIf="activeTab === 'ecs'">
+        <div class="detail-panel-title">⚙ ECS — Elastic Container Service</div>
+        <div class="services-grid">
+            <div class="service-panel">
+                <div class="service-panel-title">Backend Service</div>
+                <div *ngIf="backendLoading && !backendHealth" class="empty">
+                    <div class="spinner"></div> Fetching...
+                </div>
+                <div *ngIf="backendError && !backendHealth" class="empty error-state">{{ backendError }}</div>
+                <ng-container *ngIf="backendHealth">
+                    <ng-container *ngTemplateOutlet="healthCard; context: { health: backendHealth }"></ng-container>
+                </ng-container>
+            </div>
+            <div class="service-panel">
+                <div class="service-panel-title">Frontend Service</div>
+                <div *ngIf="frontendLoading && !frontendHealth" class="empty">
+                    <div class="spinner"></div> Fetching...
+                </div>
+                <div *ngIf="frontendError && !frontendHealth" class="empty error-state">{{ frontendError }}</div>
+                <ng-container *ngIf="frontendHealth">
+                    <ng-container *ngTemplateOutlet="healthCard; context: { health: frontendHealth }"></ng-container>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+
+    <!-- VPC Detail -->
+    <div class="detail-panel" *ngIf="activeTab === 'vpc'">
+        <div class="detail-panel-title">🌐 VPC — Virtual Private Cloud</div>
+        <div *ngIf="vpcLoading" class="empty">
+            <div class="spinner"></div> Fetching VPC data from AWS...
+        </div>
+        <div *ngIf="vpcError" class="empty error-state">{{ vpcError }}</div>
+        <ng-container *ngIf="vpcHealth && !vpcLoading">
+            <div *ngIf="vpcHealth.vpcs.length === 0" class="empty">No ACP VPCs found in {{ 'us-east-1' }}.</div>
+            <div class="vpc-block" *ngFor="let vpc of vpcHealth.vpcs">
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">VPC ID</div>
+                        <div class="detail-card-value small">{{ vpc.vpcId }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Name</div>
+                        <div class="detail-card-value">{{ vpc.name }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">CIDR</div>
+                        <div class="detail-card-value small">{{ vpc.cidr }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="status-badge"
+                            [ngClass]="getStatusClass(vpc.state === 'available' ? 'healthy' : 'unhealthy')">
+                            {{ vpc.state }}
+                        </span>
+                    </div>
+                </div>
+                <div class="section-title">Subnets ({{ vpc.subnets.length }})</div>
+                <div class="tasks-table">
+                    <div class="tasks-header">
+                        <span>Subnet ID</span>
+                        <span>Name</span>
+                        <span>Type</span>
+                        <span>AZ</span>
+                        <span>CIDR</span>
+                        <span>State</span>
+                    </div>
+                    <div class="tasks-row" *ngFor="let s of vpc.subnets">
+                        <span class="task-id">{{ s.subnetId }}</span>
+                        <span>{{ s.name }}</span>
+                        <span class="subnet-type-badge" [class.public]="s.type === 'public'">{{ s.type }}</span>
+                        <span>{{ s.az }}</span>
+                        <span class="task-id">{{ s.cidr }}</span>
+                        <span [ngClass]="getStatusClass(s.state === 'available' ? 'healthy' : 'unhealthy')">{{ s.state
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="fetched-at">Last fetched: {{ formatDate(vpcHealth.fetchedAt) }} · Auto-refreshes every 60s</div>
+        </ng-container>
+    </div>
+
+    <!-- RDS Detail -->
+    <div class="detail-panel" *ngIf="activeTab === 'rds'">
+        <div class="detail-panel-title">🗄 RDS — Relational Database Service</div>
+        <div *ngIf="rdsLoading" class="empty">
+            <div class="spinner"></div> Fetching RDS data from AWS...
+        </div>
+        <div *ngIf="rdsError" class="empty error-state">{{ rdsError }}</div>
+        <ng-container *ngIf="rdsHealth && !rdsLoading">
+            <div *ngIf="rdsHealth.instances.length === 0" class="empty">No ACP RDS instances found.</div>
+            <div class="rds-block" *ngFor="let db of rdsHealth.instances">
+                <div class="service-panel-title">{{ db.identifier }}</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">Status</div>
+                        <span class="status-badge" [ngClass]="getRdsStatusClass(db.status)">{{ db.status }}</span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Engine</div>
+                        <div class="detail-card-value">{{ db.engine }} {{ db.engineVersion }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Instance Class</div>
+                        <div class="detail-card-value small">{{ db.instanceClass }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Multi-AZ</div>
+                        <div class="detail-card-value">{{ db.multiAz ? 'Yes' : 'No' }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Storage</div>
+                        <div class="detail-card-value">{{ db.storageGb }} GB</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Port</div>
+                        <div class="detail-card-value">{{ db.port || '—' }}</div>
+                    </div>
+                </div>
+                <div class="detail-row" *ngIf="db.endpoint">
+                    <div class="detail-card wide">
+                        <div class="detail-card-label">Endpoint</div>
+                        <div class="detail-card-value small">{{ db.endpoint }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Created</div>
+                        <div class="detail-card-value small">{{ formatDate(db.createdAt) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="fetched-at">Last fetched: {{ formatDate(rdsHealth.fetchedAt) }} · Auto-refreshes every 60s</div>
+        </ng-container>
+    </div>
+
+    <!-- ALB Detail -->
+    <div class="detail-panel" *ngIf="activeTab === 'alb'">
+        <div class="detail-panel-title">ALB — Application Load Balancer</div>
+        <div *ngIf="albLoading" class="empty">
+            <div class="spinner"></div> Fetching ALB data from AWS...
+        </div>
+        <div *ngIf="albError" class="empty error-state">{{ albError }}</div>
+        <ng-container *ngIf="albHealth && !albLoading">
+            <div *ngIf="albHealth.loadBalancers.length === 0" class="empty">No ACP load balancers found.</div>
+            <div class="alb-block" *ngFor="let lb of albHealth.loadBalancers">
+                <div class="service-panel-title">{{ lb.name }}</div>
+                <div class="detail-row">
+                    <div class="detail-card">
+                        <div class="detail-card-label">State</div>
+                        <span class="status-badge" [ngClass]="getAlbStateClass(lb.state)">{{ lb.state }}</span>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Scheme</div>
+                        <div class="detail-card-value">{{ lb.scheme }}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-card-label">Type</div>
+                        <div class="detail-card-value">{{ lb.type }}</div>
+                    </div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-card wide">
+                        <div class="detail-card-label">DNS</div>
+                        <div class="detail-card-value small">{{ lb.dns }}</div>
+                    </div>
+                </div>
+                <div class="section-title">Target Groups</div>
+                <div class="alb-tg-row" *ngFor="let tg of lb.targetGroups">
+                    <span class="alb-name">{{ tg.name }}</span>
+                    <span class="alb-count" [ngClass]="tg.healthy === tg.total ? 'tg-healthy' : 'tg-degraded'">
+                        {{ tg.healthy }} / {{ tg.total }} healthy
+                    </span>
+                </div>
+            </div>
+            <div class="fetched-at">Last fetched: {{ formatDate(albHealth.fetchedAt) }} · Auto-refreshes every 60s</div>
+        </ng-container>
+    </div>
+
+</div>
+
+<!-- ── Reusable ECS health card template ── -->
+<ng-template #healthCard let-health="health">
+
+    <!-- Status + task counts row -->
+    <div class="detail-row">
+        <div class="detail-card">
+            <div class="detail-card-label">Status</div>
+            <span class="status-badge lg" [ngClass]="getStatusClass(health.status)">
+                {{ getStatusIcon(health.status) }} {{ getStatusLabel(health.status) }}
+            </span>
+        </div>
+        <div class="detail-card">
+            <div class="detail-card-label">Running</div>
+            <div class="detail-card-value">
+                {{ health.service.runningCount }} / {{ health.service.desiredCount }}
+            </div>
+        </div>
+        <div class="detail-card">
+            <div class="detail-card-label">Pending</div>
+            <div class="detail-card-value">{{ health.service.pendingCount }}</div>
+        </div>
+        <div class="detail-card">
+            <div class="detail-card-label">Task Definition</div>
+            <div class="detail-card-value small">{{ health.service.taskDefinition || '—' }}</div>
+        </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="section-title">Metrics (last 5 min)</div>
+    <div class="detail-row">
+        <div class="metric-card">
+            <div class="metric-label">CPU Utilization</div>
+            <div class="metric-value">
+                {{ health.metrics.cpuUtilization !== null ? health.metrics.cpuUtilization + '%' : 'N/A' }}
+            </div>
+            <div class="metric-bar-track" *ngIf="health.metrics.cpuUtilization !== null">
+                <div class="metric-bar-fill" [ngClass]="getMetricBarClass(health.metrics.cpuUtilization)"
+                    [style.width]="getMetricBarWidth(health.metrics.cpuUtilization)"></div>
+            </div>
+            <div class="metric-na" *ngIf="health.metrics.cpuUtilization === null">
+                Enable Container Insights to see metrics
+            </div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Memory Utilization</div>
+            <div class="metric-value">
+                {{ health.metrics.memoryUtilization !== null ? health.metrics.memoryUtilization + '%' : 'N/A' }}
+            </div>
+            <div class="metric-bar-track" *ngIf="health.metrics.memoryUtilization !== null">
+                <div class="metric-bar-fill" [ngClass]="getMetricBarClass(health.metrics.memoryUtilization)"
+                    [style.width]="getMetricBarWidth(health.metrics.memoryUtilization)"></div>
+            </div>
+            <div class="metric-na" *ngIf="health.metrics.memoryUtilization === null">
+                Enable Container Insights to see metrics
+            </div>
+        </div>
+    </div>
+
+    <!-- Target group health -->
+    <div *ngIf="health.targetGroupHealth">
+        <div class="section-title">Load Balancer</div>
+        <div class="alb-row">
+            <span class="alb-name">{{ health.targetGroupHealth.targetGroupName }}</span>
+            <span class="alb-count">
+                {{ health.targetGroupHealth.healthyCount }} / {{ health.targetGroupHealth.totalCount }} targets healthy
+            </span>
+        </div>
+    </div>
+
+    <!-- Active alarms -->
+    <div *ngIf="health.alarms.length > 0">
+        <div class="section-title">Active Alarms</div>
+        <div class="alarm-row" *ngFor="let alarm of health.alarms">
+            <span class="alarm-icon">⚠</span>
+            <div>
+                <div class="alarm-name">{{ alarm.name }}</div>
+                <div class="alarm-reason">{{ alarm.stateReason }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tasks -->
+    <div *ngIf="health.tasks.length > 0">
+        <div class="section-title">Running Tasks</div>
+        <div class="tasks-table">
+            <div class="tasks-header">
+                <span>Task ID</span>
+                <span>Status</span>
+                <span>Health</span>
+                <span>Started</span>
+            </div>
+            <div class="tasks-row" *ngFor="let t of health.tasks">
+                <span class="task-id">{{ t.taskArn }}</span>
+                <span class="task-status" [ngClass]="getTaskStatusClass(t.lastStatus)">
+                    {{ t.lastStatus }}
+                </span>
+                <span>{{ t.healthStatus || '—' }}</span>
+                <span>{{ formatDate(t.startedAt) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent events -->
+    <div *ngIf="health.recentEvents.length > 0">
+        <div class="section-title">Recent Events</div>
+        <div class="event-row" *ngFor="let ev of health.recentEvents">
+            <span class="event-time">{{ formatDate(ev.createdAt) }}</span>
+            <span class="event-msg">{{ ev.message }}</span>
+        </div>
+    </div>
+
+    <!-- Active deployment -->
+    <div *ngIf="health.deployment">
+        <div class="section-title">Active Deployment</div>
+        <div class="detail-row">
+            <div class="detail-card">
+                <div class="detail-card-label">Rollout State</div>
+                <div class="detail-card-value">{{ health.deployment.rolloutState || '—' }}</div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Running / Desired</div>
+                <div class="detail-card-value">
+                    {{ health.deployment.runningCount }} / {{ health.deployment.desiredCount }}
+                </div>
+            </div>
+            <div class="detail-card">
+                <div class="detail-card-label">Updated</div>
+                <div class="detail-card-value small">{{ formatDate(health.deployment.updatedAt) }}</div>
+            </div>
+        </div>
+        <div class="rollout-reason" *ngIf="health.deployment.rolloutStateReason">
+            {{ health.deployment.rolloutStateReason }}
+        </div>
+    </div>
+
+    <div class="fetched-at">Last fetched: {{ formatDate(health.fetchedAt) }} · Auto-refreshes every 30s</div>
+
+</ng-template>

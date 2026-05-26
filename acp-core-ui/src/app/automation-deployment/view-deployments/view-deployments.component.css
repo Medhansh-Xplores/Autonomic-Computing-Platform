@@ -1,0 +1,220 @@
+.container {
+    padding: 30px;
+    min-height: calc(100vh - 290px);
+}
+
+/* Title */
+h2 {
+    margin-bottom: 20px;
+    color: #0b2545;
+    font-weight: 600;
+}
+
+/* Main table container */
+.infra-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+}
+
+/* Header */
+.table-header {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr 1fr 1.8fr 1fr 1.5fr;
+    padding: 16px;
+    background: #1e4f86;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    border-bottom: 3px solid #ffc107;
+}
+
+/* Scroll body */
+.table-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* Rows */
+.table-row {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr 1fr 1.8fr 1fr 1.5fr;
+    padding: 14px 16px;
+    color: #0b2545;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 1px solid #e6e6e6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Alternate Row Colors */
+.table-row:nth-child(odd) {
+    background: #f2f3f6;
+}
+
+.table-row:nth-child(even) {
+    background: #ccdff5;
+}
+
+/* Hover */
+.table-row:hover {
+    background: #b8c6f8;
+    border-left: 4px solid #1e4f86;
+    padding-left: 12px;
+}
+
+/* Status */
+.status {
+    font-weight: 600;
+    color: #1e4f86;
+}
+
+/* Running Status */
+.status.running {
+    color: #ff9800;
+}
+
+/* Success Status */
+.status.completed {
+    color: #4caf50;
+}
+
+/* Failed Status */
+.status.failed {
+    color: #f44336;
+}
+
+/* Empty state */
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+}
+
+/* Scrollbar styling */
+.table-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-body::-webkit-scrollbar-thumb {
+    background: #c2d3f3;
+    border-radius: 10px;
+}
+
+.table-body::-webkit-scrollbar-thumb:hover {
+    background: #9fb8e8;
+}
+
+.app-link {
+    color: #1e4f86;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-link:hover {
+    text-decoration: underline;
+}
+
+.deployment-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.deployment-name {
+    font-weight: 600;
+}
+
+.deployment-sub {
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.table-header,
+.table-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    align-items: center;
+}
+
+.deployment-cell {
+    line-height: 1.4;
+}
+
+.header-sub {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: normal;
+}
+
+.table-header>*,
+.table-row>* {
+    padding: 0 16px;
+}
+
+.deployment-sub {
+    line-height: 1.3;
+}
+
+.table-row>div:nth-child(3),
+.table-header>th:nth-child(3) {
+    margin-left: -60px;
+}
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #003160;
+    /* subtle gray */
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.repo-link {
+    color: #1a73e8;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.repo-link:hover {
+    text-decoration: underline;
+}
+
+.delete-btn {
+    background: #e53935;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+}

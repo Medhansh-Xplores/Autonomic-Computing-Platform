@@ -1,0 +1,119 @@
+.main-container {
+    min-height: calc(100vh - 160px);
+}
+
+.create-header-box {
+    width: 55%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #003160;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Service card list — matches infraservices layout */
+.servicelist {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    margin-top: 50px;
+    margin-bottom: 60px;
+}
+
+.servicelist a {
+    text-decoration: none;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+/* Cards — matches serv1/serv2/serv3 pattern from infra-services */
+.serv1,
+.serv2,
+.serv3 {
+    width: 300px;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #1a3a6b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+.serv1:hover,
+.serv2:hover,
+.serv3:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 28px rgba(0, 49, 96, 0.28);
+}
+
+/* SVG fills the card */
+.serv1 svg,
+.serv2 svg,
+.serv3 svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Card label at bottom */
+.serv1 h2,
+.serv2 h2,
+.serv3 h2 {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin: 0;
+    padding: 10px 12px;
+    background: rgba(26, 58, 107, 0.88);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.3px;
+    border-top: 2px solid #ffc107;
+}
+
+@media only screen and (max-width: 900px) {
+    .servicelist a {
+        margin: 16px;
+    }
+
+    .serv1,
+    .serv2,
+    .serv3 {
+        width: 220px;
+        height: 220px;
+    }
+
+    .serv1 h2,
+    .serv2 h2,
+    .serv3 h2 {
+        font-size: 13px;
+    }
+}

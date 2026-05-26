@@ -1,0 +1,1080 @@
+<div class="container">
+
+    <div class="create-header-box">
+        <div class="header-subtitle">INFRASTRUCTURE SERVICES</div>
+        <div class="create-header-title">CREATE CLOUD INFRASTRUCTURE</div>
+    </div>
+
+
+    <!-- ── STEP 1: INITIAL LANDING PAGE ──────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 1">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Select Platform &amp; Infrastructure</div>
+            <div class="form-panel-body">
+
+                <div class="form-group">
+                    <label class="form-label">Platform</label>
+                    <div class="btn-group">
+                        <button class="provider-btn" [class.active-btn]="platformType == 'AWS'"
+                            (click)="onPlatformChange({target:{value:'AWS'}})">
+                            Amazon Web Services
+                        </button>
+                        <button class="provider-btn" [class.active-btn]="platformType == 'AZURE'"
+                            (click)="onPlatformChange({target:{value:'AZURE'}})">
+                            Azure
+                        </button>
+                        <button class="provider-btn" [class.active-btn]="platformType == 'GCP'"
+                            (click)="onPlatformChange({target:{value:'GCP'}})">
+                            Google Cloud Platform
+                        </button>
+                    </div>
+                    <!-- Keep original hidden radios for TS compatibility -->
+                    <div style="display:none">
+                        <input type="radio" value="AWS" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'AWS'">
+                        <input type="radio" value="AZURE" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'AZURE'">
+                        <input type="radio" value="GCP" name="platformChoice" (change)="onPlatformChange($event)"
+                            [checked]="platformType == 'GCP'">
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Infrastructure Type</label>
+                        <select #optionsLanding (change)="onBlueprintChange($event)" class="usa-select">
+                            <option value="" disabled selected>--- Choose a Platform ---</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Infrastructure Name</label>
+                        <input type="text" class="usa-input" (change)="onZoneNameChange($event)" [value]="zoneName"
+                            placeholder="e.g. my-prod-vpc">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="custombutton" (click)="changePage($event)" value="-1">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 2: AWS VPC CUSTOMIZATION ─────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 2">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Virtual Private Cloud — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsAWS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" #regionsAWS (change)="onRegionChange($event)" class="usa-select"
+                            required>
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC Name</label>
+                    <input type="text" class="usa-input" [value]="VPCname" readonly>
+                </div>
+
+                <h3 class="section-title">CIDR &amp; Subnets</h3>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Public Subnet 1 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPublicSubnet1Change($event)"
+                            placeholder="10.0.1.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Public Subnet 2 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPublicSubnet2Change($event)"
+                            placeholder="10.0.2.0/24">
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Private Subnet 1 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPrivateSubnet1Change($event)"
+                            placeholder="10.0.3.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Private Subnet 2 CIDR</label>
+                        <input type="text" class="usa-input" (change)="onPrivateSubnet2Change($event)"
+                            placeholder="10.0.4.0/24">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 3: AZURE VPC CUSTOMIZATION ───────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 3">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/azure-transparent-logo.png" alt="Azure">
+                Azure Virtual Network — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Subscription ID</label>
+                        <select #accountsAzure (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" #regionsAzure (change)="onRegionChange($event)" class="usa-select"
+                            required>
+                            <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Virtual Network Name</label>
+                    <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 4: GCP VPC CUSTOMIZATION ─────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 4">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/google-cloud-logo-5.png" alt="GCP">
+                GCP Virtual Private Cloud — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Project</label>
+                        <select #accountsGCP (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select #regionsGCP (change)="onRegionChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC Name</label>
+                    <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">VPC CIDR Block</label>
+                    <input type="text" class="usa-input" (change)="onCIDRBlockChange($event)" [value]="CIDRInput"
+                        minlength="9" maxlength="18" placeholder="Example: 10.XXX.XXX.XXX">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 5: AWS EKS CUSTOMIZATION ─────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 5">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Elastic Kubernetes Service (EKS) with Fargate — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsEKS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select #regionsEKS (change)="onRegionChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">VPC Name</label>
+                        <input type="text" class="usa-input" (change)="onVPCNameChange($event)" [value]="VPCname">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cluster Name</label>
+                        <input type="text" class="usa-input" (change)="onClusterNameChange($event)"
+                            [value]="ClusterName">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="6">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 6: REVIEW (VPC / EKS / Azure / GCP) ──────────────── -->
+    <div class="form-page" [hidden]="divToShow != 6">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>{{blueprintDescription}}</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC / VNet CIDR Block</td>
+                        <td>{{CIDRBlock}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC / VNet Name</td>
+                        <td>{{VPCname}}</td>
+                    </tr>
+                    <tr *ngIf="blueprintID == 'aws-vpc'">
+                        <td>Public Subnet 1</td>
+                        <td>{{publicSubnet1}}</td>
+                    </tr>
+                    <tr *ngIf="blueprintID == 'aws-vpc'">
+                        <td>Public Subnet 2</td>
+                        <td>{{publicSubnet2}}</td>
+                    </tr>
+                    <tr *ngIf="blueprintID == 'aws-vpc'">
+                        <td>Private Subnet 1</td>
+                        <td>{{privateSubnet1}}</td>
+                    </tr>
+                    <tr *ngIf="blueprintID == 'aws-vpc'">
+                        <td>Private Subnet 2</td>
+                        <td>{{privateSubnet2}}</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="-2">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 7: AWS ECS FARGATE CONFIGURATION ─────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 7">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Elastic Container Service (Fargate) — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <h3 class="section-title">Basic Info</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsECS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cluster Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="ClusterName" readonly>
+                </div>
+
+                <h3 class="section-title">Network</h3>
+
+                <div class="form-group">
+                    <label class="form-label">VPC</label>
+                    <select class="usa-select" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
+                        <option value="">Select VPC</option>
+                        <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
+                            {{ vpc.name }} ({{ vpc.vpcId }})
+                        </option>
+                    </select>
+                    <div *ngIf="loadingVpcs" style="font-size:13px;color:#888;margin-top:4px;">Loading VPCs...</div>
+                </div>
+
+                <h3 class="section-title">Compute</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">CPU</label>
+                        <select class="usa-select" [(ngModel)]="cpu">
+                            <option value="256">256 (.25 vCPU)</option>
+                            <option value="512">512 (.5 vCPU)</option>
+                            <option value="1024">1024 (1 vCPU)</option>
+                            <option value="2048">2048 (2 vCPU)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Memory</label>
+                        <select class="usa-select" [(ngModel)]="memory">
+                            <option value="512">512 MB</option>
+                            <option value="1024">1 GB</option>
+                            <option value="2048">2 GB</option>
+                            <option value="4096">4 GB</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="8">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 8: ECS REVIEW ─────────────────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 8">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm — ECS (Fargate)</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>AWS ECS (Fargate)</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster Name</td>
+                        <td>{{ClusterName}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC</td>
+                        <td>{{vpcName}} ({{vpcId}})</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>{{cpu}}</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>{{memory}}</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="7">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()">Create</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 9: AWS RDS CONFIGURATION ─────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 9">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/Amazon-Web-Services-AWS-Logo-Transparent-PNG.png"
+                    alt="AWS">
+                AWS Relational Database Service — Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <h3 class="section-title">Basic Info</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Account</label>
+                        <select #accountsRDS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of awsregionlist" [value]="x.code">{{x.name}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Database Engine</label>
+                        <select [(ngModel)]="dbEngine" class="usa-select">
+                            <option value="postgres">Postgres</option>
+                            <option value="mysql">MySQL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">RDS Identifier</label>
+                        <input type="text" class="usa-input" [(ngModel)]="rdsIdentifier" readonly>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Credentials</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="usa-input" [(ngModel)]="dbUsername">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="usa-input" [(ngModel)]="dbPassword">
+                    </div>
+                </div>
+
+                <h3 class="section-title">Network</h3>
+
+                <div class="form-group">
+                    <label class="form-label">VPC</label>
+                    <select class="usa-select" [(ngModel)]="vpcId" (change)="onVpcChange($event)">
+                        <option value="">Select VPC</option>
+                        <option *ngFor="let vpc of vpcs" [value]="vpc.vpcId">
+                            {{ vpc.name }} ({{ vpc.vpcId }})
+                        </option>
+                    </select>
+                </div>
+
+                <h3 class="section-title">Optional</h3>
+
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="createInitialDb" [(ngModel)]="createInitialDb">
+                    <label for="createInitialDb" class="form-label" style="margin:0;cursor:pointer;">
+                        Create Initial Database
+                    </label>
+                </div>
+
+                <div class="form-group" *ngIf="createInitialDb">
+                    <label class="form-label">Initial Database Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="initialDbName">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="10">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ── STEP 10: RDS REVIEW ────────────────────────────────────── -->
+    <div class="form-page" [hidden]="divToShow != 10">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm — RDS</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>AWS RDS</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Account / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Database Engine</td>
+                        <td>{{dbEngine}}</td>
+                    </tr>
+                    <tr>
+                        <td>RDS Identifier</td>
+                        <td>{{rdsIdentifier}}</td>
+                    </tr>
+                    <tr>
+                        <td>Username</td>
+                        <td>{{dbUsername}}</td>
+                    </tr>
+                    <tr>
+                        <td>VPC</td>
+                        <td>{{vpcName}} ({{vpcId}})</td>
+                    </tr>
+                    <tr *ngIf="createInitialDb">
+                        <td>Initial Database</td>
+                        <td>{{initialDbName}}</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="9">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()">Create</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 11: AZURE CONTAINER APPS CONFIGURATION -->
+    <div class="form-page" [hidden]="divToShow != 11">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/azure-transparent-logo.png" alt="Azure">
+                Azure Container Apps - Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <h3 class="section-title">Basic Info</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Subscription ID</label>
+                        <select #accountsContainerApps (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Container App Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="containerAppName">
+                </div>
+
+                <h3 class="section-title">Compute</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">CPU</label>
+                        <select class="usa-select" [(ngModel)]="azureCpu">
+                            <option value="0.5">0.5 vCPU</option>
+                            <option value="1">1 vCPU</option>
+                            <option value="2">2 vCPU</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Memory</label>
+                        <select class="usa-select" [(ngModel)]="azureMemory">
+                            <option value="1">1 GiB</option>
+                            <option value="2">2 GiB</option>
+                            <option value="4">4 GiB</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="12">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 12: AZURE CONTAINER APPS REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 12">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm - Azure Container Apps</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>Azure Container Apps</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Subscription / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Container App</td>
+                        <td>{{containerAppName}}</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>{{azureCpu}}</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>{{azureMemory}} GiB</td>
+                    </tr>
+                    <tr>
+                        <td>Estimated Monthly Cost</td>
+                        <td>
+                            <span *ngIf="azureCostLoading">Loading pricing...</span>
+                            <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}}</span>
+                            <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="cost-estimate">
+                    <div class="cost-estimate-title">API Cost Estimate</div>
+                    <div class="cost-estimate-total">
+                        <span *ngIf="azureCostLoading">Loading pricing...</span>
+                        <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}} / month</span>
+                        <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostEstimate">
+                        Source: {{azureCostEstimate.source}}. Assumes {{azureCostEstimate.monthlyHours}} hours/month.
+                        Excludes bandwidth, logs, taxes, discounts, and reservation pricing.
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostError">
+                        {{azureCostError}}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="11">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 13: AZURE DATABASE CONFIGURATION -->
+    <div class="form-page" [hidden]="divToShow != 13">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/azure-transparent-logo.png" alt="Azure">
+                Azure SQL / PostgreSQL Database - Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <h3 class="section-title">Basic Info</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Subscription ID</label>
+                        <select #accountsAzureDB (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Database Engine</label>
+                        <select [(ngModel)]="azureDbEngine" class="usa-select">
+                            <option value="postgres">PostgreSQL</option>
+                            <option value="sqlserver">SQL Server</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Server Identifier</label>
+                        <input type="text" class="usa-input" [(ngModel)]="serverIdentifier">
+                    </div>
+                </div>
+
+                <h3 class="section-title">Credentials</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Admin Username</label>
+                        <input type="text" class="usa-input" [(ngModel)]="azureDbUsername">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Admin Password</label>
+                        <input type="password" class="usa-input" [(ngModel)]="azureDbPassword">
+                    </div>
+                </div>
+
+                <h3 class="section-title">Optional</h3>
+
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="createAzureInitialDb" [(ngModel)]="createAzureInitialDb">
+                    <label for="createAzureInitialDb" class="form-label" style="margin:0;cursor:pointer;">
+                        Create Initial Database
+                    </label>
+                </div>
+
+                <div class="form-group" *ngIf="createAzureInitialDb">
+                    <label class="form-label">Initial Database Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="azureInitialDbName">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="14">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 14: AZURE DATABASE REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 14">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm - Azure Database</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>Azure SQL / PostgreSQL Database</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Subscription / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Database Engine</td>
+                        <td>{{azureDbEngine}}</td>
+                    </tr>
+                    <tr>
+                        <td>Server Identifier</td>
+                        <td>{{serverIdentifier}}</td>
+                    </tr>
+                    <tr>
+                        <td>Admin Username</td>
+                        <td>{{azureDbUsername}}</td>
+                    </tr>
+                    <tr *ngIf="createAzureInitialDb">
+                        <td>Initial Database</td>
+                        <td>{{azureInitialDbName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Estimated Monthly Cost</td>
+                        <td>
+                            <span *ngIf="azureCostLoading">Loading pricing...</span>
+                            <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}}</span>
+                            <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="cost-estimate">
+                    <div class="cost-estimate-title">API Cost Estimate</div>
+                    <div class="cost-estimate-total">
+                        <span *ngIf="azureCostLoading">Loading pricing...</span>
+                        <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}} / month</span>
+                        <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostEstimate">
+                        Source: {{azureCostEstimate.source}}. Assumes {{azureCostEstimate.monthlyHours}} hours/month.
+                        Excludes backups, network transfer, taxes, discounts, and reservation pricing.
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostError">
+                        {{azureCostError}}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="13">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 15: AZURE KUBERNETES SERVICE CONFIGURATION -->
+    <div class="form-page" [hidden]="divToShow != 15">
+
+        <div class="form-panel">
+            <div class="form-panel-header">
+                <img class="panel-logo" src="../../assets/img/azure-transparent-logo.png" alt="Azure">
+                Azure Kubernetes Service - Configuration
+            </div>
+            <div class="form-panel-body">
+
+                <h3 class="section-title">Basic Info</h3>
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Subscription ID</label>
+                        <select #accountsAKS (change)="onAccountChange($event)" class="usa-select">
+                            <option></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Region</label>
+                        <select [(ngModel)]="region" (change)="onRegionChange($event)" class="usa-select">
+                            <option *ngFor="let x of azureregionlist" [value]="x.name">{{x.regionaldisplayname}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Cluster Name</label>
+                    <input type="text" class="usa-input" [(ngModel)]="azureClusterName">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="1">Back</button>
+                <button class="custombutton" (click)="changePage($event)" value="16">Next</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- STEP 16: AZURE KUBERNETES SERVICE REVIEW -->
+    <div class="form-page" [hidden]="divToShow != 16">
+
+        <div class="form-panel">
+            <div class="form-panel-header">Review &amp; Confirm - Azure Kubernetes Service</div>
+            <div class="form-panel-body">
+
+                <table class="review-table">
+                    <tr>
+                        <td>Infrastructure Type</td>
+                        <td>Azure Kubernetes Service</td>
+                    </tr>
+                    <tr>
+                        <td>Infrastructure Name</td>
+                        <td>{{zoneName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Subscription / Region</td>
+                        <td>{{accountNum}} / {{region}}</td>
+                    </tr>
+                    <tr>
+                        <td>Cluster Name</td>
+                        <td>{{azureClusterName}}</td>
+                    </tr>
+                    <tr>
+                        <td>Estimated Monthly Cost</td>
+                        <td>
+                            <span *ngIf="azureCostLoading">Loading pricing...</span>
+                            <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}}</span>
+                            <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <div class="cost-estimate">
+                    <div class="cost-estimate-title">API Cost Estimate</div>
+                    <div class="cost-estimate-total">
+                        <span *ngIf="azureCostLoading">Loading pricing...</span>
+                        <span *ngIf="!azureCostLoading && !azureCostError">{{formatUsd(getAzureEstimatedMonthlyCost())}} / month</span>
+                        <span *ngIf="!azureCostLoading && azureCostError">Unavailable</span>
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostEstimate">
+                        Source: {{azureCostEstimate.source}}. Assumes {{azureCostEstimate.monthlyHours}} hours/month.
+                        AKS control plane is shown as free tier; worker node pricing comes from the selected VM SKU.
+                    </div>
+                    <div class="cost-estimate-note" *ngIf="azureCostError">
+                        {{azureCostError}}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="navbutton">
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="0">Cancel</button>
+            </div>
+            <div>
+                <button class="btn-cancel" (click)="changePage($event)" value="15">Back</button>
+                <button class="custombutton" (click)="submitForProcessing()" [disabled]="isCreating">
+                    {{ isCreating ? 'Creating...' : 'Create' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

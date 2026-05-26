@@ -1,0 +1,381 @@
+<div class="main-container">
+
+  <header>
+    <div class="menu-container">
+      <div class="menu-btn">
+      </div>
+      <h1 class="page-title">Select Cloud Service</h1>
+    </div>
+  </header>
+
+  <div id="content">
+    <div id="main-content">
+      <!-- <div class="services-info">
+          <h2>Select Cloud Platform</h2>
+        </div>
+       -->
+      <mat-tab-group mat-align-tabs="center" (selectedIndexChange)="selectPlatform($event)">
+
+        <!-- --------------------- -->
+        <!-- --AWS PARAMETERS TAB- -->
+        <!-- --------------------- -->
+        <mat-tab class="AWS-tab" label="AWS">
+
+
+          <h1 class="title" style="">
+            <img class="title-img" src="../../assets/img/AWS-transparent.png"
+              style="height: 100px; width: 150px; margin-top: 50px;" alt="">
+          </h1>
+
+
+
+
+
+
+          <div class="parameters">
+
+            <!-- AWS Row 1 -->
+            <div class="row1">
+              <div class="landing-zone">
+                <h2>Landing Zone</h2>
+                <select id="landingZoneAWS" (change)="selectLandingZone($event, 'AWS')" name="landingZoneAWS"
+                  [style.border]="hasErrors == true && validateDropdown(landingZoneSelectedAWS, landingZones) == false ? '2px solid red' : '1px solid gray'">
+                  <option *ngFor="let l of landingZones; let i = index" id="{{i}}-{{l}}" value={{l}}>{{l}}</option>
+                </select>
+              </div>
+
+              <div class="created-by">
+                <h2>Created By:</h2> <!--This still needs functionality-->
+                <input id="createdBy" name="createdBy" type="text" (ngModel)="obj.createdBy" value="" readonly>
+                <!--Logged in user by default-->
+              </div>
+            </div>
+            <!-- End AWS Row 1 -->
+
+            <!-- AWS Row 2 -->
+            <div class="row2">
+              <div class="key-ID">
+                <h2>AWS Access Key ID:</h2>
+                <input id="accessKeyId" name="accessKeyId" value="" (ngModel)="obj.accessKeyId" type="password"
+                  placeholder="AWS Secret Access Key">
+                <p>Show Password</p> <!-- Need to add functionality here-->
+                <p class="msg">Leave blank if you do not have "AWS Access Key ID" and "AWS Secret Access Key</p>
+              </div>
+
+              <div class="key">
+                <h2>AWS Secret Access Key: </h2>
+                <input type="text" placeholder="AWS Secret Access Key">
+                <p>Show Password</p> <!-- Need to add functionality here-->
+              </div>
+            </div>
+            <!-- End of AWS Row 2 -->
+
+            <!-- AWS Row 3 -->
+            <div class="row3">
+              <div class="region">
+                <h2>AWS Region</h2>
+                <select id="region" (change)="selectRegion($event)" name="region"
+                  [style.border]="hasErrors == true && validateDropdown(regionSelected, regions) == false ? '2px solid red' : '1px solid gray'">
+                  <option *ngFor="let r of regions; let i = index" id="{{i}}-{{r}}" value={{r}}>{{r}}</option>
+                </select>
+              </div>
+
+              <div class="subnet-num">
+                <h2>Number of Subnets</h2>
+                <input id="subnetCount" name="subnetCount" type="text" placeholder="2"
+                  (change)="selectSubnetCount($event)" value="" (ngModel)="this.obj.subnetCount"
+                  [style.border]="hasErrors == true && validateIsNumber(obj.subnetCount) == false ? '2px solid red' : '1px solid gray'">
+              </div>
+            </div>
+            <!-- End of AWS Row 3 -->
+
+            <!-- AWS Row 4 -->
+            <div class="row4">
+              <div class="name">
+                <h2>Infrastructure Name</h2>
+                <input id="name" name="name" type="text" placeholder="sampleName1"
+                  (change)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
+                  [style.border]="hasErrors == true && validateNoSpecialCharacters(obj.name) == false ? '2px solid red' : '1px solid gray'">
+              </div>
+
+              <div class="portfolio">
+                <h2>Portfolio</h2>
+
+                <select (change)="selectPortfolio($event)">
+                  <option value="">Select Portfolio</option>
+                  <option *ngFor="let p of portfolios" [value]="p.id">
+                    {{p.name}}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <!-- End of AWS Row 4 -->
+
+
+
+            <!-- AWS Error Messages -->
+            <!--Error messages for AWS validation go here-->
+            <div class="Error-Section" *ngIf="hasErrors == true && this.platformSelected === 'AWS'">
+              <div role="alert">
+                <h3 class="ErrorMsg">Please correct the following field(s):</h3>
+                <ul class="ErrorList" style="list-style: none;">
+                  <li *ngIf="validateDropdown(landingZoneSelectedAWS, landingZones) == false">Select Landing Zone</li>
+                  <li *ngIf="validateCreatedBy(obj.createdBy) == false">Created By</li>
+                  <li *ngIf="validateDropdown(regionSelected, regions) == false">Region</li>
+                  <li *ngIf="validateIsNumber(obj.subnetCount) == false">Number of Subnets</li>
+                  <li *ngIf="validateNoSpecialCharacters(obj.name) == false"> Infrastructure Name</li>
+                </ul>
+              </div>
+            </div>
+
+
+
+            <!-- AWS Row 5 -->
+            <div class="row5">
+              <div class="submit">
+                <input type="button" (click)="submit()" id="submit" value="Submit">
+              </div>
+
+              <div class="empty">
+                <h2></h2>
+              </div>
+            </div>
+            <!-- End of AWS Row 5  -->
+
+
+
+          </div>
+        </mat-tab>
+
+        <!-- --------------------- -->
+        <!-- GOoOGLE PARAMETERS TAB -->
+        <!-- --------------------- -->
+        <mat-tab class="Google-tab" label="Google">
+
+          <h1 class="title">
+            <img class="title-img" src="../../assets/img/google-cloud-transparent.png"
+              style="height: 200px; width: 300px; margin-top: 0;" alt="">
+          </h1>
+
+
+
+          <div class="parameters">
+
+            <!-- GCP Row 1 -->
+            <div class="row1">
+              <div class="landing-zone">
+                <h2>Landing Zone:</h2>
+                <select id="landingZoneGoogle" (change)="selectLandingZone($event, 'Google')" name="landingZoneGoogle"
+                  [style.border]="hasErrors == true && validateDropdown(landingZoneSelectedGCP, landingZones) == false ? '2px solid red' : '1px solid gray'">
+                  <option *ngFor="let l of landingZones; let i = index" id="{{i}}-{{l}}" value={{l}}>{{l}}</option>
+                </select>
+              </div>
+
+              <div class="created-by">
+                <h2>Created By:</h2>
+                <input id="createdBy" name="createdBy" type="text" (ngModel)="obj.createdBy" value="" readonly>
+                <!--Logged in user by default-->
+              </div>
+            </div>
+            <!-- End of GCP Row 1 -->
+
+            <!-- GCP Row 2 -->
+            <div class="row2">
+              <div class="key-ID">
+                <h2>Project ID:</h2>
+                <input id="projectId" name="projectId" placeholder="terraform-workspace-274318"
+                  (change)="selectProjectId($event)" value="" (ngModel)="obj.projectId" type="text"
+                  [style.border]="hasErrors == true && validateIsString(obj.projectId) == false ? '2px solid red' : '1px solid gray'">
+              </div>
+
+              <div class="key">
+                <h2>Credential JSON: </h2>
+                <input type="file" name="file" (change)="onFileChanged($event)" class="form-control-file"
+                  id="credentials" aria-describedby="fileHelp">
+                <p class="msg">Don't choose if you don't have a "Credential JSON" file</p>
+              </div>
+            </div>
+            <!-- End of GCP Row 2 -->
+
+            <!-- GCP Row 3 -->
+            <div class="row3">
+              <div class="region">
+                <h2>Region:</h2>
+                <select id="region" (change)="selectGCPRegion($event)" name="region"
+                  [style.border]="hasErrors == true && validateDropdown(regionSelected, gcpRegions) == false ? '2px solid red' : '1px solid gray'">
+                  <option *ngFor="let r of gcpRegions; let i = index" id="{{i}}-{{r}}" value={{r}}>{{r}}</option>
+                </select>
+              </div>
+
+              <div class="zone">
+                <h2>Zone</h2>
+                <select id="zone" (change)="selectGCPZone($event)" name="zone"
+                  [style.border]="hasErrors == true && validateDropdown(zoneSelected, gcpZone) == false ? '2px solid red' : '1px solid gray'">
+                  <option *ngFor="let r of gcpZone; let i = index" id="{{i}}-{{r}}" value={{r}}>{{r}}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- GCP Row 4 -->
+            <div class="row4">
+              <div class="name">
+                <h2>Infrastructure Name:</h2>
+                <input id="name" name="name" type="text" placeholder="sampleName1"
+                  (change)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
+                  [style.border]="hasErrors == true && validateNoSpecialCharacters(obj.name) == false ? '2px solid red' : '1px solid gray'">
+              </div>
+
+              <div class="empty">
+                <h2></h2>
+              </div>
+            </div>
+            <!-- End of GCP Row 4 -->
+
+
+            <!-- Google Error Messages -->
+            <!-- Error messages for GCP validation go here -->
+            <div class="Error-Section" *ngIf="hasErrors == true && this.platformSelected === 'Google'">
+              <div role="alert">
+                <h3 class="ErrorMsg">Please correct the following field(s):</h3>
+                <ul class="ErrorList" style="list-style: none;">
+                  <li *ngIf="validateDropdown(landingZoneSelectedGCP, landingZones) == false">Select Landing Zone</li>
+                  <li *ngIf="validateCreatedBy(obj.createdBy) == false">Created By</li>
+                  <li *ngIf="validateIsString(obj.projectId) == false">Project ID</li>
+                  <li *ngIf="validateDropdown(regionSelected, gcpRegions) == false">Region</li>
+                  <li *ngIf="validateDropdown(zoneSelected, gcpZone) == false">Zone</li>
+                  <li *ngIf="validateNoSpecialCharacters(obj.name) == false"> Infrastructure Name</li>
+                </ul>
+              </div>
+            </div>
+
+
+            <!-- GCP Row 5 -->
+            <div class="row5">
+              <div class="submit">
+                <input type="button" (click)="submit()" id="submit" value="Submit" disabled="{{submitDisabled}}">
+              </div>
+
+              <div class="empty">
+                <h2></h2>
+              </div>
+            </div>
+          </div>
+          <!-- End of GCP Row 5 -->
+        </mat-tab>
+
+        <!-- --------------------- -->
+        <!-- AZURE PARAMETERS TAB- -->
+        <!-- --------------------- -->
+        <mat-tab class="Azure-tab" label="Azure">
+
+
+          <h1 class="title">
+            <img class="title-img" src="../../assets/img/azure-transparent-logo.png"
+              style="height: 200px; width: 300px; margin-top: 0;" alt="">
+          </h1>
+
+
+          <div class="parameters">
+
+            <!-- Azure Row 1 -->
+            <div class="row1">
+              <div class="name">
+                <h2>Infrastructure Name:</h2>
+                <select id="landingZoneAzure" (change)="selectLandingZone($event, 'Azure')" name="landingZoneAzure">
+                  <option *ngFor="let l of landingZones; let i = index" id="{{i}}-{{l}}" value={{l}}>{{l}}</option>
+                </select>
+              </div>
+
+              <div class="created-by">
+                <h2>Created By:</h2>
+                <input id="createdBy" name="createdBy" type="text" (ngModel)="obj.createdBy" value="" readonly>
+                <!--Logged in user by default-->
+              </div>
+            </div>
+            <!-- End of Azure Row 1 -->
+
+            <!-- Azure Row 2 -->
+            <div class="row2">
+              <div class="client-ID">
+                <h2>Client ID:</h2>
+                <input id="clientId" name="clientId" (change)="selectAzureClientId($event)" value=""
+                  (ngModel)="obj.azureClientId" type="password">
+                <p>Show Client ID</p>
+              </div>
+
+              <div class="secret-key">
+                <h2>Client Secret Key: </h2>
+                <input id="secretKey" name="secretKey" type="password" value="" (ngModel)="obj.azureClientSecret">
+                <p>Show Client Secret Key</p>
+              </div>
+            </div>
+            <!-- End of Azure Row 2 -->
+
+            <!-- Azure Row 3 -->
+            <div class="row3">
+              <div class="sub-ID">
+                <h2>Subscription ID:</h2>
+                <input id="subId" name="subId" type="text" (change)="selectAzureSubscriptionId($event)" value=""
+                  (ngModel)="obj.azureSubscriptionId" placeholder="3b434792-b096-4af3-8af2-679d6d2e9c06">
+                <p class="msg">Leave blank if you do not have "Client ID" and "Client Secret Key"</p>
+              </div>
+
+              <div class="tenant-ID">
+                <h2>Tenant ID:</h2>
+                <input id="tenantId" name="tenantId" type="text" (change)="selectAzureTenantId($event)" value=""
+                  (ngModel)="obj.azureTenantId" placeholder="fb1aa781-c951-477e-b953-4aef1014f2d8">
+              </div>
+            </div>
+            <!-- End of Azure Row 3 -->
+
+            <!-- Azure Row 4 -->
+            <div class="row4">
+              <div class="region">
+                <h2>Region</h2>
+                <input id="region" name="region" type="text" placeholder="eastus" (change)="selectAzureRegion($event)"
+                  value="" (ngModel)="obj.azureRegion" maxlength="16">
+              </div>
+
+              <div class="empty">
+                <h2></h2>
+              </div>
+            </div>
+            <!-- End of Azure Row 4 -->
+
+
+            <!-- Azure Error Messages -->
+            <!-- Error messages for Azure validation go here -->
+            <div class="Error-Section" *ngIf="hasErrors == true && platformSelected === 'Azure'">
+              <div role="alert">
+                <h3 class="ErrorMsg">Please correct the following field(s):</h3>
+                <ul class="ErrorList" style="list-style: none;">
+                  <li *ngIf="validateNoSpecialCharacters(obj.name) == false"> Infrastructure Name</li>
+                  <li *ngIf="validateCreatedBy(obj.createdBy) == false">Created By</li>
+                  <li *ngIf="validateIsString(obj.azureClientId) == false">Client ID</li>
+                  <li *ngIf="validateIsNumber(obj.subnetCount) == false">Number of Subnets</li>
+                  <li *ngIf="validateIsString(obj.azureSubId) == false">Subscription ID</li>
+                  <li *ngIf="validateIsString(obj.azureTenantId) == false">Tenant ID</li>
+                  <li *ngIf="validateNoSpecialCharacters(obj.name) == false"> Infrastructure Name</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Azure Row 5 -->
+            <div class="row5">
+              <div class="submit">
+                <input type="button" (click)="submit()" id="submit" value="Submit" disabled="{{submitDisabled}}">
+              </div>
+
+              <div class="empty">
+                <h2></h2>
+              </div>
+            </div>
+            <!-- End of Azure Row 5 -->
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  </div>
+
+
+</div>

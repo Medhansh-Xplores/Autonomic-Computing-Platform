@@ -1,0 +1,19 @@
+{
+  "id": "978ae6a2-6417-4fe6-b1ee-f4afcd63735a",
+  "name": "Aca__test",
+  "type": "Azure-Container-Apps",
+  "region": "eastus",
+  "account": "3bb7b0bf-d4f0-413f-b74f-2c3a7b972809",
+  "status": "Failed",
+  "cloud": "Azure",
+  "userId": "user",
+  "subscriptionId": "3bb7b0bf-d4f0-413f-b74f-2c3a7b972809",
+  "tenantId": "b785107b-e91a-43c7-940a-054e9fe35fa6",
+  "resourceGroupName": "rg-Aca__test",
+  "containerAppName": "Aca__test",
+  "containerAppEnvironmentName": "Aca__test-env",
+  "cpu": "0.5",
+  "memory": "1",
+  "image": "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+  "port": 80
+}

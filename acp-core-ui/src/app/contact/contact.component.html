@@ -1,0 +1,215 @@
+<!-- HERO BANNER — mirrors about page hero -->
+<section class="acp-hero" aria-label="Resources">
+    <div class="hero-overlay"></div>
+    <div class="hero-body">
+        <div class="hero-text">
+            <h1>AUTONOMIC COMPUTING <br> PLATFORM (ACP)</h1>
+            <p class="hero-tagline">Patterned on the human body's self healing autonomic nervous system</p>
+            <p class="hero-subtitle">Self-Manageable&nbsp;&nbsp;|&nbsp;&nbsp;Software
+                Driven&nbsp;&nbsp;|&nbsp;&nbsp;Reusable Engineering</p>
+        </div>
+    </div>
+</section>
+
+<!-- RESOURCES CONTENT -->
+<section class="resources-content">
+    <div class="section-inner">
+
+        <div class="section-header">
+            <h2>Resources</h2>
+            <p class="section-desc">Explore the documentation and materials behind the Autonomic Computing Platform.
+                Browse our technical whitepapers and architecture guides to understand how ACP delivers autonomous,
+                self-managing cloud infrastructure - and watch the demo video to see the platform in action.</p>
+        </div>
+
+        <!-- DEMO VIDEO -->
+        <div class="resources-group">
+            <h3 class="group-title"><span class="group-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="23 7 16 12 23 17 23 7" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" />
+                    </svg>
+                </span> Demo Video</h3>
+            <div class="video-placeholder" (click)="openVideoModal()">
+                <div class="video-thumb-overlay">
+                    <div class="play-btn">
+                        <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle cx="30" cy="30" r="30" fill="rgba(0,49,96,0.85)" />
+                            <polygon points="23,16 48,30 23,44" fill="#e6bb00" />
+                        </svg>
+                    </div>
+                    <div class="video-label">
+                        <span class="video-badge">DEMO</span>
+                        <p class="video-title">ACP Platform Walkthrough</p>
+                        <p class="video-sub">Click to watch the full platform demo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF RESOURCES -->
+        <div class="resources-group">
+            <h3 class="group-title"><span class="group-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                </span> Documentation</h3>
+            <div class="cards-col">
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h4>ACP Platform Overview</h4>
+                        <p>A concise introduction to Autonomic Solutions LLC and the ACP. Learn about our mission, key
+                            partnerships, and how ACP's four self-managing capabilities - Self-Configure, Self-Heal,
+                            Self-Optimize, and Self-Protect - reduce operational costs and accelerate cloud deployments.
+                        </p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/ACP-Overview.pdf', 'ACP Platform Overview')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
+                    </button>
+                </div>
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h4>ACP Technical Whitepaper</h4>
+                        <p>A technical deep-dive into how ACP works under the hood. Explores the platform's biological
+                            inspiration, its four autonomic properties, a built-in compliance pipeline, and consistent
+                            security across AWS, Azure, and GCP - all enforced by default on every deployment.</p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/ACP-Whitepaper.pdf', 'ACP Technical Whitepaper')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
+                    </button>
+                </div>
+
+                <div class="resource-card">
+                    <div class="card-icon pdf-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h4>ACP Multi-LLM MAPE-K Autonomic Engine</h4>
+                        <p>Explores ACP's next-generation AI layer, where different AI models are assigned to different
+                            phases of autonomous decision-making. See how ACP intelligently routes tasks to the right
+                            model - balancing cost, speed, and reasoning power across every cloud workload.</p>
+                    </div>
+                    <button class="view-btn"
+                        (click)="openPdfModal('assets/docs/ACP-MAPEK.pdf', 'ACP Multi-LLM MAPE-K Autonomic Engine')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                            style="vertical-align:middle;margin-right:6px">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg> View PDF
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+<!-- PDF VIEWER MODAL -->
+<div class="modal-backdrop" *ngIf="pdfModalOpen" (click)="closeModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <span class="modal-title">{{ activePdfTitle }}</span>
+            <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
+        </div>
+
+        <!-- Zoom toolbar -->
+        <div class="pdf-toolbar">
+            <button class="zoom-btn" (click)="zoomOut()" title="Zoom Out" [disabled]="pdfScale <= 0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+            <span class="zoom-label">{{ (pdfScale * 100).toFixed(0) }}%</span>
+            <button class="zoom-btn" (click)="zoomIn()" title="Zoom In" [disabled]="pdfScale >= 3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+            <button class="zoom-btn zoom-fit" (click)="zoomFit()" title="Fit to Width">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                </svg>
+            </button>
+            <span class="page-info">{{ totalPages }} pages — scroll to navigate</span>
+        </div>
+
+        <!-- All pages scrollable container -->
+        <div class="modal-body pdf-canvas-body">
+            <div #pdfContainer class="pdf-pages-container"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- VIDEO VIEWER MODAL -->
+<div class="modal-backdrop" *ngIf="videoModalOpen" (click)="closeModal()">
+    <div class="modal-box modal-box--video" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <span class="modal-title">ACP Platform Walkthrough</span>
+            <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
+        </div>
+        <div class="modal-body modal-body--video">
+            <video class="demo-video" controls controlsList="nodownload" disablePictureInPicture
+                oncontextmenu="return false;">
+                <source src="assets/video/acp-demo.mp4" type="video/mp4">
+                Your browser does not support HTML5 video.
+            </video>
+        </div>
+    </div>
+</div>

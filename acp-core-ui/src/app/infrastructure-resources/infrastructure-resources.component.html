@@ -1,0 +1,56 @@
+<div class="container">
+
+  <div class="create-header-box">
+    <div class="header-subtitle">INFRASTRUCTURE SERVICES</div>
+    <div class="create-header-title">
+      VIEW CLOUD INFRASTRUCTURE
+    </div>
+  </div>
+
+  <!-- No Infra Message -->
+  <div *ngIf="deployments.length === 0" class="empty">
+    No Infrastructure Created
+  </div>
+
+  <!-- Scrollable Table -->
+  <div class="infra-table" *ngIf="deployments.length > 0">
+
+    <!-- Header -->
+    <div class="table-header">
+      <div>Cloud</div>
+      <div>Name</div>
+      <div>Type</div>
+      <div>Status</div>
+      <div>Region</div>
+      <div>Account ID</div>
+      <div>Destroyed By</div>
+      <div>Actions</div>
+    </div>
+
+    <!-- Rows -->
+    <div class="table-body">
+      <div class="table-row" *ngFor="let d of deployments" [class.destroyed-row]="isDestroyed(d)"
+        (click)="openDeployment(d)">
+        <div class="cloud">
+          <div class="cloud-badge" [ngClass]="getCloudName(d).toLowerCase()">
+            {{ getCloudName(d) }}
+          </div>
+        </div>
+        <div>{{ d.name }}</div>
+        <div>{{ d.type }}</div>
+        <div class="status">{{ d.status }}</div>
+        <div>{{ d.region }}</div>
+        <div>{{ d.account }}</div>
+        <div>{{ getDestroyedBy(d) }}</div>
+        <div>
+          <button class="delete-btn" [disabled]="d.status === 'Deleting' || d.status === 'Creating' || isDestroyed(d)"
+            (click)="deleteDeployment($event, d)">
+            {{ isDestroyed(d) ? 'Destroyed' : (d.status === 'Deleting' ? 'Deleting...' : 'Delete') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>

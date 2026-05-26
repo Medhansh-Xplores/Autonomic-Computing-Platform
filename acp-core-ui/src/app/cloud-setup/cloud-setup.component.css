@@ -1,0 +1,659 @@
+/* ── PAGE CONTAINER ─────────────────────────────────────────── */
+.container {
+    padding: 30px;
+    min-height: calc(100vh - 290px);
+    background: #fff;
+}
+
+/* ── HEADER BOX (matches infra-resources) ────────────────────── */
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 24px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #003160;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/* ── MESSAGES ───────────────────────────────────────────────── */
+.success-msg {
+    color: #1e7e34;
+    font-size: 13px;
+    margin: 0 0 16px;
+    background-color: #d4edda;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #28a745;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.error-msg {
+    color: #721c24;
+    font-size: 13px;
+    margin: 0 0 16px;
+    background-color: #f8d7da;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.welcome-msg {
+    text-align: center;
+    color: #003160;
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+/* ── ACCOUNTS TABLE (matches infra-resources exactly) ────────── */
+.accounts-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 0.6fr 1.5fr 1.5fr 1fr 0.8fr 1.4fr;
+    padding: 16px;
+    background: #1e4f86;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    border-bottom: 2px solid #ffc107;
+}
+
+.table-body {
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 0.6fr 1.5fr 1.5fr 1fr 0.8fr 1.4fr;
+    padding: 14px 16px;
+    color: #0b2545;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 1px solid #e6e6e6;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.table-row:nth-child(odd) {
+    background: #f7f9fd;
+}
+
+.table-row:nth-child(even) {
+    background: #ffffff;
+}
+
+.table-row:hover {
+    background: #eef3fb;
+    border-left: 3px solid #1e4f86;
+    padding-left: 13px;
+}
+
+.default-row {
+    border-left: 3px solid #ffc107 !important;
+}
+
+/* ── TABLE CELLS ─────────────────────────────────────────────── */
+.cloud-col {
+    display: flex;
+    align-items: center;
+}
+
+.cloud-badge {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.cloud-badge img {
+    height: 16px;
+}
+
+.name-col {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.default-badge {
+    background: #ffc107;
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+/* ── STATUS ──────────────────────────────────────────────────── */
+.status-col {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.status-ok {
+    color: #1e7e34;
+}
+
+.status-error {
+    color: #dc3545;
+}
+
+.status-idle {
+    color: #999;
+}
+
+/* ── ROW ACTION BUTTONS ──────────────────────────────────────── */
+.actions-col {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.btn-action {
+    background: white;
+    border: 1px solid #c0cfe0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e4f86;
+    padding: 5px 12px;
+    transition: all 0.15s;
+}
+
+.btn-action:hover {
+    background: #1e4f86;
+    color: white;
+    border-color: #1e4f86;
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-delete {
+    color: #dc3545;
+    border-color: #f5c6cb;
+}
+
+.btn-delete:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────────── */
+.table-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-body::-webkit-scrollbar-thumb {
+    background: #c2d3f3;
+    border-radius: 10px;
+}
+
+.table-body::-webkit-scrollbar-thumb:hover {
+    background: #9fb8e8;
+}
+
+/* ── EMPTY STATE ─────────────────────────────────────────────── */
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+    font-size: 15px;
+}
+
+/* ── ADD BUTTON ROW ──────────────────────────────────────────── */
+.add-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.btn-add {
+    background: #1e4f86;
+    border: none;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background: #163d6b;
+}
+
+.skip-link {
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* ── FORM PANEL ──────────────────────────────────────────────── */
+.form-panel {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    max-width: 1100px;
+    margin: 0 auto 30px;
+}
+
+.form-panel-header {
+    background: #1e4f86;
+    color: white;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #ffc107;
+}
+
+.usa-form {
+    padding: 24px;
+    max-width: 100%;
+    width: 100%;
+}
+
+.usa-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    color: #003160;
+    /* same softer color as wizard labels appear */
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.usa-input,
+.usa-select {
+    width: 100%;
+    border: 1px solid #c0cfe0;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #0b2545;
+    background: #f9fbff;
+    margin-bottom: 0;
+}
+
+.usa-input:focus,
+.usa-select:focus {
+    outline: none;
+    border-color: #1e4f86;
+    box-shadow: 0 0 0 2px rgba(30, 79, 134, 0.15);
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ── PROVIDER / AUTH BUTTONS ─────────────────────────────────── */
+.btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.provider-btn {
+    padding: 8px 18px;
+    border: 1px solid #c0cfe0;
+    border-radius: 5px;
+    background: white;
+    color: #1e4f86;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.provider-btn:hover {
+    background: #eef3fb;
+}
+
+.active-btn {
+    background: #1e4f86 !important;
+    color: white !important;
+    border-color: #1e4f86 !important;
+}
+
+/* ── IAM STEPS BLOCK ─────────────────────────────────────────── */
+.iam-steps-block {
+    margin-bottom: 16px;
+    background: #f7f9fd;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e0e8f5;
+}
+
+.iam-steps-title {
+    color: #003160;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+.iam-step {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+}
+
+.step-number {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1e4f86;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.step-text {
+    color: #0b2545;
+    font-size: 13px;
+    margin: 0 0 6px;
+}
+
+.step-hint {
+    color: #666;
+    font-size: 12px;
+    margin: 0 0 4px;
+}
+
+.step-link {
+    color: #1e4f86;
+    font-weight: 600;
+}
+
+.step-flex {
+    flex: 1;
+}
+
+.copy-row {
+    font-family: monospace;
+    background: #0b2545;
+    color: #fdb610;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    word-break: break-all;
+}
+
+.mono-text {
+    font-size: 12px;
+}
+
+.btn-copy {
+    font-size: 11px;
+    cursor: pointer;
+    background: none;
+    border: 0.5px solid #ffffff;
+    color: #fdb610;
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.inline-code {
+    color: #1e4f86;
+    background: #e8eef8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.iam-footnote {
+    color: #666;
+    font-size: 11px;
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
+.required-marker {
+    color: #dc3545;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+/* ── KEYS WARNING ────────────────────────────────────────────── */
+.keys-warning {
+    color: #666;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* ── FORM SAVE/CANCEL ────────────────────────────────────────── */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-save {
+    background: #1e4f86;
+    border: none;
+    color: white;
+    padding: 10px 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.btn-save:hover {
+    background: #163d6b;
+}
+
+.btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-cancel {
+    background: none;
+    border: 1px solid #c0cfe0;
+    color: #555;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #f2f3f6;
+}
+
+.auth-col {
+    font-size: 0.85rem;
+    color: #444;
+}
+
+/* ── TWO-COLUMN FORM LAYOUT ──────────────────────────────────── */
+.form-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+}
+
+.form-col-left {
+    min-width: 0;
+}
+
+.form-col-right {
+    min-width: 0;
+    font-size: 15px;
+}
+
+.form-col-right .iam-steps-block {
+    margin-bottom: 0;
+    height: 100%;
+}
+
+/* ── FONT SIZE INCREASES ─────────────────────────────────────── */
+.form-panel-header {
+    font-size: 18px;
+}
+
+.form-label {
+    font-size: 16px;
+    font-weight: 500;
+    /* drop from 600 → 500, matches wizard lightness */
+    color: #003160;
+    /* softer grey-navy instead of hard #003160 */
+}
+
+.usa-input,
+.usa-select {
+    font-size: 15px;
+}
+
+.provider-btn {
+    font-size: 14px;
+    font-weight: 500;
+    /* buttons were 600/700, tone them down */
+}
+
+.table-header {
+    font-size: 14px;
+}
+
+.table-row {
+    font-size: 14px;
+}
+
+.btn-action {
+    font-size: 13px;
+}
+
+.btn-add {
+    font-size: 15px;
+}
+
+.btn-save,
+.btn-cancel {
+    font-size: 15px;
+}
+
+.step-text {
+    font-size: 15px;
+}
+
+.step-hint {
+    font-size: 14px;
+}
+
+.copy-row {
+    font-size: 15px;
+}
+
+.iam-steps-title {
+    font-size: 16px;
+}
+
+.welcome-msg {
+    font-size: 16px;
+}
+
+.form-panel {
+    overflow: visible;
+}
+
+.form-panel-header {
+    border-radius: 10px 10px 0 0;
+}
+
+/* ── MOBILE ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .create-header-box {
+        width: 100%;
+    }
+
+    .table-header,
+    .table-row {
+        grid-template-columns: 1fr 1fr 1fr;
+        font-size: 12px;
+    }
+
+    .form-two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+}

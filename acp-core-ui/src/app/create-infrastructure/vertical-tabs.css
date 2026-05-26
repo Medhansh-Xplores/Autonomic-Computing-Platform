@@ -1,0 +1,62 @@
+:host > .main-container {
+    /* max-width: 1264px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between; */
+    background: none;
+    margin: 0 auto;
+  }
+  :host ::ng-deep .mat-tab-group {
+    flex-direction: row;
+  }
+  :host ::ng-deep .mat-tab-header {
+    border-bottom: none;
+  }
+  :host ::ng-deep .mat-tab-header-pagination {
+    display: none !important;
+  }
+  :host ::ng-deep .mat-tab-labels {
+    flex-direction: column;
+  }
+  :host ::ng-deep .mat-ink-bar {
+    height: 100%;
+    left: 98% !important;
+  }
+  :host ::ng-deep .mat-tab-body-wrapper {
+    flex: 1 1 auto;
+  }
+  
+  /* .main-container {
+      position: relative;
+      width: 100%;
+      flex: 1 0 auto;
+      margin: 0 auto;
+      text-align: left;
+  } */
+  /* #content {
+      box-sizing: content-box;
+      margin: 0;
+      padding: 0;
+      width: 1264px;
+      background-color: #ffffff;
+  } */
+  /* #content {
+      max-width: 1100px;
+      width: 100%;
+      background-color: #ffffff;
+      padding: 0;
+      box-sizing: border-box;
+  } */
+  #content::before, #content::after,
+  #main-content::before,
+  #main-content::after {
+    content: "";
+    display: table;
+  }
+  #content::after,
+  #main-content::after {
+    clear: both;
+  }
+  
+  /*# sourceMappingURL=vertical-tabs.css.map */
+  

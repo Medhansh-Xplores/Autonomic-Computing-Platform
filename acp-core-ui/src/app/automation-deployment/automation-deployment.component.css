@@ -1,0 +1,45 @@
+.main-container {
+    padding: 20px 40px;
+}
+
+.page-title {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    color: #1b365d;
+    font-weight: 600;
+}
+
+.servicelist {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 80px;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+    .servicelist {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+    }
+}
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}

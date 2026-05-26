@@ -1,0 +1,492 @@
+<div class="container">
+
+    <!-- Mock banner -->
+    <div class="mock-banner" *ngIf="posture?._mock">
+        <span class="mock-icon">🧪</span>
+        <span><strong>Local dev mode</strong> — Showing simulated security data. Real checks run once deployed to
+            account <code>377122171982</code>.</span>
+    </div>
+
+    <!-- Page header -->
+    <div class="create-header-box">
+        <div class="create-header-title">ACP SECURITY</div>
+        <div class="header-subtitle">AWS ACCOUNT: 377122171982</div>
+        <div class="header-hint">Security posture of ACP</div>
+    </div>
+
+    <!-- Loading state -->
+    <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Scanning security posture...</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="error-banner" *ngIf="!loading && error">
+        <span>⚠</span> {{ error }}
+    </div>
+
+    <ng-container *ngIf="!loading && posture">
+
+        <!-- ── Score + Summary Row ── -->
+        <div class="summary-row">
+
+            <!-- Score ring -->
+            <div class="score-card" [ngClass]="scoreClass">
+                <div class="score-ring-label">Security Score</div>
+                <div class="score-ring-wrapper">
+                    <svg width="110" height="110" viewBox="0 0 110 110">
+                        <circle cx="55" cy="55" r="42" fill="none" stroke="currentColor" stroke-width="9"
+                            opacity="0.12" />
+                        <circle cx="55" cy="55" r="42" fill="none" stroke="currentColor" stroke-width="9"
+                            [attr.stroke-dasharray]="circumference" [attr.stroke-dashoffset]="scoreDashOffset"
+                            stroke-linecap="round" transform="rotate(-90 55 55)" />
+                    </svg>
+                    <div class="score-ring-center">
+                        <span class="score-number">{{ posture.overall.score }}<span
+                                class="score-percent-sign">%</span></span>
+                        <span class="score-pct-label">security</span>
+                    </div>
+                </div>
+                <div class="score-label">{{ scoreLabel }}</div>
+                <div class="score-meta">{{ posture.overall.passed }}/{{ posture.overall.total }} checks passed</div>
+            </div>
+
+            <!-- Quick stats -->
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <div class="quick-stat-value pass">{{ posture.overall.passed }}</div>
+                    <div class="quick-stat-label">Passed</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value fail">{{ posture.overall.failed }}</div>
+                    <div class="quick-stat-label">Failed</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value">{{ posture.certificates.length > 0 ?
+                        posture.certificates[0].daysUntilExpiry ?? '—' : '—' }}</div>
+                    <div class="quick-stat-label">Days to cert expiry</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value" [class.fail]="(posture.guardDuty.highSeverityFindings || 0) > 0">
+                        {{ posture.guardDuty.highSeverityFindings ?? 0 }}
+                    </div>
+                    <div class="quick-stat-label">HIGH findings</div>
+                </div>
+            </div>
+
+            <!-- Fetch time -->
+            <div class="fetched-at">Last scanned: {{ formatDate(posture.fetchedAt) }}</div>
+        </div>
+
+        <!-- ── Section Cards ── -->
+        <div class="section-cards-grid">
+
+            <!-- Container Security -->
+            <div class="section-card" [class.active]="activeSection === 'container'"
+                (click)="toggleSection('container')">
+                <div class="section-card-icon">🐳</div>
+                <div class="section-card-title">Container Security</div>
+                <div class="section-card-subtitle">Task def · IAM · Secrets</div>
+                <div class="section-card-badge fail-badge" *ngIf="containerFails > 0">{{ containerFails }} issue{{
+                    containerFails > 1 ? 's' : '' }}</div>
+                <div class="section-card-badge pass-badge" *ngIf="containerFails === 0">All clear</div>
+                <div class="section-card-chevron">{{ activeSection === 'container' ? '▲' : '▼' }}</div>
+            </div>
+
+            <!-- Network Security -->
+            <div class="section-card" [class.active]="activeSection === 'network'" (click)="toggleSection('network')">
+                <div class="section-card-icon">🔒</div>
+                <div class="section-card-title">Network Security</div>
+                <div class="section-card-subtitle">SGs · ALB · RDS · Flow Logs</div>
+                <div class="section-card-badge fail-badge" *ngIf="networkFails > 0">{{ networkFails }} issue{{
+                    networkFails > 1 ? 's' : '' }}</div>
+                <div class="section-card-badge pass-badge" *ngIf="networkFails === 0">All clear</div>
+                <div class="section-card-chevron">{{ activeSection === 'network' ? '▲' : '▼' }}</div>
+            </div>
+
+            <!-- Threat Detection -->
+            <div class="section-card" [class.active]="activeSection === 'threat'" (click)="toggleSection('threat')">
+                <div class="section-card-icon">🛡</div>
+                <div class="section-card-title">Threat Detection</div>
+                <div class="section-card-subtitle">GuardDuty findings</div>
+                <div class="section-card-badge fail-badge" *ngIf="threatFails > 0">{{ threatFails }} issue{{ threatFails
+                    > 1 ? 's' : '' }}</div>
+                <div class="section-card-badge pass-badge" *ngIf="threatFails === 0">No threats</div>
+                <div class="section-card-chevron">{{ activeSection === 'threat' ? '▲' : '▼' }}</div>
+            </div>
+
+            <!-- Audit & Compliance -->
+            <div class="section-card" [class.active]="activeSection === 'audit'" (click)="toggleSection('audit')">
+                <div class="section-card-icon">📋</div>
+                <div class="section-card-title">Audit & Certificates</div>
+                <div class="section-card-subtitle">CloudTrail · ACM</div>
+                <div class="section-card-badge fail-badge" *ngIf="auditFails > 0">{{ auditFails }} issue{{ auditFails >
+                    1 ? 's' : '' }}</div>
+                <div class="section-card-badge pass-badge" *ngIf="auditFails === 0">All clear</div>
+                <div class="section-card-chevron">{{ activeSection === 'audit' ? '▲' : '▼' }}</div>
+            </div>
+
+        </div>
+
+        <!-- ══════════════ CONTAINER SECURITY PANEL ══════════════ -->
+        <div class="section-panel" *ngIf="activeSection === 'container'">
+
+            <!-- Task Definition -->
+            <div class="panel-group" *ngIf="posture.taskDefinition">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">📦</span>
+                    Task Definition
+                    <span class="panel-group-name muted">{{ posture.taskDefinition.name }}</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.taskDefinition.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IAM Role -->
+            <div class="panel-group" *ngIf="posture.iamRole">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🔑</span>
+                    IAM Task Role
+                    <span class="panel-group-name muted">{{ posture.iamRole.roleName }}</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">ARN</span>
+                    <span class="meta-value mono">{{ posture.iamRole.roleArn }}</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Last used</span>
+                    <span class="meta-value">{{ formatDate(posture.iamRole.lastUsed) }}</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Managed policies</span>
+                    <span class="meta-value">
+                        <span class="tag" *ngFor="let p of posture.iamRole.attachedPolicies">{{ p }}</span>
+                    </span>
+                </div>
+                <div class="check-list" style="margin-top: 10px;">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.iamRole.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secrets -->
+            <div class="panel-group" *ngIf="posture.secrets.length > 0">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🔐</span>
+                    Secrets Manager — Rotation Status
+                </div>
+                <div class="secrets-table">
+                    <div class="secrets-table-header">
+                        <span>Secret name</span>
+                        <span>Rotation</span>
+                        <span>Last rotated</span>
+                        <span>Status</span>
+                    </div>
+                    <div class="secrets-table-row" *ngFor="let secret of posture.secrets">
+                        <span class="mono">{{ secret.name }}</span>
+                        <span>{{ secret.rotationEnabled ? 'Enabled' : 'Disabled' }}</span>
+                        <span>{{ secret.lastRotatedDays !== null ? secret.lastRotatedDays + 'd ago' : '—' }}</span>
+                        <span class="check-status-pill" [ngClass]="secretRotationClass(secret)">
+                            {{ secret.status | uppercase }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-empty"
+                *ngIf="!posture.taskDefinition && !posture.iamRole && posture.secrets.length === 0">
+                Could not retrieve container security data. Ensure the ECS task definition is deployed.
+            </div>
+        </div>
+
+        <!-- ══════════════ NETWORK SECURITY PANEL ══════════════ -->
+        <div class="section-panel" *ngIf="activeSection === 'network'">
+
+            <!-- Security Groups -->
+            <div class="panel-group" *ngFor="let sg of posture.network.securityGroups">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🛡</span>
+                    Security Group
+                    <span class="panel-group-name muted">{{ sg.groupName }} ({{ sg.groupId }})</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Inbound rules</span>
+                    <span class="meta-value">{{ sg.totalIngressRules }} total · {{ sg.publicIngressRules }} open to
+                        0.0.0.0/0</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of sg.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VPC Flow Logs -->
+            <div class="panel-group">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">📡</span>
+                    VPC Flow Logs
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(posture.network.flowLogs.status)">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(posture.network.flowLogs.status)">{{
+                                checkIcon(posture.network.flowLogs.status) }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">VPC Flow Logs</span>
+                                <span class="check-finding" [ngClass]="checkClass(posture.network.flowLogs.status)">
+                                    Flow logs {{ posture.network.flowLogs.enabled ? 'are enabled' : 'are NOT enabled' }}
+                                    <span *ngIf="posture.network.flowLogs.trafficType"> · {{
+                                        posture.network.flowLogs.trafficType }}</span>
+                                    <span *ngIf="posture.network.flowLogs.destination"> → {{
+                                        posture.network.flowLogs.destination }}</span>
+                                </span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(posture.network.flowLogs.status)">{{
+                            posture.network.flowLogs.status | uppercase }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALB -->
+            <div class="panel-group" *ngIf="posture.network.alb">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">⚖️</span>
+                    Application Load Balancer
+                </div>
+                <div class="panel-meta-row" *ngIf="posture.network.alb.tlsPolicy">
+                    <span class="meta-label">TLS policy</span>
+                    <span class="meta-value mono">{{ posture.network.alb.tlsPolicy }}</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.network.alb.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RDS -->
+            <div class="panel-group" *ngIf="posture.network.rds">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🗄</span>
+                    RDS Security
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Backup retention</span>
+                    <span class="meta-value">{{ posture.network.rds.backupRetentionDays }} days</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.network.rds.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ══════════════ THREAT DETECTION PANEL ══════════════ -->
+        <div class="section-panel" *ngIf="activeSection === 'threat'">
+
+            <div class="panel-group">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🔍</span>
+                    GuardDuty
+                    <span class="panel-group-name muted" *ngIf="posture.guardDuty.detectorEnabled">Detector
+                        active</span>
+                    <span class="panel-group-name fail" *ngIf="!posture.guardDuty.detectorEnabled">Detector NOT
+                        enabled</span>
+                </div>
+
+                <div class="gd-summary" *ngIf="posture.guardDuty.detectorEnabled">
+                    <div class="gd-stat">
+                        <span class="gd-stat-value" [class.fail]="(posture.guardDuty.highSeverityFindings || 0) > 0">
+                            {{ posture.guardDuty.highSeverityFindings ?? 0 }}
+                        </span>
+                        <span class="gd-stat-label">HIGH (last 7d)</span>
+                    </div>
+                    <div class="gd-stat">
+                        <span class="gd-stat-value warn">
+                            {{ posture.guardDuty.mediumSeverityFindings ?? 0 }}
+                        </span>
+                        <span class="gd-stat-label">MEDIUM (last 7d)</span>
+                    </div>
+                </div>
+
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.guardDuty.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+
+                <!-- Findings list -->
+                <div class="findings-list" *ngIf="posture.guardDuty.findings && posture.guardDuty.findings.length > 0">
+                    <div class="findings-header">Recent findings</div>
+                    <div class="finding-row" *ngFor="let f of posture.guardDuty.findings">
+                        <span class="severity-badge" [ngClass]="severityClass(f.severity)">{{ f.severity }}</span>
+                        <div class="finding-details">
+                            <span class="finding-title">{{ f.title }}</span>
+                            <span class="finding-type mono">{{ f.type }}</span>
+                        </div>
+                        <span class="finding-time">{{ formatDate(f.updatedAt) }}</span>
+                    </div>
+                </div>
+
+                <div class="panel-empty" *ngIf="!posture.guardDuty.findings || posture.guardDuty.findings.length === 0">
+                    No GuardDuty findings in the last 7 days.
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ AUDIT & CERTIFICATES PANEL ══════════════ -->
+        <div class="section-panel" *ngIf="activeSection === 'audit'">
+
+            <!-- CloudTrail -->
+            <div class="panel-group" *ngIf="posture.cloudTrail">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">📒</span>
+                    CloudTrail
+                </div>
+                <div class="panel-meta-row" *ngIf="posture.cloudTrail.cwLogsArn">
+                    <span class="meta-label">CloudWatch log group</span>
+                    <span class="meta-value mono">{{ posture.cloudTrail.cwLogsArn }}</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of posture.cloudTrail.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-empty" *ngIf="!posture.cloudTrail">
+                CloudTrail data unavailable.
+            </div>
+
+            <!-- Certificates -->
+            <div class="panel-group" *ngFor="let cert of posture.certificates">
+                <div class="panel-group-header">
+                    <span class="panel-group-icon">🔏</span>
+                    ACM Certificate
+                    <span class="panel-group-name muted">{{ cert.domain }}</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value">{{ cert.status }}</span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Expires</span>
+                    <span class="meta-value" [ngClass]="expiryClass(cert.daysUntilExpiry)">
+                        {{ formatDate(cert.expiresAt) }}
+                        <strong *ngIf="cert.daysUntilExpiry !== null">({{ cert.daysUntilExpiry }}d remaining)</strong>
+                    </span>
+                </div>
+                <div class="panel-meta-row">
+                    <span class="meta-label">Validation</span>
+                    <span class="meta-value">{{ cert.domainValidationMethod || '—' }}</span>
+                </div>
+                <div class="check-list">
+                    <div class="check-row" [ngClass]="'row-' + checkClass(check.status)"
+                        *ngFor="let check of cert.checks">
+                        <div class="check-row-left">
+                            <span class="check-icon-box" [ngClass]="checkClass(check.status)">{{ checkIcon(check.status)
+                                }}</span>
+                            <div class="check-content">
+                                <span class="check-topic">{{ checkTopic(check.label) }}</span>
+                                <span class="check-finding" [ngClass]="checkClass(check.status)">{{
+                                    checkFinding(check.label, check.status) }}</span>
+                            </div>
+                        </div>
+                        <span class="check-status-pill" [ngClass]="checkClass(check.status)">{{ check.status | uppercase
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-empty" *ngIf="posture.certificates.length === 0 && posture.cloudTrail">
+                No ACM certificates found.
+            </div>
+
+        </div>
+
+    </ng-container>
+
+</div>

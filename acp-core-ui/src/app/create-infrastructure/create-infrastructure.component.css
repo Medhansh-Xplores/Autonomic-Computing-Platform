@@ -1,0 +1,495 @@
+@import 'vertical-tabs.css';
+
+/* Services Info */
+.services-info {
+    margin: auto;
+    width: 45%;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 100;
+    border-radius: 30px;
+    margin-top: 10px;
+}
+.services-info h2 {
+    font-size: 48px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+    color: black;
+}
+.servicelist {
+    margin: auto;
+    width: 80%;
+    display: flex;
+    justify-content: center;
+    margin-top: 80px;
+}
+.AWS, .Google, .Azure {
+    background-color: #003160;
+    margin-left: 25px;
+    margin-right: 25px;
+    border-radius: 15px;
+    margin-bottom: 200px;
+}
+a {
+    width: 400px;
+}
+
+.servicelist h2 {
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top: 2px solid white;
+}
+
+.parameters h2 {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* Styling Error Messages ================================================================================*/
+
+.Error-Section {
+    text-align: left;
+    margin: 20px;
+    width: 75%;
+    margin: auto;
+    padding-left: 20px;
+}
+
+.ErrorMsg {
+    color: red;
+    font-size: 1.5em;
+}
+
+.Error-Section ul {
+    padding: 0%;
+}
+
+.Error-Section li {
+    color: red;
+}
+
+
+
+/* Tabs Styling ==========================================================================================*/
+
+.mat-tab-labels { 
+    justify-content: center; 
+}
+
+::ng-deep mat-tab-body {
+    text-align: center;
+}
+
+/* AWS Parameters Styling ======================================================================================== */
+.title {
+    text-align: left;
+    margin-top: 50px;
+    margin-left: 20px;
+    margin-bottom: 50px;
+    font-size: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+.row1, .row2, .row3, .row4, .row5 {
+    display: flex;
+    width: 100%;
+}
+
+.landing-zone, .created-by, .key, .key-ID, .region, .subnet-num, .name, .empty, .submit {
+    width: 400px;
+    margin: auto;
+}
+
+.submit {
+    margin-bottom: 100px;
+    margin-top: 30px;
+}
+
+p {
+    text-align: right;
+    text-decoration: underline;
+}
+
+.msg {
+    font-size: 10px;
+    text-align: left;
+    text-decoration: none;
+}
+
+h2 {
+    font-size: 15px;
+    font-weight: 700;
+    text-align: left;
+}
+
+select {
+    width: 100%;
+    padding: 10px 0;
+}
+
+input {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.submit input {
+    padding: 10px 20px;
+    width: 100px;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: #e6bb00;
+    border: none;
+    transition: all 0.5s ease;
+}
+
+.submit input:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+/* Google Parameters Styling */
+
+.row1, .row2, .row3, .row4, .row5 {
+    display: flex;
+    width: 100%;
+}
+
+.landing-zone, .created-by, .key, .key-ID, .region, .subnet-num, .name, .empty, .submit, .zone {
+    width: 400px;
+    margin: auto;
+}
+
+.submit {
+    margin-bottom: 100px;
+    margin-top: 30px;
+}
+
+p {
+    text-align: right;
+    text-decoration: underline;
+}
+
+.msg {
+    font-size: 10px;
+    text-align: left;
+    text-decoration: none;
+}
+
+
+select {
+    width: 100%;
+    padding: 10px 0;
+}
+
+input {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.submit input {
+    padding: 10px 20px;
+    width: 100px;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: #e6bb00;
+    border: none;
+    transition: all 0.5s ease;
+}
+
+.submit input:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Azure Parameters Styling */
+
+.row1, .row2, .row3, .row4, .row5 {
+    display: flex;
+    width: 100%;
+}
+
+.tenant-ID, .created-by, .client-ID, .secret-key, .region, .sub-ID, .name, .empty, .submit {
+    width: 400px;
+    margin: auto;
+}
+
+.submit {
+    margin-bottom: 100px;
+    margin-top: 30px;
+}
+
+p {
+    text-align: right;
+    text-decoration: underline;
+}
+
+.msg {
+    font-size: 10px;
+    text-align: left;
+    text-decoration: none;
+    margin-top: 5px;
+}
+
+select {
+    width: 100%;
+    padding: 10px 0;
+}
+
+input::placeholder {
+    padding-left: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.submit input {
+    padding: 10px 20px;
+    width: 100px;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: #e6bb00;
+    border: none;
+    transition: all 0.5s ease;
+}
+
+.submit input:hover {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+/* Mobile Views */
+@media only screen and (max-width: 600px) {
+    .page3-title {
+        padding-bottom: 20px;
+        width: 80%;
+        padding: 0;
+        font-size: 22px;
+        margin-top: 3px;
+        background-color: transparent;
+    }
+    .menu-container {
+        height: 72px;
+        padding: 0%;
+    }
+    .services-info h2 {
+        font-size: 21px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: center;
+    }
+    .services-info {
+
+    }
+
+    /* Tabs Styling */
+    .mat-tab-labels { 
+        justify-content: center; 
+        color:#003160;
+    }
+
+    ::ng-deep mat-tab-body {
+        text-align: center;
+    }
+
+    .row1, .row2, .row3, .row4, .row5 {
+        display: flex;
+        width: 100%;
+    }
+
+    /* AWS Parameters */
+    
+    .landing-zone, .created-by, .key, .key-ID, .region, .subnet-num, .name, .empty, .submit {
+        width: 400px;
+        margin: auto;
+        padding: 2%;
+    }
+
+    .key {
+        padding-bottom: 11%;
+    }
+    
+    .submit {
+        margin-bottom: 100px;
+        margin-top: 30px;
+    }
+    
+    p {
+        text-align: right;
+        text-decoration: underline;
+    }
+    
+    .msg {
+        font-size: 10px;
+        text-align: left;
+        text-decoration: none;
+    }
+    
+    h2 {
+        font-size: 15px;
+        font-weight: 400;
+        text-align: left;
+    }
+
+    .title {
+        text-align: center;
+        margin-top: 50px;
+        font-size: 30px;
+    }
+    
+    select {
+        width: 10%;
+        padding: 10px 0;
+    }
+    
+    input {
+        width: 10%;
+        padding: 10px 0;
+    }
+    
+    .submit input {
+        padding: 10px 20px;
+        width: 100px;
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        background-color: #e6bb00;
+        border: none;
+        transition: all 0.5s ease;
+    }
+    
+    .submit input:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    
+    /* Google Parameters Styling */
+    .title {
+        text-align: center;
+        margin-top: 50px;
+        font-size: 36px;
+    }
+    
+    .row1, .row2, .row3, .row4, .row5 {
+        display: flex;
+        width: 100%;
+    }
+    
+    .landing-zone, .created-by, .key, .key-ID, .region, .subnet-num, .name, .empty, .submit {
+        width: 400px;
+        margin: auto;
+        padding: 2%;
+    }
+    
+    .submit {
+        margin-bottom: 100px;
+        margin-top: 30px;
+    }
+    
+    p {
+        text-align: right;
+        text-decoration: underline;
+    }
+    
+    .msg {
+        font-size: 10px;
+        text-align: left;
+        text-decoration: none;
+    }
+    
+    h2 {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    
+    select {
+        width: 100%;
+        padding: 10px 0;
+    }
+    
+    input {
+        width: 100%;
+        padding: 10px 0;
+    }
+    
+    .submit input {
+        padding: 10px 20px;
+        width: 100px;
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        background-color: #e6bb00;
+        border: none;
+        transition: all 0.5s ease;
+    }
+    
+    .submit input:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Azure Parameters Styling */
+    
+    .row1, .row2, .row3, .row4, .row5 {
+        display: flex;
+        width: 100%;
+    }
+    
+    .tenant-ID, .created-by, .client-ID, .secret-key, .region, .sub-ID, .name, .empty, .submit {
+        width: 400px;
+        margin: auto;
+    }
+    
+    .client-ID, .secret-key, .sub-ID, .tenant-ID {
+        margin: 2%;
+    }
+
+    .submit {
+        margin-bottom: 100px;
+        margin-top: 30px;
+    }
+    
+    p {
+        text-align: right;
+        text-decoration: underline;
+    }
+    
+    .msg {
+        font-size: 10px;
+        text-align: left;
+        text-decoration: none;
+        margin-top: 5px;
+    }
+    
+    h2 {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    
+    input::placeholder {
+        padding-left: 5px;
+    }
+    
+    
+    .submit input {
+        padding: 10px 20px;
+        width: 100px;
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        background-color: #e6bb00;
+        border: none;
+        transition: all 0.5s ease;
+    }
+    
+    .submit input:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+}
+

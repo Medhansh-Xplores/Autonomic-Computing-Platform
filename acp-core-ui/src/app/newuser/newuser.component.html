@@ -1,0 +1,59 @@
+<section class="usa-hero"
+    style="background-image:url('../../assets/img/login_background.png');background-position:left top;min-height:500px;"
+    aria-label="Register">
+    <div class="content">
+        <div class="main-text-login" style="float:left">
+            <h1>AUTONOMIC COMPUTING <br> PLATFORM (ACP)</h1>
+            <p class="par">Patterned on the human body's self healing autonomic nervous system</p>
+            <p class="par-subtitle">Self-Manageable | Software Driven | Reusable Engineering</p>
+        </div>
+
+        <div id="form-container-2" class="usa-hero__callout tablet:grid-offset-9 tablet:grid-col3"
+            style="width:100%; background-color:rgba(0, 49, 96, .5);margin-right:auto;">
+            <div class="form-container">
+                <form class="usa-form">
+                    <fieldset class="usa-fieldset">
+                        <legend class="usa-legend" style="color:rgb(255,255,255);">Create an Account</legend>
+                        <span>Already have one? <a routerLink="/login" style="color:rgb(255,255,255);">Sign
+                                in</a></span>
+                        <br>
+                        <div class="usa-input-error-message" style="color:red;" role="alert" *ngIf="error">
+                            {{ error }}
+                        </div>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="firstname">First Name</label>
+                        <input class="usa-input" id="firstname" name="firstname" type="text" [(ngModel)]="firstname"
+                            placeholder="enter first name here" required>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="lastname">Last Name</label>
+                        <input class="usa-input" id="lastname" name="lastname" type="text" [(ngModel)]="lastname"
+                            placeholder="enter last name here" required>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="email">Email</label>
+                        <input class="usa-input" id="email" name="email" type="email" [(ngModel)]="email"
+                            placeholder="enter email here" required>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="username">Username</label>
+                        <input class="usa-input" id="username" name="username" type="text" [(ngModel)]="username"
+                            placeholder="enter username here" required>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="password">Password</label>
+                        <input class="usa-input" id="password" name="password" type="password" [(ngModel)]="password"
+                            placeholder="enter password here" required>
+
+                        <label class="usa-label" style="color:rgb(255,255,255);" for="confirmPassword">Confirm
+                            Password</label>
+                        <input class="usa-input" id="confirmPassword" name="confirmPassword" type="password"
+                            [(ngModel)]="confirmPassword" placeholder="confirm password here" required>
+
+                        <button class="usa-button" type="button" (click)="register()" [disabled]="loading">
+                            <span *ngIf="loading">Please Wait...</span>
+                            <span *ngIf="!loading">Create Account</span>
+                        </button>
+
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
