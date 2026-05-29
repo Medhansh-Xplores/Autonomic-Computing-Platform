@@ -53,6 +53,21 @@ You have four tools:
 - scale_ecs_service → always requires approval
 - reboot_rds_instance → always requires approval
 
+### When adding scale_ecs_service to pendingApproval, you MUST always include desiredCount:
+- If current desiredCount is 0 → set desiredCount: 1 (safe minimum to restore the service)
+- If running < desired (tasks crashing) → keep the existing desiredCount value
+- NEVER omit desiredCount from a scale_ecs_service pendingApproval entry
+
+### When adding scale_ecs_service to pendingApproval for a desiredCount=0 service:
+- ALWAYS set desiredCount: 1 in the pendingApproval entry — do NOT try to copy it from findings
+- Never omit desiredCount — the approval flow requires it
+
+### target format for ECS actions MUST be: "<clusterName>/<serviceNameWithSuffix>"
+- Example: "dev-ecs-cluster/myapp-backend"
+- If the app finding includes cluster and ecsServiceBackend fields, use those exactly
+- If cluster is unknown, set target to "<appName>/<appName>-backend" and note it in reason
+- NEVER set target to just the app name alone — it must always contain a slash
+
 ### Create incident instead of acting when:
 - rootCause is unclear or ambiguous
 - The resource type is VPC or networking (you have no networking tools)
@@ -71,9 +86,10 @@ After taking actions, return a JSON summary:
   ],
   "pendingApproval": [
     {
-      "action": "reboot_rds_instance",
-      "target": "my-postgres-db",
-      "reason": "RDS instance status is stopped",
+      "action": "scale_ecs_service",
+      "target": "dev-ecs/task-app",
+      "desiredCount": 1,
+      "reason": "Service desired count is 0 — restoring to minimum of 1",
       "awaitingApproval": true
     }
   ],
@@ -90,7 +106,7 @@ After taking actions, return a JSON summary:
 
 const remediationAgent = new LlmAgent({
   name: 'remediation_agent',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-2.5-pro',
   description: 'Executes remediation actions based on monitoring findings. Restarts ECS services, scales tasks, reboots RDS, creates incidents.',
   instruction: REMEDIATION_SYSTEM_PROMPT,
   tools: [

@@ -26,24 +26,11 @@
             </span>
         </div>
 
-        <div class="ctl-divider"></div>
-
-        <!-- Mode Selector -->
-        <div class="ctl-group">
-            <label class="ctl-label">Mode</label>
-            <div class="mode-toggle">
-                <button class="mode-btn" [class.active]="selectedMode === 'observe'" (click)="setMode('observe')">
-                    <span class="mode-icon">👁</span>
-                    <span>Observe Only</span>
-                </button>
-                <button class="mode-btn" [class.active]="selectedMode === 'full'" (click)="setMode('full')">
-                    <span class="mode-icon">⚡</span>
-                    <span>Full Auto-Remediate</span>
-                </button>
-            </div>
-        </div>
-
         <div class="ctl-spacer"></div>
+        <div class="ctl-hint">
+            <span class="ctl-hint-icon">⚡</span>
+            ACP's Autonomous and Intelligent Agents continously learn and adapt.
+        </div>
 
         <!-- Run Button -->
         <button class="run-btn" (click)="runScan()" [disabled]="scanning">
@@ -76,7 +63,7 @@
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <!-- AGENT FLOW DIAGRAM – shown during scan AND after scan             -->
     <!-- ══════════════════════════════════════════════════════════════════ -->
-    <div class="flow-section" *ngIf="scanning || scanResult">
+    <div class="flow-section">
         <div class="flow-label">AGENTIC PIPELINE
             <div class="flow-label-sub"> (Powered by Google Gemini and Agent Development Kit) </div>
         </div>
@@ -217,19 +204,15 @@
 
             <!-- ── Agent: Remediation ── -->
             <div class="agent-node" [class.node-active]="scanning && currentPhaseIndex >= 3"
-                [class.node-done]="scanResult && selectedMode === 'full'"
-                [class.node-skipped]="scanResult && selectedMode === 'observe'">
+                [class.node-done]="scanResult">
                 <div class="node-header">
-                    <span class="node-icon"
-                        [style.background]="selectedMode === 'full' ? '#d97706' : '#9e9e9e'">🔧</span>
+                    <span class="node-icon" style="background: #d97706">🔧</span>
                     <div class="node-title">Remediation Self-Heal Agent</div>
                 </div>
                 <div class="node-status">
-                    <span class="ns-dot" [class.ns-amber]="selectedMode === 'full'"
-                        [class.ns-gray]="selectedMode === 'observe'"></span>
+                    <span class="ns-dot ns-amber"></span>
                     <span *ngIf="scanning && currentPhaseIndex >= 3">Remediating…</span>
-                    <span *ngIf="scanResult && selectedMode === 'full'">✓ {{ actionsTaken.length }} actions</span>
-                    <span *ngIf="scanResult && selectedMode === 'observe'">Skipped (observe)</span>
+                    <span *ngIf="scanResult">✓ {{ actionsTaken.length }} actions</span>
                     <span *ngIf="!scanning && !scanResult">Standby</span>
                 </div>
                 <div class="node-tasks">
@@ -262,6 +245,14 @@
             <span class="os-icon">🤖</span>
             <span class="os-text">{{ orchestratorSummary }}</span>
             <span class="os-meta mono" *ngIf="currentSessionId">#{{ currentSessionId.slice(-8) }}</span>
+        </div>
+
+        <!-- Pre-scan ready hint -->
+        <div class="ready-hint" *ngIf="!scanning && !scanResult && !accountsError">
+            <span class="rh-icon">⚡</span>
+            <span>Click <strong>Run Agents</strong> to scan your infrastructure and applications. The Remediation Agent
+                will request
+                approval before taking any action.</span>
         </div>
 
     </div><!-- /flow-section -->
@@ -306,7 +297,7 @@
         <div class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon sc-action">✅</span>
-                <span class="stat-label">Actions Taken</span>
+                <span class="stat-label">Remediations Performed</span>
             </div>
             <div class="stat-value" [class.sv-green]="actionsTaken.length > 0">
                 {{ actionsTaken.length }}
@@ -317,7 +308,7 @@
         <div class="stat-card">
             <div class="stat-header">
                 <span class="stat-icon sc-pending">⏳</span>
-                <span class="stat-label">Pending Approval</span>
+                <span class="stat-label">Human-in-the-Loop (HITL) for Remediation</span>
             </div>
             <div class="stat-value" [class.sv-amber]="pendingApprovals.length > 0">
                 {{ pendingApprovals.length }}
@@ -328,38 +319,27 @@
 
     <!-- ── Section Tabs ── -->
     <div class="tabs-bar" *ngIf="scanResult">
-        <button class="tab-btn" [class.tab-active]="activeSection === 'findings'" (click)="activeSection = 'findings'">
+        <button class="tab-btn" [class.tab-active]="activeSection === 'findings'" (click)="setSection('findings')">
             <svg width="14" height="14" viewBox="0 0 14 14">
                 <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" fill="none" />
                 <line x1="9.5" y1="9.5" x2="13" y2="13" stroke="currentColor" stroke-width="1.4"
                     stroke-linecap="round" />
             </svg>
-            Findings
+            Issues Detected
             <span class="tab-badge" *ngIf="totalFindings > 0">{{ totalFindings }}</span>
         </button>
-        <button class="tab-btn" [class.tab-active]="activeSection === 'approvals'"
-            (click)="activeSection = 'approvals'">
+        <button class="tab-btn" [class.tab-active]="activeSection === 'approvals'" (click)="setSection('approvals')">
             <svg width="14" height="14" viewBox="0 0 14 14">
                 <rect x="1.5" y="1.5" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.4"
                     fill="none" />
                 <line x1="4" y1="7" x2="10" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
                 <line x1="7" y1="4" x2="7" y2="10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
             </svg>
-            Pending Approvals
+            HITL Remediation Approvals
             <span class="tab-badge tab-amber" *ngIf="pendingApprovals.length > 0">{{ pendingApprovals.length }}</span>
         </button>
-        <button class="tab-btn" [class.tab-active]="activeSection === 'incidents'"
-            (click)="loadIncidents(); activeSection = 'incidents'">
-            <svg width="14" height="14" viewBox="0 0 14 14">
-                <path d="M7 1 L13 12 H1 Z" stroke="currentColor" stroke-width="1.4" fill="none"
-                    stroke-linejoin="round" />
-                <line x1="7" y1="5" x2="7" y2="8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-                <circle cx="7" cy="10.5" r="0.5" fill="currentColor" />
-            </svg>
-            Incidents
-        </button>
-        <button class="tab-btn" [class.tab-active]="activeSection === 'audit'"
-            (click)="loadAuditLog(); activeSection = 'audit'">
+        <button class="tab-btn" [class.tab-active]="activeSection === 'resolution'"
+            (click)="loadIncidents(); setSection('resolution')">
             <svg width="14" height="14" viewBox="0 0 14 14">
                 <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4"
                     fill="none" />
@@ -369,12 +349,13 @@
                 <line x1="4.5" y1="9.5" x2="7.5" y2="9.5" stroke="currentColor" stroke-width="1.2"
                     stroke-linecap="round" />
             </svg>
-            Audit Log
+            Remediation Log
+            <span class="tab-badge" *ngIf="actionsTaken.length > 0">{{ actionsTaken.length }}</span>
         </button>
         <button class="tab-btn" [class.tab-active]="activeSection === 'runs'"
-            (click)="loadScanRuns(); activeSection = 'runs'">
+            (click)="loadScanRuns(); setSection('runs')">
             <span class="tab-icon">🕓</span>
-            Run History
+            Agent Execution History
             <span class="tab-badge" *ngIf="scanRuns.length > 0">{{ scanRuns.length }}</span>
         </button>
     </div>
@@ -501,27 +482,6 @@
             </div>
         </div>
 
-        <!-- Actions Taken -->
-        <div *ngIf="actionsTaken.length > 0">
-            <div class="group-header">
-                <span class="gh-icon" style="background:#2e7d3215; color:#2e7d32">✅</span>
-                <span class="gh-title">Actions Taken by Agents</span>
-                <span class="gh-count" style="background:#e8f5e9; color:#2e7d32">{{ actionsTaken.length }}</span>
-            </div>
-            <div class="action-card" *ngFor="let a of actionsTaken" [class.action-fail]="a.result === 'failed'">
-                <div class="ac-icon-wrap">
-                    <span class="ac-result-icon" [class.ari-fail]="a.result === 'failed'">
-                        {{ a.result === 'success' ? '✔' : '✖' }}
-                    </span>
-                </div>
-                <div class="ac-content">
-                    <div class="ac-action-name">{{ a.action }}</div>
-                    <div class="ac-target">{{ a.target }}</div>
-                    <div class="ac-msg">{{ a.message }}</div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <!-- ══ APPROVALS TAB ══ -->
@@ -535,6 +495,10 @@
         <div class="approval-card" *ngFor="let a of pendingApprovals">
             <div class="apv-header">
                 <div class="apv-badge">⚠ Requires Approval</div>
+                <span class="risk-badge" [class.risk-high]="a.riskLevel === 'high'"
+                    [class.risk-medium]="a.riskLevel === 'medium'" [class.risk-low]="a.riskLevel === 'low'">
+                    {{ a.riskLevel | uppercase }} RISK
+                </span>
                 <div class="apv-meta">
                     <div class="apv-action">{{ a.action }}</div>
                     <div class="apv-target">Target: <strong>{{ a.target }}</strong></div>
@@ -549,7 +513,13 @@
                         stroke-linecap="round" />
                     <circle cx="6.5" cy="10" r="0.5" fill="#7a4f00" />
                 </svg>
-                This action may cause a brief outage. Review carefully before approving.
+                <ng-container [ngSwitch]="a.riskLevel">
+                    <span *ngSwitchCase="'high'">High-risk action — may cause downtime or data loss. Approve only if
+                        certain.</span>
+                    <span *ngSwitchCase="'medium'">Medium-risk action — may cause a brief disruption. Review target
+                        before approving.</span>
+                    <span *ngSwitchDefault>Low-risk action — minimal expected impact.</span>
+                </ng-container>
             </div>
             <div class="apv-actions">
                 <button class="apv-btn apv-approve" (click)="approveAction(a)" [disabled]="a.processing">
@@ -563,93 +533,100 @@
     </div>
 
     <!-- ══ INCIDENTS TAB ══ -->
-    <div class="tab-panel" *ngIf="scanResult && activeSection === 'incidents'">
-        <div class="spinner-wrap" *ngIf="incidentsLoading">
-            <div class="spinner"></div>
+    <!-- ══ REMEDIATION LOG TAB ══ -->
+    <div class="tab-panel" *ngIf="scanResult && activeSection === 'resolution'">
+
+        <!-- Sub-tab bar -->
+        <div class="sub-tabs-bar">
+            <button class="sub-tab-btn" [class.sub-tab-active]="resolutionSubTab === 'actions'"
+                (click)="resolutionSubTab = 'actions'">Current Execution</button>
+            <button class="sub-tab-btn" [class.sub-tab-active]="resolutionSubTab === 'incidents'"
+                (click)="resolutionSubTab = 'incidents'">Remediation History</button>
         </div>
 
-        <div class="empty-state" *ngIf="!incidentsLoading && incidents.length === 0">
-            <div class="es-icon">🎉</div>
-            <div class="es-title">No incidents</div>
-            <div class="es-sub">No open incidents logged by agents.</div>
+        <!-- ── Actions This Run ── -->
+        <div *ngIf="resolutionSubTab === 'actions'">
+            <div class="empty-state" *ngIf="actionsTaken.length === 0">
+                <div class="es-icon">✅</div>
+                <div class="es-title">No actions taken this run</div>
+                <div class="es-sub">Auto-remediated and approved actions will appear here.</div>
+            </div>
+            <div class="action-card" *ngFor="let a of actionsTaken" [class.action-fail]="a.result === 'failed'">
+                <div class="ac-icon-wrap">
+                    <span class="ac-result-icon" [class.ari-fail]="a.result === 'failed'">
+                        {{ a.result === 'success' ? '✔' : '✖' }}
+                    </span>
+                </div>
+                <div class="ac-content">
+                    <div class="ac-action-name">
+                        {{ a.action }}
+                        <span class="recurred-badge" *ngIf="a.recurred">↻ Recurred</span>
+                    </div>
+                    <div class="ac-target">{{ a.target }}</div>
+                    <div class="ac-msg">{{ a.message }}</div>
+                    <div class="ac-meta-row">
+                        <span class="acm-item" *ngIf="a.approvedBy">
+                            <span class="acm-label">Approved by</span> {{ a.approvedBy }}
+                        </span>
+                        <span class="acm-item" *ngIf="a.resolutionTimeMs != null">
+                            <span class="acm-label">Resolved in</span> {{ resolutionTimeLabel(a.resolutionTimeMs) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="table-wrap" *ngIf="incidents.length > 0">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Severity</th>
-                        <th>Title</th>
-                        <th>Resource</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Update</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let inc of incidents">
-                        <td class="td-id">{{ inc.id }}</td>
-                        <td><span class="sev-badge" [class]="'sev-' + inc.severity">{{ inc.severity | uppercase
-                                }}</span></td>
-                        <td class="td-title">{{ inc.title }}</td>
-                        <td class="td-mono">{{ inc.affected_resource }}</td>
-                        <td><span class="inc-status" [class]="'inc-' + inc.status">{{ inc.status }}</span></td>
-                        <td class="td-date">{{ inc.created_at | date:'dd MMM HH:mm' }}</td>
-                        <td>
-                            <select class="status-select" [(ngModel)]="inc.status" (change)="updateIncident(inc)">
-                                <option value="open">Open</option>
-                                <option value="acknowledged">Acknowledged</option>
-                                <option value="resolved">Resolved</option>
-                            </select>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ── Unified Incident + Audit Log ── -->
+        <div *ngIf="resolutionSubTab === 'incidents'">
+            <div class="spinner-wrap" *ngIf="incidentsLoading">
+                <div class="spinner"></div>
+            </div>
+            <div class="table-wrap" *ngIf="incidents.length > 0">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Severity</th>
+                            <th>Title</th>
+                            <th>Resource / Target</th>
+                            <th>Agent remediations</th>
+                            <th>Result</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let row of incidents">
+                            <td class="td-id">{{ row.id || '—' }}</td>
+                            <td>
+                                <span *ngIf="row.severity" class="sev-badge" [class]="'sev-' + row.severity">
+                                    {{ row.severity | uppercase }}
+                                </span>
+                                <span *ngIf="!row.severity">—</span>
+                            </td>
+                            <td class="td-title">{{ row.title || '—' }}</td>
+                            <td class="td-mono">{{ row.resource || '—' }}</td>
+                            <td class="td-mono">{{ row.action || '—' }}</td>
+                            <td class="td-result">
+                                <span *ngIf="row.result">
+                                    {{ row.result?.success ? '✔ Success' : '✖ ' + (row.result?.message || 'Failed') }}
+                                </span>
+                                <span *ngIf="!row.result">—</span>
+                            </td>
+                            <td class="td-date">{{ row.created_at | date:'dd MMM HH:mm' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty-state" *ngIf="!incidentsLoading && incidents.length === 0">
+                <div class="es-icon">🎉</div>
+                <div class="es-title">No history yet</div>
+            </div>
+
         </div>
+
     </div>
 
-    <!-- ══ AUDIT LOG TAB ══ -->
-    <div class="tab-panel" *ngIf="scanResult && activeSection === 'audit'">
-        <div class="spinner-wrap" *ngIf="auditLoading">
-            <div class="spinner"></div>
-        </div>
-
-        <div class="empty-state" *ngIf="!auditLoading && auditLog.length === 0">
-            <div class="es-icon">📋</div>
-            <div class="es-title">No audit entries yet</div>
-            <div class="es-sub">Agent actions will appear here after the first scan.</div>
-        </div>
-
-        <div class="table-wrap" *ngIf="auditLog.length > 0">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Action</th>
-                        <th>Target</th>
-                        <th>Approved</th>
-                        <th>Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let log of auditLog">
-                        <td class="td-date">{{ log.created_at | date:'dd MMM HH:mm:ss' }}</td>
-                        <td class="td-mono">{{ log.action }}</td>
-                        <td class="td-mono">{{ log.target }}</td>
-                        <td>
-                            <span class="approved-badge" [class.ab-yes]="log.approved">
-                                {{ log.approved ? '✔ Yes' : '✖ No' }}
-                            </span>
-                        </td>
-                        <td class="td-result">
-                            {{ log.result?.success ? '✔ Success' : '✖ ' + (log.result?.message || 'Failed') }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <!-- ══ RUN HISTORY TAB ══ -->
     <div class="tab-panel" *ngIf="scanResult && activeSection === 'runs'">
         <div class="spinner-wrap" *ngIf="runsLoading">
             <div class="spinner"></div>
@@ -666,20 +643,27 @@
                         <th>Session</th>
                         <th>Account</th>
                         <th>Region</th>
-                        <th>Mode</th>
+                        <th>Status</th>
                         <th>Resources</th>
                         <th>Findings</th>
-                        <th>Started</th>
+                        <th>Started At</th>
                         <th>Duration</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let run of scanRuns">
+                    <tr *ngFor="let run of scanRuns" [class.row-error]="run.status === 'error'">
                         <td>{{ run.id }}</td>
                         <td><code>{{ run.session_id | slice:0:16 }}…</code></td>
                         <td>{{ run.account_id }}</td>
                         <td>{{ run.region }}</td>
-                        <td><span class="sev-badge">{{ run.mode }}</span></td>
+                        <td>
+                            <span class="run-status-badge" [class.rs-complete]="run.status === 'complete'"
+                                [class.rs-failed]="run.status === 'error'"
+                                [class.rs-partial]="run.status === 'partial'">
+                                {{ run.status === 'complete' ? 'Complete' : run.status === 'error' ? 'Failed' :
+                                run.status === 'partial' ? 'Partial' : (run.status || '—') }}
+                            </span>
+                        </td>
                         <td>{{ run.scan_meta?.infraAgent?.resourcesChecked + run.scan_meta?.appAgent?.resourcesChecked
                             || '—' }}</td>
                         <td>{{ run.scan_meta?.infraSummary || '—' }}</td>
@@ -690,21 +674,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- ── Initial state ── -->
-    <div class="initial-state" *ngIf="!scanResult && !scanning && !accountsError">
-        <div class="is-graphic">
-            <div class="is-node is-n1">🧠</div>
-            <div class="is-arrow">→</div>
-            <div class="is-node is-n2">🖥</div>
-            <div class="is-arrow">→</div>
-            <div class="is-node is-n3">📦</div>
-            <div class="is-arrow">→</div>
-            <div class="is-node is-n4">🔧</div>
-        </div>
-        <div class="is-title">Agents ready</div>
-        <div class="is-sub">Choose a mode above and click <strong>Run Agents</strong> to start the scan.</div>
     </div>
 
 </div>

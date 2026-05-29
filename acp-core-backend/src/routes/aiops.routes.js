@@ -33,10 +33,6 @@ router.get('/incidents', aiopsController.getIncidents);
 // Body: { status: 'open' | 'acknowledged' | 'resolved' }
 router.patch('/incidents/:id', aiopsController.updateIncident);
 
-// Get the agent audit trail (every action taken by agents)
-// GET /api/v1/aiops/audit-log?limit=100
-router.get('/audit-log', aiopsController.getAuditLog);
-
 // GET /api/v1/aiops/runs
 router.get('/runs', aiopsController.getScanRuns);
 

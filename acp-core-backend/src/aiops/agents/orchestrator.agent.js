@@ -73,7 +73,7 @@ CRITICAL: Output ONLY the JSON object. No explanation. No markdown fences.
 
 const orchestratorAgent = new LlmAgent({
   name: 'acp_aiops_orchestrator',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-2.5-pro',
   description: 'Synthesizes infra and app health findings into a final report.',
   instruction: ORCHESTRATOR_PROMPT,
   tools: [],  // No tools — reads from state, synthesizes only

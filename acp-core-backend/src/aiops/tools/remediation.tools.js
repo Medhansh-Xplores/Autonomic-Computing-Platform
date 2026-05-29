@@ -54,15 +54,32 @@ async function resolveCredentials(accountId, userId, region) {
 }
 
 // ── Audit logger ──────────────────────────────────────────────────────────────
+// Update the auditLog helper signature
 async function auditLog({ userId, action, target, reason, approved, result }) {
     try {
-        await db.query(
-            `INSERT INTO aiops_audit_log (user_id, action, target, reason, approved, result, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-            [userId, action, target, reason, approved, JSON.stringify(result)]
+        // Find the most recent open incident for this resource and attach the action
+        const existing = await db.query(
+            `SELECT id FROM aiops_events 
+             WHERE user_id = $1 AND resource = $2 AND status = 'open' 
+             ORDER BY created_at DESC LIMIT 1`,
+            [userId, target]
         );
+        if (existing.rows.length) {
+            await db.query(
+                `UPDATE aiops_events 
+                 SET action = $1, approved = $2, result = $3, reason = $4, updated_at = NOW()
+                 WHERE id = $5`,
+                [action, approved, JSON.stringify(result), reason, existing.rows[0].id]
+            );
+        } else {
+            // No incident exists — insert a standalone action row
+            await db.query(
+                `INSERT INTO aiops_events (user_id, resource, action, approved, result, reason, created_at)
+                 VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+                [userId, target, action, approved, JSON.stringify(result), reason]
+            );
+        }
     } catch (err) {
-        // Audit log failure should never block remediation
         console.error('[aiops-audit] Failed to write audit log:', err.message);
     }
 }
@@ -137,7 +154,7 @@ const scaleEcsService = {
     description: `Change the desired task count for an ECS service.
 Use to scale UP when running < desired (e.g. tasks keep crashing, bump desired to ensure availability).
 Use to scale DOWN only when explicitly asked by a human.
-Requires human approval when scaling DOWN (desiredCount is being reduced).`,
+ALWAYS requires human approval before executing. Set approvedByUser=true only after the human confirms in ACP Portal.`,
 
     parameters: {
         type: 'object',
@@ -158,13 +175,13 @@ Requires human approval when scaling DOWN (desiredCount is being reduced).`,
         const target = `${cluster}/${serviceName}`;
 
         // Safety: if scaling down, require explicit approval
-        if (desiredCount === 0 && !approvedByUser) {
+        if (!approvedByUser) {
             return {
                 success: false,
                 requiresApproval: true,
                 action: 'scale_ecs_service',
                 target,
-                message: 'Scaling to 0 requires explicit human approval. Set approvedByUser=true after confirming.',
+                message: 'ECS service scaling requires explicit human approval. Set approvedByUser=true after confirming in ACP Portal.',
             };
         }
 
@@ -282,9 +299,9 @@ Severity: 'critical' | 'high' | 'medium' | 'low'.`,
     handler: async ({ userId, title, severity, affectedResource, rootCause, actionTaken }) => {
         try {
             const result = await db.query(
-                `INSERT INTO aiops_incidents (user_id, title, severity, affected_resource, root_cause, action_taken, status, created_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, 'open', NOW()) RETURNING id`,
-                [userId, title, severity, affectedResource, rootCause, actionTaken || 'none']
+                `INSERT INTO aiops_events (user_id, title, severity, resource, root_cause, action, status, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'open', NOW()) RETURNING id`,
+                [userId, title, severity, affectedResource, rootCause, actionTaken || null]
             );
             const incidentId = result.rows[0]?.id;
             return { success: true, incidentId, message: `Incident #${incidentId} created: ${title}` };
@@ -314,4 +331,10 @@ module.exports = {
     scaleEcsService: toFunctionTool(scaleEcsService),
     rebootRdsInstance: toFunctionTool(rebootRdsInstance),
     createIncident: toFunctionTool(createIncident),
+    // Raw handlers for direct invocation in resumeAiOps (bypasses LLM re-entry)
+    _handlers: {
+        scale_ecs_service: scaleEcsService.handler,
+        restart_ecs_service: restartEcsService.handler,
+        reboot_rds_instance: rebootRdsInstance.handler,
+    },
 };

@@ -36,6 +36,7 @@ You have access to three tools:
 3. Analyze the data: check running vs desired counts, stopped task reasons, active alarms, recent events.
 4. Diagnose the root cause for each problem. Common causes:
    - running = 0, desired = 0 → service was scaled down to zero or intentionally stopped. Still unhealthy — a running app should never have desired=0
+   - running = 0, desired = 0 → recommendedAction MUST be "scale_ecs_service". A restart will not help — the service must be scaled up first. Always include desiredCount: 1 in your finding details.
    - running = 0, desired > 0 + stoppedReason "Essential container exited" → application crash / bad image
    - running < desired + no alarms → tasks are being replaced (deployment in progress or OOM)
    - alarms active → capacity or error rate threshold breached
@@ -99,7 +100,7 @@ Returning an empty string or no JSON is a critical failure — always output the
 
 const appHealthAgent = new LlmAgent({
   name: 'app_health_agent',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-2.5-pro',
   description: 'Monitors ACP Portal application health via ECS services, tasks, alarms, and deployments. Returns structured findings.',
   instruction: APP_HEALTH_SYSTEM_PROMPT,
   tools: [

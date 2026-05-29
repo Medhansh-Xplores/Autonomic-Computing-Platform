@@ -5,6 +5,8 @@
 const { InMemoryRunner, isFinalResponse } = require('@google/adk');
 const { createUserContent } = require('@google/genai');
 const { orchestratorAgent } = require('./agents/orchestrator.agent');
+const { _handlers } = require('./tools/remediation.tools');
+
 const db = require('../config/db');
 
 const APP_NAME = 'acp-aiops';
@@ -244,26 +246,48 @@ function isRemediation(obj, author) {
     return obj.actionsAttempted !== undefined || obj.pendingApproval !== undefined;
 }
 
-async function resumeAiOps({ sessionId, userId, approved, action, target }) {
-    const msg = createUserContent(JSON.stringify({
-        type: 'human_approval_response',
-        approved, action, target,
-        message: approved
-            ? `Human approved: proceed with ${action} on ${target}`
-            : `Human rejected: do NOT proceed with ${action} on ${target}. Create an incident instead.`,
-    }));
-
-    let finalReport = null;
-
-    for await (const event of runner.runAsync({ userId, sessionId, newMessage: msg })) {
-        if (isFinalResponse(event) && event.content?.parts?.length) {
-            const text = event.content.parts.filter(p => p.text).map(p => p.text).join('');
-            finalReport = safeJsonParse(text);
-        }
+async function resumeAiOps({ sessionId, userId, approved, action, target, accountId, region, desiredCount, reason }) {
+    if (!approved) {
+        await db.query(
+            `INSERT INTO aiops_audit_log (user_id, action, target, reason, approved, result, created_at)
+             VALUES ($1, $2, $3, $4, false, $5, NOW())`,
+            [userId, action, target, reason || 'User rejected', JSON.stringify({ rejected: true })]
+        );
+        return { report: null, remediation: { rejected: true, action, target } };
     }
 
-    const session = await runner.sessionService.getSession({ appName: APP_NAME, userId, sessionId });
-    return { report: finalReport, remediation: safeJsonParse(session?.state?.remediation_results) };
+    let result;
+    try {
+        if (action === 'scale_ecs_service') {
+            const [cluster, serviceName] = target.split('/');
+            result = await _handlers.scale_ecs_service({
+                accountId, region, userId, cluster, serviceName,
+                desiredCount: desiredCount ?? 1,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else if (action === 'restart_ecs_service') {
+            const [cluster, serviceName] = target.split('/');
+            result = await _handlers.restart_ecs_service({
+                accountId, region, userId, cluster, serviceName,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else if (action === 'reboot_rds_instance') {
+            result = await _handlers.reboot_rds_instance({
+                accountId, region, userId,
+                dbIdentifier: target,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else {
+            result = { success: false, message: `Unknown action: ${action}` };
+        }
+    } catch (err) {
+        result = { success: false, action, target, message: err.message };
+    }
+
+    return { report: result, remediation: { actionsAttempted: [{ action, target, result }] } };
 }
 
 /**

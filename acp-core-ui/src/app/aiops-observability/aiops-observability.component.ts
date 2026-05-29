@@ -2,8 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AiopsService } from '../services/aiops.service';
 import { CloudAccountService, CloudAccount } from '../services/cloud-account.service';
 
-export type ScanMode = 'observe' | 'full';
-export type SectionTab = 'findings' | 'approvals' | 'incidents' | 'audit' | 'runs';
+export type SectionTab = 'findings' | 'approvals' | 'resolution' | 'runs';
 
 @Component({
     selector: 'app-aiops-observability',
@@ -13,7 +12,7 @@ export type SectionTab = 'findings' | 'approvals' | 'incidents' | 'audit' | 'run
 export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     // ── Controls ──────────────────────────────────────────────────────────────
-    selectedMode: ScanMode = 'observe';
+    selectedMode: 'observe' | 'full' | 'remediate-only' = 'full';
     activeSection: SectionTab = 'findings';
 
     // ── Cloud account ─────────────────────────────────────────────────────────
@@ -30,6 +29,7 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
     scanDurationMs: number | null = null;
     scanPhase = 'Starting agents…';
     currentSessionId = '';
+    currentScanMeta: any = {};
 
     // ── Parsed results ────────────────────────────────────────────────────────
     infraFindings: any[] = [];
@@ -54,11 +54,11 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
     currentPhaseIndex = 0;
     private phaseInterval: any;
 
-    // ── Incidents & Audit ─────────────────────────────────────────────────────
+    // ── Remediation Log ───────────────────────────────────────────────────────────
+    resolutionSubTab: 'actions' | 'incidents' = 'actions';
     incidents: any[] = [];
-    auditLog: any[] = [];
     incidentsLoading = false;
-    auditLoading = false;
+
 
     constructor(
         private aiopsService: AiopsService,
@@ -67,6 +67,7 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loadCloudAccounts();
+        this.restoreFromCache();
     }
 
     ngOnDestroy(): void {
@@ -95,12 +96,46 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
         });
     }
 
+    // ── Restore last scan from service cache ──────────────────────────────
+    private restoreFromCache(): void {
+        if (!this.aiopsService.lastScanResult) return;
+        this.scanResult = this.aiopsService.lastScanResult;
+        this.scanMeta = this.aiopsService.lastScanMeta;
+        this.infraFindings = this.aiopsService.lastInfraFindings;
+        this.appFindings = this.aiopsService.lastAppFindings;
+        this.actionsTaken = this.aiopsService.lastActionsTaken;
+        this.pendingApprovals = this.aiopsService.lastPendingApprovals;
+        this.lastRunAt = this.aiopsService.lastRunAt;
+        this.scanDurationMs = this.aiopsService.lastScanDurationMs;
+        this.currentSessionId = this.aiopsService.lastSessionId;
+        this.currentScanMeta = this.aiopsService.lastScanMetaRaw;
+        this.phaseSteps.forEach(s => s.done = true);
+        this.activeSection = this.aiopsService.lastActiveSection;
+    }
+
     onAccountChange(accountId: string): void {
         this.selectedAccount = this.cloudAccounts.find(a => a.accountId === accountId) || null;
     }
 
-    setMode(mode: ScanMode): void {
-        this.selectedMode = mode;
+    // ── Set active tab and persist to cache ───────────────────────────────
+    setSection(tab: SectionTab): void {
+        this.activeSection = tab;
+        if (this.aiopsService.lastScanResult) this.aiopsService.lastActiveSection = tab;
+    }
+
+    // ── Save scan to service cache ─────────────────────────────────────────
+    private saveToCache(): void {
+        this.aiopsService.lastScanResult = this.scanResult;
+        this.aiopsService.lastScanMeta = this.scanMeta;
+        this.aiopsService.lastInfraFindings = this.infraFindings;
+        this.aiopsService.lastAppFindings = this.appFindings;
+        this.aiopsService.lastActionsTaken = this.actionsTaken;
+        this.aiopsService.lastPendingApprovals = this.pendingApprovals;
+        this.aiopsService.lastRunAt = this.lastRunAt;
+        this.aiopsService.lastScanDurationMs = this.scanDurationMs;
+        this.aiopsService.lastSessionId = this.currentSessionId;
+        this.aiopsService.lastScanMetaRaw = this.currentScanMeta;
+        this.aiopsService.lastActiveSection = this.activeSection;
     }
 
     // ── Run scan ──────────────────────────────────────────────────────────────
@@ -130,12 +165,14 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
             next: (result) => {
                 this.scanning = false;
                 this.scanResult = result;
-                this.scanRuns = []; 
+                this.scanRuns = [];
                 this.lastRunAt = new Date();
                 this.scanDurationMs = Date.now() - scanStart;
                 this.currentSessionId = result.sessionId || '';
+                this.currentScanMeta = result.scanMeta || {};
                 this.stopPhaseAnimation();
                 this.parseResult(result);
+                this.saveToCache();
             },
             error: (err) => {
                 this.scanning = false;
@@ -152,7 +189,11 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
         try {
             const rem = result.remediation;
             this.actionsTaken = rem?.actionsAttempted || [];
-            this.pendingApprovals = (rem?.pendingApproval || []).map((a: any) => ({ ...a, processing: false }));
+            this.pendingApprovals = (rem?.pendingApproval || []).map((a: any) => ({
+                ...a,
+                processing: false,
+                riskLevel: a.riskLevel ?? this.inferRiskLevel(a.action),
+            }));
         } catch { this.actionsTaken = []; this.pendingApprovals = []; }
 
         // Merge scanMeta from backend (runner.js) with local timing
@@ -169,10 +210,20 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
     // ── Approve / Reject ──────────────────────────────────────────────────────
     approveAction(approval: any): void {
         approval.processing = true;
-        this.aiopsService.approveAction(this.currentSessionId, true, approval.action, approval.target).subscribe({
+        this.aiopsService.approveAction(
+            this.currentSessionId,
+            true,
+            approval.action,
+            approval.target,
+            this.currentScanMeta?.accountId,
+            this.currentScanMeta?.region,
+            approval.desiredCount ?? 1,
+            approval.reason,
+        ).subscribe({
             next: () => {
                 this.pendingApprovals = this.pendingApprovals.filter(a => a !== approval);
                 this.actionsTaken.push({ ...approval, result: 'success', message: 'Approved and executed' });
+                this.saveToCache();
             },
             error: () => { approval.processing = false; }
         });
@@ -180,10 +231,37 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     rejectAction(approval: any): void {
         approval.processing = true;
-        this.aiopsService.approveAction(this.currentSessionId, false, approval.action, approval.target).subscribe({
-            next: () => { this.pendingApprovals = this.pendingApprovals.filter(a => a !== approval); },
+        this.aiopsService.approveAction(
+            this.currentSessionId,
+            false,
+            approval.action,
+            approval.target,
+            this.currentScanMeta?.accountId,
+            this.currentScanMeta?.region,
+        ).subscribe({
+            next: () => {
+                this.pendingApprovals = this.pendingApprovals.filter(a => a !== approval);
+                this.saveToCache();
+            },
             error: () => { approval.processing = false; }
         });
+    }
+
+    // ── Risk level inference ──────────────────────────────────────────────────────
+    inferRiskLevel(action: string): 'high' | 'medium' | 'low' {
+        if (!action) return 'low';
+        const a = action.toLowerCase();
+        if (a.includes('delete') || a.includes('terminate') || a.includes('alb') || a.includes('rds')) return 'high';
+        if (a.includes('scale') || a.includes('restart') || a.includes('ecs')) return 'medium';
+        return 'low';
+    }
+
+    // ── Resolution time formatter ─────────────────────────────────────────────────
+    resolutionTimeLabel(ms: number | null | undefined): string {
+        if (ms == null) return '—';
+        if (ms < 1000) return `${ms}ms`;
+        const s = Math.round(ms / 1000);
+        return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${s % 60}s`;
     }
 
     // ── Incidents ─────────────────────────────────────────────────────────────
@@ -198,16 +276,6 @@ export class AiopsObservabilityComponent implements OnInit, OnDestroy {
 
     updateIncident(inc: any): void {
         this.aiopsService.updateIncident(inc.id, inc.status).subscribe();
-    }
-
-    // ── Audit log ─────────────────────────────────────────────────────────────
-    loadAuditLog(): void {
-        if (this.auditLoading || this.auditLog.length > 0) return;
-        this.auditLoading = true;
-        this.aiopsService.getAuditLog().subscribe({
-            next: (data) => { this.auditLog = data; this.auditLoading = false; },
-            error: () => { this.auditLoading = false; }
-        });
     }
 
     loadScanRuns(): void {

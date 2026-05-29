@@ -1413,3 +1413,169 @@
     opacity: 0.7;
     margin-top: 2px;
 }
+
+.ctl-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-size: 18px;
+    color: #000000;
+    font-style: italic;
+    white-space: nowrap;
+    flex: 1;
+    font-weight: 500;
+    margin-right: 400px;
+}
+
+.ctl-hint-icon {
+    font-size: 14px;
+    opacity: 0.75;
+}
+
+/* ── Risk badges (approval cards) ── */
+.risk-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    margin-left: 8px;
+}
+
+.risk-high {
+    background: #fde8e8;
+    color: #b91c1c;
+}
+
+.risk-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.risk-low {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+/* ── Remediation sub-tabs ── */
+.sub-tabs-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    padding-bottom: 0;
+}
+
+.sub-tab-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted, #64748b);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+
+.sub-tab-btn:hover {
+    color: var(--text, #1e293b);
+}
+
+.sub-tab-active {
+    color: var(--accent, #1a73e8) !important;
+    border-bottom-color: var(--accent, #1a73e8) !important;
+}
+
+/* ── Action card meta row (approvedBy, resolutionTime) ── */
+.ac-meta-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+}
+
+.acm-label {
+    font-weight: 600;
+    color: var(--text, #374151);
+    margin-right: 3px;
+}
+
+.recurred-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    background: #ede9fe;
+    color: #6d28d9;
+    font-weight: 600;
+}
+
+/* ── Run status badges ── */
+.run-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rs-complete {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.rs-failed {
+    background: #fde8e8;
+    color: #b91c1c;
+}
+
+.rs-partial {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* ── Triggered-by badges ── */
+.trigger-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.tb-manual {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.tb-scheduled {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+/* ── Error row in runs table ── */
+tr.row-error {
+    background: #fff5f5 !important;
+}
+
+.type-badge {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.tb-incident {
+    background: #fff0f0;
+    color: #c0392b;
+}
+
+.tb-audit {
+    background: #f0f4ff;
+    color: #1a56db;
+}

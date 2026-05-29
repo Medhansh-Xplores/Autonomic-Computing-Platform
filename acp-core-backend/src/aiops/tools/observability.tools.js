@@ -220,7 +220,17 @@ Returns { deployments: [{ id, name, status, runningCount, desiredCount, activeAl
                         else if (running < desired) status = 'degraded';
                         else status = 'healthy';
                     }
-                    return { id, name, status, runningCount: running, desiredCount: desired, activeAlarms: alarmsVal.length };
+                    return {
+                        id, name, status,
+                        runningCount: running,
+                        desiredCount: desired,
+                        activeAlarms: alarmsVal.length,
+                        cluster: ecsCluster,
+                        ecsServiceBackend: backendSvc,
+                        ecsServiceFrontend: frontendSvc,
+                        region,
+                        accountId: accountID,
+                    };
                 } catch (err) {
                     return { id, name, status: 'unknown', reason: err.message };
                 }

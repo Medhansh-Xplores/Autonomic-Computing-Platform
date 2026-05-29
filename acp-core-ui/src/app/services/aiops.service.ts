@@ -7,6 +7,19 @@ import { EnvService } from 'src/environments/env.service';
 export class AiopsService {
 
     private apiBase: string = '';
+    lastActiveSection: 'findings' | 'approvals' | 'resolution' | 'runs' = 'findings';
+
+    // ── Persisted last scan state (survives navigation) ──────────────────
+    lastScanResult: any = null;
+    lastScanMeta: any = null;
+    lastInfraFindings: any[] = [];
+    lastAppFindings: any[] = [];
+    lastActionsTaken: any[] = [];
+    lastPendingApprovals: any[] = [];
+    lastRunAt: Date | null = null;
+    lastScanDurationMs: number | null = null;
+    lastSessionId: string = '';
+    lastScanMetaRaw: any = {};
 
     constructor(private http: HttpClient, private envService: EnvService) {
         this.apiBase = this.envService.apiUrl;
@@ -18,8 +31,11 @@ export class AiopsService {
     }
 
     // Approve or reject a pending remediation action
-    approveAction(sessionId: string, approved: boolean, action: string, target: string): Observable<any> {
-        return this.http.post(`${this.apiBase}aiops/approve`, { sessionId, approved, action, target });
+    approveAction(sessionId: string, approved: boolean, action: string, target: string,
+        accountId?: string, region?: string, desiredCount?: number, reason?: string): Observable<any> {
+        return this.http.post(`${this.apiBase}aiops/approve`, {
+            sessionId, approved, action, target, accountId, region, desiredCount, reason
+        });
     }
 
     // Fetch incident list
@@ -32,11 +48,6 @@ export class AiopsService {
     // Update incident status
     updateIncident(id: number, status: string): Observable<any> {
         return this.http.patch(`${this.apiBase}aiops/incidents/${id}`, { status });
-    }
-
-    // Fetch audit log
-    getAuditLog(): Observable<any[]> {
-        return this.http.get<any[]>(`${this.apiBase}aiops/audit-log`);
     }
 
     getScanRuns(): Observable<any[]> {

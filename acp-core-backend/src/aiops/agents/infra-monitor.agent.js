@@ -92,7 +92,7 @@ Return a JSON findings object. Format EXACTLY like this — include scanMeta alw
 
 const infraMonitorAgent = new LlmAgent({
   name: 'infra_monitor_agent',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-2.5-pro',
   description: 'Monitors AWS infrastructure health (ECS clusters, RDS, ALB) for ACP Portal. Returns structured findings.',
   instruction: INFRA_MONITOR_SYSTEM_PROMPT,
   tools: [
