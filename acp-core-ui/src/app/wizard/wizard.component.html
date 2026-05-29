@@ -49,11 +49,14 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Infrastructure Name</label>
-                        <input type="text" class="usa-input" (change)="onZoneNameChange($event)" [value]="zoneName"
-                            placeholder="e.g. my-prod-vpc">
+                        <input type="text" class="usa-input" (input)="onZoneNameInput($event)" [value]="zoneName"
+                            placeholder="e.g. my-prod-vpc" [style.border]="zoneNameInvalid ? '2px solid red' : ''">
+                        <div *ngIf="zoneNameInvalid" style="color: red; font-size: 12px; margin-top: 5px;">
+                            {{ zoneNameErrorMsg }}
+                        </div>
                     </div>
                 </div>
-
+                
             </div>
         </div>
 

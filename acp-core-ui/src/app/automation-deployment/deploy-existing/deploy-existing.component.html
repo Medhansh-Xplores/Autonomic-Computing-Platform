@@ -164,6 +164,115 @@
             </div>
         </div>
 
+        <!-- ACP Azure: Shared Account + Region (all Azure ACP flows) -->
+        <div *ngIf="isAnyAzureAcpFlow()" class="form-panel">
+            <div class="form-panel-header">Azure Account & Region</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Azure Account (Subscription)</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="azureAccount"
+                            [disabled]="loadingAzureAccounts || !azureAccountOptions.length"
+                            (ngModelChange)="loadAzureRegions()">
+                            <option value="">
+                                {{ loadingAzureAccounts ? 'Loading accounts...' :
+                                 (azureAccountOptions.length ? 'Select Azure Account' : 'No Azure accounts available') }}
+                            </option>
+                            <option *ngFor="let acc of azureAccountOptions" [value]="acc.accountId">
+                                {{ acc.accountName }} ({{ acc.accountId }})
+                            </option>
+                        </select>
+                        <div *ngIf="loadingAzureAccounts" class="small-spinner"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Location (Region)</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="region"
+                            [disabled]="loadingAzureRegions || !azureAccount"
+                            (ngModelChange)="loadContainerAppEnvironments(); loadAksClusters(); loadAppServicePlans()">
+                            <option value="">
+                                {{ loadingAzureRegions ? 'Loading regions...' : (azureAccount ? 'Select Region' : 'Select account first') }}
+                            </option>
+                            <option *ngFor="let r of azureRegionOptions" [value]="r">{{ r }}</option>
+                        </select>
+                        <div *ngIf="loadingAzureRegions" class="small-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACP Azure Container Apps: Environment picker -->
+        <div *ngIf="isAcpAzureContainerAppsFlow()" class="form-panel">
+            <div class="form-panel-header">Container App Environment</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Container App Environment</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="selectedContainerAppEnvironment"
+                            [disabled]="loadingContainerAppEnvironments || !region">
+                            <option value="">
+                                {{ loadingContainerAppEnvironments ? 'Loading environments...' :
+                                   (region ? (containerAppEnvironments.length ? 'Select Environment' : 'No environments found') : 'Select region first') }}
+                            </option>
+                            <option *ngFor="let env of containerAppEnvironments" [value]="env.name">
+                                {{ env.name }} ({{ env.resourceGroup }})
+                            </option>
+                        </select>
+                        <div *ngIf="loadingContainerAppEnvironments" class="small-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACP Azure AKS: Cluster picker -->
+        <div *ngIf="isAcpAzureAksFlow()" class="form-panel">
+            <div class="form-panel-header">AKS Cluster</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">AKS Cluster</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="selectedAksCluster"
+                            [disabled]="loadingAksClusters || !region"
+                            (ngModelChange)="onAksClusterChange()">
+                            <option value="">
+                                {{ loadingAksClusters ? 'Loading AKS clusters...' :
+                                   (region ? (aksClusters.length ? 'Select AKS Cluster' : 'No clusters found') : 'Select region first') }}
+                            </option>
+                            <option *ngFor="let c of aksClusters" [value]="c.name">
+                                {{ c.name }} ({{ c.resourceGroup }})
+                            </option>
+                        </select>
+                        <div *ngIf="loadingAksClusters" class="small-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACP Azure App Service: Plan picker -->
+        <div *ngIf="isAcpAzureAppServiceFlow()" class="form-panel">
+            <div class="form-panel-header">App Service Plan</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">App Service Plan</label>
+                    <div class="dropdown-with-loader">
+                        <select class="usa-select" [(ngModel)]="selectedAppServicePlan"
+                            [disabled]="loadingAppServicePlans || !region">
+                            <option value="">
+                                {{ loadingAppServicePlans ? 'Loading plans...' :
+                                   (region ? (appServicePlans.length ? 'Select App Service Plan' : 'No plans found') : 'Select region first') }}
+                            </option>
+                            <option *ngFor="let p of appServicePlans" [value]="p.name">
+                                {{ p.name }} ({{ p.sku }}) — {{ p.resourceGroup }}
+                            </option>
+                        </select>
+                        <div *ngIf="loadingAppServicePlans" class="small-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- GitHub non-ACP: Deployment Details -->
         <div *ngIf="source === 'GitHub' && !isAcpAwsEcsFlow()" class="form-panel">
             <div class="form-panel-header">Deployment Details</div>
@@ -345,6 +454,60 @@
             </div>
         </div>
 
+        <!-- ACP Azure: GitHub Details (all Azure ACP flows) -->
+        <div *ngIf="isAnyAzureAcpFlow()" class="form-panel">
+            <div class="form-panel-header">GitHub Details</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Application Repository URL</label>
+                    <input type="text" class="usa-input" [(ngModel)]="repoUrl"
+                        placeholder="https://github.com/org/repo  or  .../tree/main/subfolder">
+                    <div class="field-hint">Paste a full repo URL or a /tree/branch/subfolder URL — branch and paths are detected automatically.</div>
+                </div>
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Frontend Codebase Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="frontendPath"
+                            placeholder="frontend (subfolder with Dockerfile)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Backend Codebase Path</label>
+                        <input type="text" class="usa-input" [(ngModel)]="backendPath"
+                            placeholder="backend (subfolder with Dockerfile)">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ACP Azure: Repository Access -->
+        <div *ngIf="isAnyAzureAcpFlow()" class="form-panel">
+            <div class="form-panel-header">Repository Access</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">Repository Type</label>
+                    <label class="radio-option">
+                        <input type="radio" name="azureRepoType" (change)="azureRepoType='public'">
+                        Public Repository
+                    </label>
+                    <label class="radio-option">
+                        <input type="radio" name="azureRepoType" (change)="azureRepoType='private'">
+                        Private Repository
+                    </label>
+                </div>
+            </div>
+        </div>
+        <!-- ACP Azure: GitHub Token (Azure private repos) -->
+        <div *ngIf="isAnyAzureAcpFlow()" class="form-panel">
+            <div class="form-panel-header">Authentication</div>
+            <div class="form-panel-body">
+                <div class="form-group">
+                    <label class="form-label">GitHub Token <span style="color:red">*</span></label>
+                    <input type="password" class="usa-input" [(ngModel)]="githubToken"
+                        placeholder="GitHub Personal Access Token (repo + workflow scopes)">
+                    <div *ngIf="azureRepoType === 'public'" class="field-hint">Required to commit the workflow file to your repository.</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Non-ACP: Loading workflows -->
         <div *ngIf="loadingWorkflows && !isAcpAwsEcsFlow()" class="form-panel">
             <div class="form-panel-body">
@@ -445,13 +608,12 @@
                         <input type="text" class="usa-input" [(ngModel)]="healthCheckPath" placeholder="/health">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">API Path</label>
+                        <label class="form-label">API Path Prefix</label>
                         <input type="text" class="usa-input" [(ngModel)]="apiPath" placeholder="/api/*">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Listener Priority</label>
                     <input type="number" class="usa-input" [(ngModel)]="priority" [class.is-invalid]="isPriorityTaken()"
                         placeholder="100">
                     <div *ngIf="takenPriorities.length > 0" class="field-hint">
@@ -469,7 +631,7 @@
         </div>
 
         <!-- Non-ACP: App & compute config -->
-        <div *ngIf="!isAcpAwsEcsFlow()" class="form-panel">
+        <div *ngIf="!isAcpAwsEcsFlow() && !isAnyAzureAcpFlow()" class="form-panel">
             <div class="form-panel-header">Application Configuration</div>
             <div class="form-panel-body">
 
@@ -583,6 +745,46 @@
                     <tr *ngIf="isAcpAwsEcsFlow()">
                         <td>Backend Path</td>
                         <td>{{backendPath}}</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow()">
+                        <td>Azure Account</td>
+                        <td>{{azureAccount}}</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow()">
+                        <td>Region</td>
+                        <td>{{region}}</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow()">
+                        <td>Repository</td>
+                        <td>{{repoUrl}} ({{branch}})</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow()">
+                        <td>Frontend Path</td>
+                        <td>{{frontendPath}}</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow()">
+                        <td>Backend Path</td>
+                        <td>{{backendPath}}</td>
+                    </tr>
+                    <tr *ngIf="isAnyAzureAcpFlow() && acrName">
+                        <td>ACR Name</td>
+                        <td>{{acrName}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAzureContainerAppsFlow() && selectedContainerAppEnvironment">
+                        <td>Container App Environment</td>
+                        <td>{{selectedContainerAppEnvironment}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAzureAksFlow() && selectedAksCluster">
+                        <td>AKS Cluster</td>
+                        <td>{{selectedAksCluster}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAzureAksFlow()">
+                        <td>Namespace</td>
+                        <td>{{azureNamespace || 'default'}}</td>
+                    </tr>
+                    <tr *ngIf="isAcpAzureAppServiceFlow() && selectedAppServicePlan">
+                        <td>App Service Plan</td>
+                        <td>{{selectedAppServicePlan}}</td>
                     </tr>
                 </table>
             </div>

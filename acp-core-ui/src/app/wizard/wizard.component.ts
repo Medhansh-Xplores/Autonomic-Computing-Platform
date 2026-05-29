@@ -27,6 +27,8 @@ export class WizardComponent implements OnInit, AfterViewInit {
   region!: string;
   landingZone!: string;
   zoneName = '';
+  zoneNameInvalid = false;
+  zoneNameErrorMsg = '';
   blueprintID!: string;
   blueprintDescription!: string;
   VPCname = '';
@@ -311,6 +313,11 @@ export class WizardComponent implements OnInit, AfterViewInit {
           alert("Please fill all required fields");
           return;
         }
+
+        if (this.zoneNameInvalid) {
+          alert("Please provide a valid Infrastructure Name.");
+          return;
+        }
       }
 
       // SECOND PAGE VALIDATION
@@ -494,9 +501,66 @@ export class WizardComponent implements OnInit, AfterViewInit {
     //alert(this.platformType)
   }
 
-  onZoneNameChange(e: any) {
+  validateZoneName() {
+    if (!this.zoneName) {
+      this.zoneNameInvalid = false;
+      this.zoneNameErrorMsg = '';
+      return;
+    }
+
+    let regex: RegExp;
+    let errorMsg: string;
+
+    switch (this.blueprintID) {
+      case 'aws-vpc':
+      case 'aws-eks-fargate':
+      case 'aws-ecs':
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$/;
+        errorMsg = 'AWS names must start with a letter/number, contain alphanumeric/hyphens/underscores, and be up to 100 chars.';
+        break;
+      case 'aws-rds':
+        regex = /^[a-zA-Z](?:(?!.*--)[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+        errorMsg = 'AWS RDS names must start with a letter, end with alphanumeric, contain up to 63 chars, and have no consecutive hyphens.';
+        break;
+      case 'azure-vpc':
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$/;
+        errorMsg = 'Azure VNet names must be 2-80 chars, start with alphanumeric, and end with alphanumeric/underscore.';
+        break;
+      case 'azure-container-apps':
+        regex = /^[a-z](?!.*--)[a-z0-9-]{0,30}[a-z0-9]$/;
+        errorMsg = 'Azure Container App names must be 2-32 chars, lowercase, start with letter, and have no consecutive hyphens.';
+        break;
+      case 'azure-db':
+        regex = /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/;
+        errorMsg = 'Azure DB names must be 3-63 chars, lowercase, and cannot start or end with a hyphen.';
+        break;
+      case 'azure-aks':
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9]$/;
+        errorMsg = 'Azure AKS names must be 1-63 chars, start and end with alphanumeric.';
+        break;
+      case 'gcp-vpc':
+        regex = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+        errorMsg = 'GCP VPC names must be 1-63 chars, lowercase, start with a letter, and end with letter/number.';
+        break;
+      default:
+        regex = /^[a-zA-Z0-9-]+$/;
+        errorMsg = 'Name can only contain letters, numbers, and hyphens.';
+        break;
+    }
+
+    if (!regex.test(this.zoneName)) {
+      this.zoneNameInvalid = true;
+      this.zoneNameErrorMsg = errorMsg;
+    } else {
+      this.zoneNameInvalid = false;
+      this.zoneNameErrorMsg = '';
+    }
+  }
+
+  onZoneNameInput(e: any) {
     this.zoneName = e.target.value;
     this.VPCname = this.zoneName;
+    this.validateZoneName();
   }
 
   onVPCNameChange(e: any) {
@@ -596,6 +660,9 @@ export class WizardComponent implements OnInit, AfterViewInit {
 
   onBlueprintChange(e: any) {
     this.blueprintID = e.target.value;
+    if (this.zoneName) {
+      this.validateZoneName();
+    }
   }
 
   validateCIDR(cidr: string): boolean {

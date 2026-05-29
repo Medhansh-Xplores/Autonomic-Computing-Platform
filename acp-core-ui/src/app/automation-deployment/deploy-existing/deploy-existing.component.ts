@@ -9,6 +9,28 @@ import { Router } from '@angular/router';
     styleUrls: ['./deploy-existing.component.css']
 })
 export class DeployExistingComponent implements OnInit {
+    // Azure resource pickers
+    azureRegionOptions: string[] = [];
+    loadingAzureRegions = false;
+    containerAppEnvironments: any[] = [];
+    loadingContainerAppEnvironments = false;
+    selectedContainerAppEnvironment: string = '';
+    aksClusters: any[] = [];
+    loadingAksClusters = false;
+    selectedAksCluster: string = '';
+    selectedAksResourceGroup: string = '';
+    appServicePlans: any[] = [];
+    loadingAppServicePlans = false;
+    selectedAppServicePlan: string = '';
+    azureRepoType: string = 'public';
+    azureNamespace: string = 'default';
+    azureAccountOptions: any[] = [];
+    azureAccount: any;
+    loadingAzureAccounts = false;
+    containerAppName: any;
+    acrName: any;
+    azurePort: any = '80';
+
 
     constructor(
         private http: HttpClient,
@@ -91,7 +113,68 @@ export class DeployExistingComponent implements OnInit {
             && this.deployment === 'ECS Fargate';
     }
 
-    nextPage() {
+    
+    isAcpAzureContainerAppsFlow(): boolean {
+        return this.source === 'GitHub' && this.deploymentMode === 'acp' && this.cloud === 'Azure' && this.deployment === 'Container Apps';
+    }
+    isAcpAzureAppServiceFlow(): boolean {
+        return this.source === 'GitHub' && this.deploymentMode === 'acp' && this.cloud === 'Azure' && this.deployment === 'App Service';
+    }
+    isAcpAzureAksFlow(): boolean {
+        return this.source === 'GitHub' && this.deploymentMode === 'acp' && this.cloud === 'Azure' && this.deployment === 'AKS';
+    }
+    isAnyAzureAcpFlow(): boolean {
+        return this.isAcpAzureContainerAppsFlow() || this.isAcpAzureAppServiceFlow() || this.isAcpAzureAksFlow();
+    }
+    loadAzureAccounts() {
+        this.loadingAzureAccounts = true;
+        this.http.get(this.apiBase + 'azure/accounts').subscribe({
+            next: (res: any) => { this.azureAccountOptions = res || []; this.loadingAzureAccounts = false; },
+            error: (err) => { console.error(err); this.loadingAzureAccounts = false; }
+        });
+    }
+    loadAzureRegions() {
+        this.azureRegionOptions = []; this.containerAppEnvironments = []; this.aksClusters = []; this.appServicePlans = [];
+        this.selectedContainerAppEnvironment = ''; this.selectedAksCluster = ''; this.selectedAppServicePlan = '';
+        this.region = null; this.loadingAzureRegions = true;
+        this.http.get(this.apiBase + 'azure/regions').subscribe({
+            next: (res: any) => { this.azureRegionOptions = res; this.loadingAzureRegions = false; },
+            error: (err) => { console.error(err); this.loadingAzureRegions = false; }
+        });
+    }
+    loadContainerAppEnvironments() {
+        if (!this.azureAccount || !this.region) return;
+        this.selectedContainerAppEnvironment = ''; this.containerAppEnvironments = []; this.loadingContainerAppEnvironments = true;
+        this.http.get(this.apiBase + 'azure/container-app-environments?account=' + this.azureAccount + '&region=' + this.region).subscribe({
+            next: (res: any) => { this.containerAppEnvironments = res; this.loadingContainerAppEnvironments = false; },
+            error: (err) => { console.error(err); this.loadingContainerAppEnvironments = false; }
+        });
+    }
+    loadAksClusters() {
+        if (!this.azureAccount || !this.region) return;
+        this.selectedAksCluster = ''; this.aksClusters = []; this.loadingAksClusters = true;
+        this.http.get(this.apiBase + 'azure/aks-clusters?account=' + this.azureAccount + '&region=' + this.region).subscribe({
+            next: (res: any) => { this.aksClusters = res; this.loadingAksClusters = false; },
+            error: (err) => { console.error(err); this.loadingAksClusters = false; }
+        });
+    }
+    onAksClusterChange() {
+        const selected = this.aksClusters.find(c => c.name === this.selectedAksCluster);
+        if (selected) {
+            this.selectedAksResourceGroup = selected.resourceGroup;
+        } else {
+            this.selectedAksResourceGroup = '';
+        }
+    }
+    loadAppServicePlans() {
+        if (!this.azureAccount || !this.region) return;
+        this.selectedAppServicePlan = ''; this.appServicePlans = []; this.loadingAppServicePlans = true;
+        this.http.get(this.apiBase + 'azure/app-service-plans?account=' + this.azureAccount + '&region=' + this.region).subscribe({
+            next: (res: any) => { this.appServicePlans = res; this.loadingAppServicePlans = false; },
+            error: (err) => { console.error(err); this.loadingAppServicePlans = false; }
+        });
+    }
+nextPage() {
 
         // Page 1
         if (this.divToShow === 1) {
@@ -164,7 +247,59 @@ export class DeployExistingComponent implements OnInit {
             }
         }
 
-        // Page 2 → Load workflows (Repository YAML flow)
+        
+        if (this.isAcpAzureContainerAppsFlow()) {
+            if (this.divToShow === 2) {
+                if (!this.azureAccount || !this.region || !this.selectedContainerAppEnvironment) { alert('Please select Account, Region and Environment'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 3) {
+                if (!this.repoUrl) { alert('Please fill GitHub Repository URL'); return; }
+                if (this.azureRepoType === 'private' && !this.githubToken) { alert('Please provide GitHub token for private repo'); return; }
+                if (!this.githubToken) { alert('Please provide GitHub token'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 4) {
+                if (!this.appName) { alert('Please fill Application Name'); return; }
+                if (this.acrName && (this.acrNameAvailable === false || !/^[a-zA-Z0-9]{3,24}$/.test(this.acrName))) { alert('Invalid ACR Name'); return; }
+                this.divToShow++; return;
+            }
+        }
+        if (this.isAcpAzureAksFlow()) {
+            if (this.divToShow === 2) {
+                if (!this.azureAccount || !this.region || !this.selectedAksCluster) { alert('Please select Account, Region and AKS Cluster'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 3) {
+                if (!this.repoUrl) { alert('Please fill GitHub Repository URL'); return; }
+                if (this.azureRepoType === 'private' && !this.githubToken) { alert('Please provide GitHub token for private repo'); return; }
+                if (!this.githubToken) { alert('Please provide GitHub token'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 4) {
+                if (!this.appName) { alert('Please fill Application Name'); return; }
+                if (this.acrName && (this.acrNameAvailable === false || !/^[a-zA-Z0-9]{3,24}$/.test(this.acrName))) { alert('Invalid ACR Name'); return; }
+                this.divToShow++; return;
+            }
+        }
+        if (this.isAcpAzureAppServiceFlow()) {
+            if (this.divToShow === 2) {
+                if (!this.azureAccount || !this.region || !this.selectedAppServicePlan) { alert('Please select Account, Region and App Service Plan'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 3) {
+                if (!this.repoUrl) { alert('Please fill GitHub Repository URL'); return; }
+                if (this.azureRepoType === 'private' && !this.githubToken) { alert('Please provide GitHub token for private repo'); return; }
+                if (!this.githubToken) { alert('Please provide GitHub token'); return; }
+                this.divToShow++; return;
+            }
+            if (this.divToShow === 4) {
+                if (!this.appName) { alert('Please fill Application Name'); return; }
+                if (this.acrName && (this.acrNameAvailable === false || !/^[a-zA-Z0-9]{3,24}$/.test(this.acrName))) { alert('Invalid ACR Name'); return; }
+                this.divToShow++; return;
+            }
+        }
+// Page 2 → Load workflows (Repository YAML flow)
         if (this.divToShow === 2 && this.source === 'GitHub') {
 
             if (!this.repoUrl || !this.branch) {
@@ -271,11 +406,16 @@ export class DeployExistingComponent implements OnInit {
         }
 
         if (val === 'Azure') {
-            this.deploymentOptions = [
-                'Container Apps',
-                'AKS',
-                'App Service'
-            ];
+            this.deploymentOptions = ['Container Apps', 'AKS', 'App Service'];
+            this.loadAzureAccounts();
+            this.region = null;
+            this.azureRegionOptions = [];
+            this.containerAppEnvironments = [];
+            this.aksClusters = [];
+            this.appServicePlans = [];
+            this.selectedContainerAppEnvironment = '';
+            this.selectedAksCluster = '';
+            this.selectedAppServicePlan = '';
         }
 
         if (val === 'GCP') {
@@ -293,6 +433,82 @@ export class DeployExistingComponent implements OnInit {
     }
 
     deploy() {
+        const _azureTreeMatch = (this.repoUrl || '').match(/^(https:\/\/github\.com\/[^\/]+\/[^\/]+)\/tree\/([^\/]+)\/(.+)$/);
+        const _azureBaseRepoUrl  = _azureTreeMatch ? _azureTreeMatch[1] : this.repoUrl;
+        const _azureResolvedBranch = _azureTreeMatch ? _azureTreeMatch[2] : (this.branch || 'main');
+        const _azureAppSubfolder   = _azureTreeMatch ? _azureTreeMatch[3] : '';
+        const _azureResolvedFrontendPath = _azureAppSubfolder ? _azureAppSubfolder + '/' + (this.frontendPath || 'frontend') : (this.frontendPath || 'frontend');
+        const _azureResolvedBackendPath = _azureAppSubfolder ? _azureAppSubfolder + '/' + (this.backendPath || 'backend') : (this.backendPath || 'backend');
+
+        if (this.isAcpAzureAksFlow()) {
+            this.loading = true;
+            const safeAppName = (this.appName || 'app').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const workflowName = 'deploy-' + safeAppName + '-aks.yml';
+            const payload = {
+                repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken,
+                frontendPath: _azureResolvedFrontendPath, backendPath: _azureResolvedBackendPath,
+                account: this.azureAccount, acrName: this.acrName, appName: this.appName,
+                aksCluster: this.selectedAksCluster, aksResourceGroup: this.selectedAksResourceGroup,
+                region: this.region, port: this.azurePort, namespace: this.azureNamespace
+            };
+            this.http.post(this.apiBase + 'github/deploy-azure-aks', payload).subscribe({
+                next: (res: any) => {
+                    this.loading = false;
+                    this.router.navigate(['/automation-logs'], {
+                        state: res.provisioning ? { phase: 'provisioning', appName: this.appName, repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken, cloud: 'Azure', workflow: workflowName, deploymentMode: 'acp' } : { phase: 'github', repoUrl: _azureBaseRepoUrl, workflow: workflowName, branch: _azureResolvedBranch, token: this.githubToken, deploymentId: res.deploymentId, runId: res.runId, appName: this.appName, cloud: 'Azure' }
+                    });
+                },
+                error: (err: any) => { this.loading = false; alert('Deployment failed'); }
+            });
+            return;
+        }
+
+        if (this.isAcpAzureAppServiceFlow()) {
+            this.loading = true;
+            const safeAppName = (this.appName || 'app').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const workflowName = 'deploy-' + safeAppName + '.yml';
+            const payload = {
+                repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken,
+                frontendPath: _azureResolvedFrontendPath, backendPath: _azureResolvedBackendPath,
+                account: this.azureAccount, acrName: this.acrName, appName: this.appName,
+                appServiceName: this.containerAppName || safeAppName, appServicePlan: this.selectedAppServicePlan,
+                region: this.region, port: this.azurePort
+            };
+            this.http.post(this.apiBase + 'github/deploy-azure-app-service', payload).subscribe({
+                next: (res: any) => {
+                    this.loading = false;
+                    this.router.navigate(['/automation-logs'], {
+                        state: res.provisioning ? { phase: 'provisioning', appName: this.appName, repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken, cloud: 'Azure', workflow: workflowName, deploymentMode: 'acp' } : { phase: 'github', repoUrl: _azureBaseRepoUrl, workflow: workflowName, branch: _azureResolvedBranch, token: this.githubToken, deploymentId: res.deploymentId, runId: res.runId, appName: this.appName, cloud: 'Azure' }
+                    });
+                },
+                error: (err: any) => { this.loading = false; alert('Deployment failed'); }
+            });
+            return;
+        }
+
+        if (this.isAcpAzureContainerAppsFlow()) {
+            this.loading = true;
+            const safeAppName = (this.appName || 'app').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            const workflowName = 'deploy-' + safeAppName + '.yml';
+            const payload = {
+                repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken,
+                frontendPath: _azureResolvedFrontendPath, backendPath: _azureResolvedBackendPath,
+                account: this.azureAccount, acrName: this.acrName, appName: this.appName,
+                containerAppName: this.containerAppName || safeAppName, containerAppEnvironment: this.selectedContainerAppEnvironment,
+                region: this.region, port: this.azurePort, cpu: this.cpu, memory: this.memory, frontendBasePath: this.frontendBasePath
+            };
+            this.http.post(this.apiBase + 'github/deploy-azure-container-apps', payload).subscribe({
+                next: (res: any) => {
+                    this.loading = false;
+                    this.router.navigate(['/automation-logs'], {
+                        state: res.provisioning ? { phase: 'provisioning', appName: this.appName, repoUrl: _azureBaseRepoUrl, branch: _azureResolvedBranch, token: this.githubToken, cloud: 'Azure', workflow: workflowName, deploymentMode: 'acp' } : { phase: 'github', repoUrl: _azureBaseRepoUrl, workflow: workflowName, branch: _azureResolvedBranch, token: this.githubToken, deploymentId: res.deploymentId, runId: res.runId, appName: this.appName, cloud: 'Azure' }
+                    });
+                },
+                error: (err: any) => { this.loading = false; alert('Deployment failed'); }
+            });
+            return;
+        }
+
         if (this.isAcpAwsEcsFlow()) {
             this.loading = true;
 
@@ -601,4 +817,24 @@ export class DeployExistingComponent implements OnInit {
         return this.takenPriorities.find(r => r.priority === +this.priority)?.path || '';
     }
 
+
+    checkingAcrName = false;
+    acrNameAvailable: boolean | null = null;
+    acrNameError: string | null = null;
+    acrNameTimeout: any;
+    onAcrNameChange() {
+        this.acrNameAvailable = null;
+        this.acrNameError = null;
+        if (!this.acrName) return;
+        if (this.acrNameTimeout) clearTimeout(this.acrNameTimeout);
+        this.acrNameTimeout = setTimeout(() => { this.checkAcrNameAvailability(); }, 500);
+    }
+    checkAcrNameAvailability() {
+        if (!this.acrName || !this.azureAccount) return;
+        this.checkingAcrName = true;
+        this.http.get(`${this.apiBase}github/check-acr-name?account=${this.azureAccount}&name=${this.acrName}`).subscribe({
+            next: (res: any) => { this.checkingAcrName = false; this.acrNameAvailable = res.nameAvailable; if (!res.nameAvailable) this.acrNameError = res.message || 'Already in use.'; },
+            error: (err) => { this.checkingAcrName = false; console.error(err); }
+        });
+    }
 }

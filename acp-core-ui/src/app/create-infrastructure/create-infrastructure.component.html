@@ -94,8 +94,11 @@
               <div class="name">
                 <h2>Infrastructure Name</h2>
                 <input id="name" name="name" type="text" placeholder="sampleName1"
-                  (change)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
-                  [style.border]="hasErrors == true && validateNoSpecialCharacters(obj.name) == false ? '2px solid red' : '1px solid gray'">
+                  (input)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
+                  [style.border]="(hasErrors == true && validateNoSpecialCharacters(obj.name) == false) || nameInvalid ? '2px solid red' : '1px solid gray'">
+                <div *ngIf="nameInvalid" style="color: red; font-size: 12px; margin-top: 5px;">
+                  {{ nameErrorMsg }}
+                </div>
               </div>
 
               <div class="portfolio">
@@ -221,8 +224,11 @@
               <div class="name">
                 <h2>Infrastructure Name:</h2>
                 <input id="name" name="name" type="text" placeholder="sampleName1"
-                  (change)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
-                  [style.border]="hasErrors == true && validateNoSpecialCharacters(obj.name) == false ? '2px solid red' : '1px solid gray'">
+                  (input)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
+                  [style.border]="(hasErrors == true && validateNoSpecialCharacters(obj.name) == false) || nameInvalid ? '2px solid red' : '1px solid gray'">
+                <div *ngIf="nameInvalid" style="color: red; font-size: 12px; margin-top: 5px;">
+                  {{ nameErrorMsg }}
+                </div>
               </div>
 
               <div class="empty">
@@ -281,9 +287,12 @@
             <div class="row1">
               <div class="name">
                 <h2>Infrastructure Name:</h2>
-                <select id="landingZoneAzure" (change)="selectLandingZone($event, 'Azure')" name="landingZoneAzure">
-                  <option *ngFor="let l of landingZones; let i = index" id="{{i}}-{{l}}" value={{l}}>{{l}}</option>
-                </select>
+                <input id="name" name="name" type="text" placeholder="sampleName1"
+                  (input)="selectInfrastructureName($event)" value="" (ngModel)="obj.name" maxlength="16"
+                  [style.border]="(hasErrors == true && validateNoSpecialCharacters(obj.name) == false) || nameInvalid ? '2px solid red' : '1px solid gray'">
+                <div *ngIf="nameInvalid" style="color: red; font-size: 12px; margin-top: 5px;">
+                  {{ nameErrorMsg }}
+                </div>
               </div>
 
               <div class="created-by">

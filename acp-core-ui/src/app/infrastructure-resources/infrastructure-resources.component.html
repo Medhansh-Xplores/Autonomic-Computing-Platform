@@ -33,7 +33,8 @@
         (click)="openDeployment(d)">
         <div class="cloud">
           <div class="cloud-badge" [ngClass]="getCloudName(d).toLowerCase()">
-            {{ getCloudName(d) }}
+            <img *ngIf="getCloudName(d) === 'Azure'" src="assets/img/azure-transparent-logo.png" alt="Azure" style="height: 16px;">
+            <ng-container *ngIf="getCloudName(d) !== 'Azure'">{{ getCloudName(d) }}</ng-container>
           </div>
         </div>
         <div>{{ d.name }}</div>

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const awsController = require("../controllers/aws.controller");
+const azureController = require("../controllers/azure.controller");
 const db = require('../config/db');
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -37,5 +38,12 @@ router.get("/aws/ecs-clusters", authMiddleware, awsController.getAwsEcsClusters)
 router.get("/aws/rds-instances", authMiddleware, awsController.getAwsRdsInstances);
 
 router.get("/aws/accounts", authMiddleware, awsController.getAwsAccounts);
+
+// ── Azure resource listing ──────────────────────────────────────────────
+router.get("/azure/accounts", authMiddleware, azureController.getAzureAccounts);
+router.get("/azure/regions", authMiddleware, azureController.getAzureRegions);
+router.get("/azure/container-app-environments", authMiddleware, azureController.getContainerAppEnvironments);
+router.get("/azure/aks-clusters", authMiddleware, azureController.getAksClusters);
+router.get("/azure/app-service-plans", authMiddleware, azureController.getAppServicePlans);
 
 module.exports = router;

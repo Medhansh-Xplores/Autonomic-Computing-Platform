@@ -734,7 +734,7 @@ function azureEnv(creds) {
   return {
     ARM_SUBSCRIPTION_ID: creds.subscription_id,
     ARM_TENANT_ID: creds.tenant_id,
-    ARM_CLIENT_ID: creds.client_id,
+            ARM_CLIENT_ID: creds.client_id,
     ARM_CLIENT_SECRET: creds.client_secret
   };
 }
@@ -743,69 +743,78 @@ function writeTfvars(deploymentPath, tfvars) {
   fs.writeFileSync(path.join(deploymentPath, "terraform.tfvars"), tfvars);
 }
 
+exports.runAzureTerraformDeployment = runAzureTerraformDeployment;
 function runAzureTerraformDeployment({ data, creds, templateName, typeName, deploymentName, tfvars, metadata }) {
-  logs = [];
+  return new Promise((resolve, reject) => {
+    logs = [];
 
-  const templatePath = path.join(__dirname, `../../terraform/templates/${templateName}`);
-  const deploymentPath = path.join(__dirname, `../../terraform/deployments/${templateName}/${deploymentName}`);
+    const templatePath = path.join(__dirname, `../../terraform/templates/${templateName}`);
+    const deploymentPath = path.join(__dirname, `../../terraform/deployments/${templateName}/${deploymentName}`);
 
-  fs.mkdirSync(deploymentPath, { recursive: true });
-  fs.cpSync(templatePath, deploymentPath, { recursive: true });
+    fs.mkdirSync(deploymentPath, { recursive: true });
+    fs.cpSync(templatePath, deploymentPath, { recursive: true });
 
-  fs.writeFileSync(
-    path.join(deploymentPath, "metadata.json"),
-    JSON.stringify(metadata, null, 2)
-  );
+    fs.writeFileSync(
+      path.join(deploymentPath, "metadata.json"),
+      JSON.stringify(metadata, null, 2)
+    );
 
-  writeTfvars(deploymentPath, tfvars);
+    writeTfvars(deploymentPath, tfvars);
 
-  const command = `terraform init && terraform apply -auto-approve`;
+    const command = `terraform init && terraform apply -auto-approve`;
 
-  let child;
-  try {
-    child = exec(command, {
-      cwd: deploymentPath,
-      env: {
-        ...process.env,
-        ...azureEnv(creds)
-      }
-    });
-  } catch (error) {
-    console.error(`${typeName} Exec Error:`, error);
-    throw error;
-  }
-
-  child.stdout.on("data", (chunk) => { logs.push(chunk.toString()); console.log(chunk.toString()); });
-  child.stderr.on("data", (chunk) => { logs.push(chunk.toString()); console.error(chunk.toString()); });
-
-  child.on("close", async (code) => {
-    const metadataPath = path.join(deploymentPath, "metadata.json");
-
-    if (fs.existsSync(metadataPath)) {
-      const nextMetadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
-
-      nextMetadata.status = code === 0 ? "Active" : "Failed";
-
-      if (code === 0) {
-        try {
-          const { execSync } = require("child_process");
-          const outputs = JSON.parse(
-            execSync("terraform output -json", { cwd: deploymentPath }).toString()
-          );
-
-          nextMetadata.outputs = Object.fromEntries(
-            Object.entries(outputs).map(([key, output]) => [key, output.value])
-          );
-        } catch (e) {
-          console.error(`Could not capture ${typeName} outputs:`, e.message);
+    let child;
+    try {
+      child = exec(command, {
+        cwd: deploymentPath,
+        env: {
+          ...process.env,
+          ...azureEnv(creds)
         }
-      }
-
-      fs.writeFileSync(metadataPath, JSON.stringify(nextMetadata, null, 2));
-      await saveInfraMetadata(nextMetadata);
+      });
+    } catch (error) {
+      console.error(`${typeName} Exec Error:`, error);
+      reject(error);
+      throw error;
     }
 
-    logs.push(code === 0 ? "INFRA_CREATED" : "INFRA_FAILED");
+    child.stdout.on("data", (chunk) => { logs.push(chunk.toString()); console.log(chunk.toString()); });
+    child.stderr.on("data", (chunk) => { logs.push(chunk.toString()); console.error(chunk.toString()); });
+
+    child.on("close", async (code) => {
+      const metadataPath = path.join(deploymentPath, "metadata.json");
+
+      if (fs.existsSync(metadataPath)) {
+        const nextMetadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+
+        nextMetadata.status = code === 0 ? "Active" : "Failed";
+
+        if (code === 0) {
+          try {
+            const { execSync } = require("child_process");
+            const outputs = JSON.parse(
+              execSync("terraform output -json", { cwd: deploymentPath }).toString()
+            );
+
+            nextMetadata.outputs = Object.fromEntries(
+              Object.entries(outputs).map(([key, output]) => [key, output.value])
+            );
+          } catch (e) {
+            console.error(`Could not capture ${typeName} outputs:`, e.message);
+          }
+        }
+
+        fs.writeFileSync(metadataPath, JSON.stringify(nextMetadata, null, 2));
+        await saveInfraMetadata(nextMetadata);
+      }
+
+      logs.push(code === 0 ? "INFRA_CREATED" : "INFRA_FAILED");
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Terraform ${typeName} deployment failed with code ${code}`));
+      }
+    });
   });
 }
 
@@ -967,7 +976,7 @@ exports.createAzureVPC = (data, creds, userID) => {
   const resourceGroupName = `rg-${deploymentName}`;
   const subnetCidr = data.subnetCidr || data.subnet_cidr || "10.0.1.0/24";
 
-  runAzureTerraformDeployment({
+  return runAzureTerraformDeployment({
     data,
     creds,
     templateName: "azure-vnet",
@@ -1019,7 +1028,7 @@ exports.createAzureContainerApps = (data, creds, userID) => {
   const resourceGroupName = `rg-${deploymentName}`;
   const environmentName = data.containerAppEnvironmentName || `${deploymentName}-env`;
 
-  runAzureTerraformDeployment({
+  return runAzureTerraformDeployment({
     data,
     creds,
     templateName: "azure-container-apps",
@@ -1078,7 +1087,7 @@ exports.deployAzureDB = (data, creds, userID) => {
   const resourceGroupName = `rg-${deploymentName}`;
   const dbEngine = data.dbEngine || "postgres";
 
-  runAzureTerraformDeployment({
+  return runAzureTerraformDeployment({
     data,
     creds,
     templateName: "azure-db",
@@ -1131,7 +1140,7 @@ exports.createAzureAKS = (data, creds, userID) => {
   const resourceGroupName = `rg-${deploymentName}`;
   const dnsPrefix = `${deploymentName}`.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
-  runAzureTerraformDeployment({
+  return runAzureTerraformDeployment({
     data,
     creds,
     templateName: "azure-aks",
@@ -1164,6 +1173,109 @@ tags = {
       clusterName: data.clusterName,
       nodeCount: data.nodeCount || 1,
       vmSize: data.vmSize || "Standard_B2s"
+    }
+  });
+};
+
+/* ============================================================
+   Azure - App Service
+   ============================================================ */
+exports.createAzureAppService = (data, creds, userID) => {
+  const appServiceName = data.appServiceName;
+
+  if (!data.accountID || !data.region || !appServiceName || !data.zoneName) {
+    throw new Error("Missing required Azure App Service parameters");
+  }
+
+  const { v4: uuidv4 } = require('uuid');
+  const deploymentName = appServiceName;
+  const resourceGroupName = `rg-${deploymentName}`;
+  const planName = data.appServicePlanName || `${deploymentName}-plan`;
+
+  return runAzureTerraformDeployment({
+    data,
+    creds,
+    templateName: "azure-app-service",
+    typeName: "Azure-App-Service",
+    deploymentName,
+    tfvars: `
+region                 = "${data.region}"
+resource_group_name    = "${resourceGroupName}"
+app_service_name       = "${appServiceName}"
+app_service_plan_name  = "${planName}"
+acr_name               = "${data.acrName}"
+image                  = "${data.image || "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"}"
+port                   = ${Number(data.port || 80)}
+tags = {
+  CreatedBy = "ACP-Portal"
+  ZoneName  = "${data.zoneName}"
+}
+`,
+    metadata: {
+      id: uuidv4(),
+      name: deploymentName,
+      type: "Azure-App-Service",
+      region: data.region,
+      account: data.accountID,
+      status: "Creating",
+      cloud: "Azure",
+      userId: userID,
+      subscriptionId: creds.subscription_id,
+      tenantId: creds.tenant_id,
+      resourceGroupName,
+      appServiceName,
+      appServicePlanName: planName,
+      image: data.image || "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest",
+      port: data.port || 80
+    }
+  });
+};
+
+/* ============================================================
+   Azure - AKS (ACR only — cluster is pre-existing)
+   ============================================================ */
+exports.createAzureAksAcr = (data, creds, userID) => {
+  const appName = data.appName;
+
+  if (!data.accountID || !data.region || !appName || !data.aksCluster || !data.zoneName) {
+    throw new Error("Missing required Azure AKS parameters");
+  }
+
+  const { v4: uuidv4 } = require('uuid');
+  const deploymentName = appName;
+  const resourceGroupName = `rg-${deploymentName}`;
+  const generatedAcrName = (data.acrName || `acr${appName.replace(/[^a-z0-9]/gi, '').toLowerCase()}`).substring(0, 24);
+
+  return runAzureTerraformDeployment({
+    data,
+    creds,
+    templateName: "azure-aks-acr",
+    typeName: "Azure-AKS-App",
+    deploymentName,
+    tfvars: `
+region              = "${data.region}"
+resource_group_name = "${resourceGroupName}"
+acr_name            = "${generatedAcrName}"
+tags = {
+  CreatedBy = "ACP-Portal"
+  ZoneName  = "${data.zoneName}"
+}
+`,
+    metadata: {
+      id: uuidv4(),
+      name: deploymentName,
+      type: "Azure-AKS-App",
+      region: data.region,
+      account: data.accountID,
+      status: "Creating",
+      cloud: "Azure",
+      userId: userID,
+      subscriptionId: creds.subscription_id,
+      tenantId: creds.tenant_id,
+      resourceGroupName,
+      aksCluster: data.aksCluster,
+      acrName: generatedAcrName,
+      port: data.port || 80
     }
   });
 };

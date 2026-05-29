@@ -383,6 +383,8 @@ async function resolveAzureCredentials(accountId, userId) {
   };
 }
 
+exports.resolveAzureCredentials = resolveAzureCredentials;
+
 /* ===================================================
    Azure — Virtual Network (VNet)
    =================================================== */

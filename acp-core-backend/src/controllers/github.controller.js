@@ -1,6 +1,7 @@
 const githubService = require('../services/github.service');
 const axios = require("axios");
 const { connectEcsToRds } = require('../services/aws.service');
+const terraformService = require('../services/terraform.service');
 const {
     ElasticLoadBalancingV2Client,
     ModifyTargetGroupCommand,
@@ -336,7 +337,7 @@ exports.deployToEcs = async (req, res) => {
                 await configureAlb({
                     region,
                     ecsCluster,
-                    appName,
+                    resolvedContainerAppName,
                     healthCheckPath: req.body.healthCheckPath || "/health",
                     apiPath: req.body.apiPath || "/api/*",
                     priority: req.body.priority || 100,
@@ -659,6 +660,247 @@ async function configureAlb({
     console.log("ALB configured successfully");
 }
 
+// ─── AZURE CONTAINER APPS DEPLOY ──────────────────────────────────────────────
+// In-memory store shared with ECS flow
+exports.deployToAzureContainerApps = async (req, res) => {
+    try {
+        const {
+            repoUrl, branch, token,
+            frontendPath, backendPath,
+            account,                    // Azure account id (subscription id)
+            acrName,
+            appName,
+            containerAppName,
+            region,
+            cpu,
+            memory,
+            port,
+            frontendBasePath
+        } = req.body;
+
+        if (!repoUrl || !appName || !account || !region) {
+            return res.status(400).json({ message: 'repoUrl, appName, account and region are required' });
+        }
+
+        const safeAppName = (appName || 'app')
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+
+        const resolvedContainerAppName = containerAppName || safeAppName;
+        const resourceGroupName = `rg-${resolvedContainerAppName}`;
+        const generatedAcrName = acrName
+            ? acrName.toLowerCase().replace(/[^a-z0-9]/g, '')
+            : `acr${safeAppName.replace(/-/g, '')}`;  // ACR names: alphanumeric only
+
+        // Clear any stale pending entry
+        pendingDeployments.delete(appName);
+
+        // Respond immediately so the frontend can navigate to the log page
+        res.json({ provisioning: true });
+
+        // ── Background job ────────────────────────────────────────────────────
+        try {
+            const { v4: uuidv4 } = require('uuid');
+            const infraController = require('./infra.controller');
+            const creds = await infraController.resolveAzureCredentials(account, req.user?.username);
+            const tfvars = `
+region = "${region}"
+resource_group_name = "${resourceGroupName}"
+acr_name = "${generatedAcrName}"
+container_app_name = "${resolvedContainerAppName}"
+container_app_environment_name = "${resolvedContainerAppName}-env"
+container_name = "app"
+image = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+cpu = ${cpu || 1}
+memory = ${memory || 2}
+port = ${port || 80}
+tags = {
+  CreatedBy = "ACP-Portal"
+}
+`;
+            await terraformService.runAzureTerraformDeployment({
+              data: {},
+              creds,
+              templateName: "azure-container-apps",
+              typeName: "Azure-Container-Apps",
+              deploymentName: resolvedContainerAppName,
+              tfvars,
+              metadata: {
+                id: uuidv4(),
+                name: appName,
+                type: "Azure-Container-Apps",
+                status: "Creating",
+                region: region,
+                account: account,
+                cloud: "Azure",
+                userId: req.user?.username,
+                acr_name: generatedAcrName
+              }
+            });
+
+            const workflowName = `deploy-${safeAppName}.yml`;
+
+            // STEP 1: Generate and commit the GitHub Actions workflow
+            const workflowContent = generateAzureContainerAppsWorkflowYaml({
+                appName: resolvedContainerAppName,
+                resourceGroupName,
+                containerAppName: resolvedContainerAppName,
+                frontendPath: frontendPath || 'frontend',
+                backendPath: backendPath || 'backend',
+                port: port || 80
+            }, appName);
+
+            await githubService.commitWorkflowFile({
+                repoUrl,
+                branch,
+                token,
+                workflowContent,
+                appName
+            });
+
+            // STEP 2: Set Azure SP secrets on the repo
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_CLIENT_ID',       secretValue: creds.client_id });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_CLIENT_SECRET',   secretValue: creds.client_secret });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_TENANT_ID',       secretValue: creds.tenant_id });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_SUBSCRIPTION_ID', secretValue: creds.subscription_id });
+
+            // STEP 3: Small delay for GitHub to index the committed workflow file
+            await new Promise(r => setTimeout(r, 30000));
+
+            // STEP 4: Trigger workflow
+            const { runId } = await githubService.triggerWorkflow({
+                repoUrl, branch, token,
+                workflowId: workflowName,
+                inputs: {
+                    azure_region:          region,
+                    acr_name:              generatedAcrName,
+                    resource_group:        resourceGroupName,
+                    container_app_name:    resolvedContainerAppName,
+                    frontend_path:         frontendPath || 'frontend',
+                    backend_path:          backendPath || 'backend',
+                    port:                  String(port || 80)
+                }
+            });
+
+            if (!runId) {
+                throw new Error('Azure workflow triggered but runId could not be resolved.');
+            }
+
+            // STEP 5: Save deployment record
+            const deploymentModel = require('../models/deployment.model');
+            const repoParts = repoUrl
+                .replace(/\.git$/, '')
+                .replace(/^https?:\/\/github\.com\//, '')
+                .replace(/\/+$/, '')
+                .split('/');
+
+            const { id: deploymentId } = await deploymentModel.createDeployment({
+                name: appName,
+                cloud: 'Azure',
+                deployment: 'Container Apps',
+                repoUrl,
+                repoName: repoParts[1] || '',
+                account: repoParts[0] || account,
+                accountID: account,
+                userId: req.user?.username,
+                workflow: workflowName,
+                branch,
+                region,
+                runId,
+                status: 'running',
+                triggeredFrom: 'ACP Portal',
+                createdAt: new Date().toISOString()
+            });
+
+            // STEP 6: Store for frontend polling
+            pendingDeployments.set(appName, { runId, deploymentId });
+            console.log(`Azure deployment ready: appName=${appName} runId=${runId} deploymentId=${deploymentId}`);
+
+        } catch (bgError) {
+            const errorMsg = bgError.response?.data?.message || bgError.message;
+            console.error('Azure Container Apps background deploy error:', errorMsg);
+            pendingDeployments.set(appName, { error: errorMsg });
+        }
+
+    } catch (error) {
+        console.error('Azure Container Apps deploy error:', error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Azure Container Apps deployment failed', error: error.message });
+        }
+    }
+};
+
+// ─── AZURE CONTAINER APPS WORKFLOW YAML GENERATOR ────────────────────────────
+function generateAzureContainerAppsWorkflowYaml(cfg, appName) {
+    return `name: Deploy ${appName} to Azure Container Apps
+
+on:
+  workflow_dispatch:
+    inputs:
+      azure_region:
+        required: true
+        type: string
+      acr_name:
+        required: true
+        type: string
+      resource_group:
+        required: true
+        type: string
+      container_app_name:
+        required: true
+        type: string
+      frontend_path:
+        required: true
+        default: "frontend"
+        type: string
+      backend_path:
+        required: true
+        default: "backend"
+        type: string
+      port:
+        required: true
+        default: "80"
+        type: string
+
+env:
+  IMAGE_TAG: \${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    name: Build, push and deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "\${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "\${{ secrets.AZURE_CLIENT_SECRET }}",
+              "tenantId": "\${{ secrets.AZURE_TENANT_ID }}",
+              "subscriptionId": "\${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            }
+
+      - name: Log in to ACR
+        run: az acr login --name \${{ inputs.acr_name }}
+
+      - name: Build and push backend image
+        run: |
+          docker build -t \${{ inputs.acr_name }}.azurecr.io/${cfg.containerAppName}-backend:\${{ env.IMAGE_TAG }} -f \${{ inputs.backend_path }}/Dockerfile \${{ inputs.backend_path }}
+          docker push \${{ inputs.acr_name }}.azurecr.io/${cfg.containerAppName}-backend:\${{ env.IMAGE_TAG }}
+
+      - name: Deploy backend to Azure Container Apps
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          resourceGroup: \${{ inputs.resource_group }}
+          containerAppName: \${{ inputs.container_app_name }}
+          imageToDeploy: \${{ inputs.acr_name }}.azurecr.io/${cfg.containerAppName}-backend:\${{ env.IMAGE_TAG }}
+`;
+}
+
 exports.getListenerRules = async (req, res) => {
     const { region, ecsCluster, account } = req.query;
     const db = require('../config/db');
@@ -739,3 +981,476 @@ exports.getListenerRules = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.checkAcrName = async (req, res) => {
+    try {
+        const { account, name } = req.query;
+        if (!account || !name) {
+            return res.status(400).json({ error: 'Missing account or name' });
+        }
+        
+        const infraController = require('./infra.controller');
+        const creds = await infraController.resolveAzureCredentials(account, req.user?.username);
+        
+        if (!creds) {
+            return res.status(404).json({ error: 'Azure credentials not found for this account' });
+        }
+
+        const axios = require('axios');
+        const tokenResponse = await axios.post(
+            `https://login.microsoftonline.com/${creds.tenant_id}/oauth2/v2.0/token`,
+            new URLSearchParams({
+                client_id: creds.client_id,
+                client_secret: creds.client_secret,
+                grant_type: 'client_credentials',
+                scope: 'https://management.azure.com/.default'
+            }),
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        );
+        const token = tokenResponse.data.access_token;
+        
+        const url = `https://management.azure.com/subscriptions/${creds.subscription_id}/providers/Microsoft.ContainerRegistry/checkNameAvailability?api-version=2023-01-01-preview`;
+        
+        const checkResponse = await axios.post(url, {
+            name: name,
+            type: "Microsoft.ContainerRegistry/registries"
+        }, { headers: { Authorization: `Bearer ${token}` } });
+
+        res.json(checkResponse.data);
+    } catch (err) {
+        console.error('ACR check name failed:', err.response?.data || err.message);
+        res.status(500).json({ error: 'Failed to check ACR name availability' });
+    }
+};
+exports.deployToAzureAppService = async (req, res) => {
+    try {
+        const {
+            repoUrl, branch, token,
+            frontendPath, backendPath,
+            account,                    // Azure account id (subscription id)
+            acrName,
+            appName,
+            appServiceName,
+            region,
+            port
+        } = req.body;
+
+        if (!repoUrl || !appName || !account || !region) {
+            return res.status(400).json({ message: 'repoUrl, appName, account and region are required' });
+        }
+
+        const safeAppName = (appName || 'app')
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+
+        const resolvedAppServiceName = appServiceName || safeAppName;
+        const resourceGroupName = `rg-${resolvedAppServiceName}`;
+        const generatedAcrName = acrName
+            ? acrName.toLowerCase().replace(/[^a-z0-9]/g, '')
+            : `acr${safeAppName.replace(/-/g, '')}`;  // ACR names: alphanumeric only
+
+        // Clear any stale pending entry
+        pendingDeployments.delete(appName);
+
+        // Respond immediately so the frontend can navigate to the log page
+        res.json({ provisioning: true });
+
+        // Run Terraform and deployment in background
+        try {
+            const infraController = require('./infra.controller');
+            const creds = await infraController.resolveAzureCredentials(account, req.user?.username);
+
+            if (!creds) {
+                throw new Error("Azure credentials not found for this account");
+            }
+
+            // STEP 1: Provision Infrastructure via Terraform (Background)
+            console.log(`Starting background Terraform provisioning for Azure App Service: ${resolvedAppServiceName}`);
+            const terraformService = require('../services/terraform.service');
+            await terraformService.createAzureAppService({
+                accountID: account,
+                region,
+                appServiceName: resolvedAppServiceName,
+                acrName: generatedAcrName,
+                port: port || 80,
+                zoneName: "internal.acp"
+            }, creds, req.user?.username);
+
+            // Wait briefly for outputs to be written
+            await new Promise(r => setTimeout(r, 2000));
+
+            // Load Terraform outputs
+            const infraMetadata = await require('../services/deployments.service').getInfraMetadata(resolvedAppServiceName);
+            if (!infraMetadata || !infraMetadata.outputs) {
+                throw new Error("Failed to load Terraform outputs for Azure App Service");
+            }
+            const tfOutputs = infraMetadata.outputs;
+
+            // STEP 2: Generate workflow YAML
+            const workflowYaml = generateAzureAppServiceWorkflowYaml({
+                appServiceName: resolvedAppServiceName,
+                acrName: generatedAcrName,
+                resourceGroupName
+            }, appName);
+
+            // STEP 3: Commit YAML to Repository
+            const workflowName = `deploy-${safeAppName}-app-service.yml`;
+            const githubService = require('../services/github.service');
+            await githubService.commitFile(
+                repoUrl,
+                `.github/workflows/${workflowName}`,
+                workflowYaml,
+                `Add ACP Azure App Service Deployment Workflow for ${appName}`,
+                branch,
+                token
+            );
+
+            // Wait a moment for GitHub to index the workflow file
+            console.log("Waiting 30s for GitHub to index the new workflow...");
+            await new Promise(r => setTimeout(r, 30000));
+
+            // STEP 4: Trigger the workflow
+            const { runId } = await githubService.triggerWorkflow({
+                repoUrl,
+                workflowId: workflowName,
+                branch,
+                token,
+                inputs: {
+                    azure_region: region,
+                    acr_name: generatedAcrName,
+                    resource_group: resourceGroupName,
+                    app_service_name: resolvedAppServiceName,
+                    backend_path: backendPath || "backend",
+                    frontend_path: frontendPath || "frontend",
+                    port: (port || "80").toString()
+                }
+            });
+
+            if (!runId) {
+                throw new Error("GitHub workflow triggered but runId could not be resolved. Try again.");
+            }
+
+            // STEP 5: Save deployment record
+            const deploymentModel = require('../models/deployment.model');
+            const repoParts = repoUrl
+                .replace(/\.git$/, '')
+                .replace(/^https?:\/\/github\.com\//, '')
+                .replace(/\/+$/, '')
+                .split('/');
+
+            const { id: deploymentId } = await deploymentModel.createDeployment({
+                name: appName,
+                cloud: 'Azure',
+                deployment: 'App Service',
+                repoUrl,
+                repoName: repoParts[1] || '',
+                account: repoParts[0] || account,
+                accountID: account,
+                userId: req.user?.username,
+                workflow: workflowName,
+                branch,
+                region,
+                runId,
+                status: 'running',
+                triggeredFrom: 'ACP Portal',
+                createdAt: new Date().toISOString()
+            });
+
+            // STEP 6: Store for frontend polling
+            pendingDeployments.set(appName, { runId, deploymentId });
+            console.log(`Azure App Service deployment ready: appName=${appName} runId=${runId} deploymentId=${deploymentId}`);
+
+        } catch (bgError) {
+            const errorMsg = bgError.response?.data?.message || bgError.message;
+            console.error('Azure App Service background deploy error:', errorMsg);
+            pendingDeployments.set(appName, { error: errorMsg });
+        }
+
+    } catch (error) {
+        console.error('Azure App Service deploy error:', error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Azure App Service deployment failed', error: error.message });
+        }
+    }
+};
+
+function generateAzureAppServiceWorkflowYaml(cfg, appName) {
+    return `name: Deploy ${appName} to Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      azure_region:
+        required: true
+        type: string
+      acr_name:
+        required: true
+        type: string
+      resource_group:
+        required: true
+        type: string
+      app_service_name:
+        required: true
+        type: string
+      frontend_path:
+        required: true
+        default: "frontend"
+        type: string
+      backend_path:
+        required: true
+        default: "backend"
+        type: string
+      port:
+        required: true
+        default: "80"
+        type: string
+
+env:
+  IMAGE_TAG: \${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    name: Build, push and deploy to Azure App Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "\${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "\${{ secrets.AZURE_CLIENT_SECRET }}",
+              "tenantId": "\${{ secrets.AZURE_TENANT_ID }}",
+              "subscriptionId": "\${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            }
+
+      - name: Log in to ACR
+        run: az acr login --name \${{ inputs.acr_name }}
+
+      - name: Build and push backend image
+        run: |
+          docker build -t \${{ inputs.acr_name }}.azurecr.io/\${{ inputs.app_service_name }}-backend:\${{ env.IMAGE_TAG }} -f \${{ inputs.backend_path }}/Dockerfile \${{ inputs.backend_path }}
+          docker push \${{ inputs.acr_name }}.azurecr.io/\${{ inputs.app_service_name }}-backend:\${{ env.IMAGE_TAG }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: \${{ inputs.app_service_name }}
+          images: \${{ inputs.acr_name }}.azurecr.io/\${{ inputs.app_service_name }}-backend:\${{ env.IMAGE_TAG }}
+`;
+}
+
+exports.deployToAzureAks = async (req, res) => {
+    try {
+        const {
+            repoUrl, branch, token,
+            frontendPath, backendPath,
+            account,
+            acrName,
+            appName,
+            aksCluster,
+            aksResourceGroup,
+            region,
+            port,
+            namespace
+        } = req.body;
+
+        if (!repoUrl || !appName || !account || !region || !aksCluster) {
+            return res.status(400).json({ message: 'repoUrl, appName, account, region and aksCluster are required' });
+        }
+
+        const safeAppName = (appName || 'app')
+            .toLowerCase()
+            .replace(/\\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+
+        const generatedAcrName = acrName
+            ? acrName.toLowerCase().replace(/[^a-z0-9]/g, '')
+            : ('acr' + safeAppName.replace(/-/g, '').substring(0, 20));
+
+        pendingDeployments.delete(appName);
+        res.json({ provisioning: true });
+
+        try {
+            const infraController = require('./infra.controller');
+            const creds = await infraController.resolveAzureCredentials(account, req.user?.username);
+
+            if (!creds) throw new Error("Azure credentials not found for this account");
+
+            const terraformService = require('../services/terraform.service');
+            await terraformService.createAzureAksAcr({
+                accountID: account,
+                region,
+                appName: safeAppName,
+                aksCluster,
+                acrName: generatedAcrName,
+                port: port || 80,
+                zoneName: aksCluster
+            }, creds, req.user?.username);
+
+            await new Promise(r => setTimeout(r, 2000));
+
+            const workflowName = 'deploy-' + safeAppName + '-aks.yml';
+            const workflowYaml = generateAzureAksWorkflowYaml({
+                aksCluster,
+                aksResourceGroup: aksResourceGroup || ('rg-' + safeAppName),
+                acrName: generatedAcrName,
+                namespace: namespace || 'default'
+            }, appName);
+
+            const githubService = require('../services/github.service');
+            await githubService.commitFile(
+                repoUrl,
+                '.github/workflows/' + workflowName,
+                workflowYaml,
+                'Add ACP Azure AKS Deployment Workflow for ' + appName,
+                branch,
+                token
+            );
+
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_CLIENT_ID', secretValue: creds.client_id });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_CLIENT_SECRET', secretValue: creds.client_secret });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_TENANT_ID', secretValue: creds.tenant_id });
+            await githubService.setRepoSecret({ repoUrl, token, secretName: 'AZURE_SUBSCRIPTION_ID', secretValue: creds.subscription_id });
+
+            console.log("Waiting 30s for GitHub to index the new workflow...");
+            await new Promise(r => setTimeout(r, 30000));
+
+            const { runId } = await githubService.triggerWorkflow({
+                repoUrl,
+                workflowId: workflowName,
+                branch,
+                token,
+                inputs: {
+                    azure_region: region,
+                    acr_name: generatedAcrName,
+                    aks_cluster: aksCluster,
+                    aks_resource_group: aksResourceGroup || ('rg-' + safeAppName),
+                    namespace: namespace || 'default',
+                    backend_path: backendPath || 'backend',
+                    frontend_path: frontendPath || 'frontend',
+                    port: (port || '80').toString()
+                }
+            });
+
+            if (!runId) throw new Error("GitHub workflow triggered but runId could not be resolved.");
+
+            const deploymentModel = require('../models/deployment.model');
+            const repoParts = repoUrl.replace(/\.git$/, '').replace(/^https?:\/\/github\.com\//, '').replace(/\/+$/, '').split('/');
+
+            const { id: deploymentId } = await deploymentModel.createDeployment({
+                name: appName,
+                cloud: 'Azure',
+                deployment: 'AKS',
+                repoUrl,
+                repoName: repoParts[1] || '',
+                account: repoParts[0] || account,
+                accountID: account,
+                userId: req.user?.username,
+                workflow: workflowName,
+                branch,
+                region,
+                runId,
+                status: 'running',
+                triggeredFrom: 'ACP Portal',
+                createdAt: new Date().toISOString()
+            });
+
+            pendingDeployments.set(appName, { runId, deploymentId });
+            console.log('Azure AKS deployment ready: appName=' + appName + ' runId=' + runId);
+
+        } catch (bgError) {
+            const errorMsg = bgError.response?.data?.message || bgError.message;
+            console.error('Azure AKS background deploy error:', errorMsg);
+            pendingDeployments.set(appName, { error: errorMsg });
+        }
+
+    } catch (error) {
+        console.error('Azure AKS deploy error:', error.message);
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Azure AKS deployment failed', error: error.message });
+        }
+    }
+};
+
+function generateAzureAksWorkflowYaml(cfg, appName) {
+    const acrRef = cfg.acrName || '${{ inputs.acr_name }}';
+    return 'name: Deploy ' + appName + ' to Azure AKS\n\n' +
+'on:\n' +
+'  workflow_dispatch:\n' +
+'    inputs:\n' +
+'      azure_region:\n' +
+'        required: true\n' +
+'        type: string\n' +
+'      acr_name:\n' +
+'        required: true\n' +
+'        type: string\n' +
+'      aks_cluster:\n' +
+'        required: true\n' +
+'        type: string\n' +
+'      aks_resource_group:\n' +
+'        required: true\n' +
+'        type: string\n' +
+'      namespace:\n' +
+'        required: true\n' +
+'        default: "default"\n' +
+'        type: string\n' +
+'      frontend_path:\n' +
+'        required: true\n' +
+'        default: "frontend"\n' +
+'        type: string\n' +
+'      backend_path:\n' +
+'        required: true\n' +
+'        default: "backend"\n' +
+'        type: string\n' +
+'      port:\n' +
+'        required: true\n' +
+'        default: "80"\n' +
+'        type: string\n\n' +
+'env:\n' +
+'  IMAGE_TAG: ${{ github.sha }}\n\n' +
+'jobs:\n' +
+'  build-and-deploy:\n' +
+'    name: Build, push and deploy to AKS\n' +
+'    runs-on: ubuntu-latest\n' +
+'    steps:\n' +
+'      - uses: actions/checkout@v4\n\n' +
+'      - name: Azure Login\n' +
+'        uses: azure/login@v2\n' +
+'        with:\n' +
+'          creds: |\n' +
+'            {\n' +
+'              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",\n' +
+'              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",\n' +
+'              "tenantId": "${{ secrets.AZURE_TENANT_ID }}",\n' +
+'              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"\n' +
+'            }\n\n' +
+'      - name: Log in to ACR\n' +
+'        run: az acr login --name ${{ inputs.acr_name }}\n\n' +
+'      - name: Build and push backend image\n' +
+'        run: |\n' +
+'          docker build -t ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-backend:${{ env.IMAGE_TAG }} -f ${{ inputs.backend_path }}/Dockerfile ${{ inputs.backend_path }}\n' +
+'          docker push ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-backend:${{ env.IMAGE_TAG }}\n\n' +
+'      - name: Build and push frontend image\n' +
+'        run: |\n' +
+'          docker build -t ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-frontend:${{ env.IMAGE_TAG }} -f ${{ inputs.frontend_path }}/Dockerfile ${{ inputs.frontend_path }}\n' +
+'          docker push ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-frontend:${{ env.IMAGE_TAG }}\n\n' +
+'      - name: Set AKS context\n' +
+'        uses: azure/aks-set-context@v3\n' +
+'        with:\n' +
+'          resource-group: ${{ inputs.aks_resource_group }}\n' +
+'          cluster-name: ${{ inputs.aks_cluster }}\n\n' +
+'      - name: Deploy backend to AKS\n' +
+'        uses: azure/k8s-deploy@v4\n' +
+'        with:\n' +
+'          namespace: ${{ inputs.namespace }}\n' +
+'          images: ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-backend:${{ env.IMAGE_TAG }}\n\n' +
+'      - name: Deploy frontend to AKS\n' +
+'        uses: azure/k8s-deploy@v4\n' +
+'        with:\n' +
+'          namespace: ${{ inputs.namespace }}\n' +
+'          images: ${{ inputs.acr_name }}.azurecr.io/' + cfg.acrName + '-frontend:${{ env.IMAGE_TAG }}\n';
+}

@@ -41,6 +41,17 @@ resource "azurerm_container_app" "main" {
     }
   }
 
+  secret {
+    name  = "acr-password"
+    value = azurerm_container_registry.main.admin_password
+  }
+
+  registry {
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
+    password_secret_name = "acr-password"
+  }
+
   ingress {
     external_enabled = true
     target_port      = var.port

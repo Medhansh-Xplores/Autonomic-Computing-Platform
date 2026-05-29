@@ -80,3 +80,38 @@ exports.updateStatus = (id, payload) => {
         }
     });
 };
+
+exports.getInfraMetadata = async (name) => {
+    const USE_DB = process.env.USE_DB === 'true';
+    if (USE_DB) {
+        try {
+            const db = require('../config/db');
+            const res = await db.query(
+                `SELECT data FROM infra_deployments WHERE name = $1 LIMIT 1`,
+                [name]
+            );
+            if (res.rows.length) {
+                return res.rows[0].data;
+            }
+        } catch (e) {
+            console.error('Failed to get infra metadata from DB:', e.message);
+        }
+    }
+
+    // Fallback to filesystem
+    const terraformDeploymentsPath = path.join(__dirname, "../../terraform/deployments");
+    if (fs.existsSync(terraformDeploymentsPath)) {
+        try {
+            const types = fs.readdirSync(terraformDeploymentsPath);
+            for (const type of types) {
+                const metadataPath = path.join(terraformDeploymentsPath, type, name, "metadata.json");
+                if (fs.existsSync(metadataPath)) {
+                    return JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+                }
+            }
+        } catch (e) {
+            console.error('Failed to read filesystem metadata:', e.message);
+        }
+    }
+    return null;
+};

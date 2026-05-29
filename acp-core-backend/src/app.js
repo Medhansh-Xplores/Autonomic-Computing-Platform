@@ -8,6 +8,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.url}`);
+  next();
+});
+
 // Routes
 const tenantRoutes = require("./routes/tenant.routes");
 const deploymentRoutes = require("./routes/deployment.routes");
@@ -23,6 +29,7 @@ const observabilityRoutes = require('./routes/observability.routes');
 const securityRoutes = require('./routes/security.routes');
 const aiopsRoutes = require('./routes/aiops.routes');
 const costRoutes = require('./routes/cost.routes');
+const azureRoutes = require('./routes/azure.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -39,6 +46,7 @@ app.use('/api/v1/observability', observabilityRoutes);
 app.use('/api/v1/security', securityRoutes);
 app.use('/api/v1/aiops', aiopsRoutes);
 app.use('/api/v1/cost-estimates', costRoutes);
+app.use('/api/v1/azure', azureRoutes);
 
 // Health
 app.get("/health", (req, res) => {

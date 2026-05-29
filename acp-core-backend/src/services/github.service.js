@@ -135,6 +135,43 @@ exports.commitWorkflowFile = async ({ repoUrl, branch, token, workflowContent, a
     );
 };
 
+exports.commitFile = async (repoUrl, filePath, content, commitMessage, branch, token) => {
+    const { owner, repo } = parseRepo(repoUrl);
+
+    const headers = {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+    };
+
+    let sha = undefined;
+
+    try {
+        const existing = await axios.get(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+            { headers }
+        );
+
+        sha = existing.data.sha;
+    } catch (e) {
+        // file doesn't exist yet
+    }
+
+    const body = {
+        message: commitMessage || 'chore: commit file via ACP Portal',
+        content: Buffer.from(content).toString('base64'),
+        branch
+    };
+
+    if (sha) body.sha = sha;
+
+    await axios.put(
+        `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+        body,
+        { headers }
+    );
+};
+
 
 // ─── NEW FUNCTION 2 ───────────────────────────────────────────────────────────
 // Set GitHub repo secret

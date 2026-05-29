@@ -6,10 +6,13 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.post('/workflows', githubController.getWorkflows);
 router.post('/workflows/trigger', githubController.triggerWorkflow);
 router.post('/deploy-ecs', authMiddleware, githubController.deployToEcs);
-
+router.post('/deploy-azure-container-apps', authMiddleware, githubController.deployToAzureContainerApps);
+router.post('/deploy-azure-app-service', authMiddleware, githubController.deployToAzureAppService);
+router.post('/deploy-azure-aks', authMiddleware, githubController.deployToAzureAks);
 router.get('/workflows/logs', githubController.getLogs);
 router.get("/listener-rules", authMiddleware, githubController.getListenerRules);
 router.get('/terraform-logs', githubController.getTerraformLogs);
 router.get('/pending-deployment', githubController.getPendingDeployment);
+router.get('/check-acr-name', authMiddleware, githubController.checkAcrName);
 
 module.exports = router;

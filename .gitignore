@@ -12,6 +12,7 @@ override.tf.json
 .terraform.lock.hcl
 acp-terraform/.terraform/          
 acp-terraform/.terraform.lock.hcl
+acp-core-backend/terraform/deployments/*
 
 ################################
 # Node
@@ -77,3 +78,9 @@ terraform/deployments/*/*.tfstate.*
 # AWS credentials
 ################################
 .aws/
+
+
+###############################
+# Tools
+##############################
+Rules.md

@@ -7,7 +7,7 @@
 .container {
     padding: 30px;
     min-height: calc(100vh - 290px);
-    background: #fff;
+    background: linear-gradient(135deg, #f8fafd 0%, #eef3fb 100%);
 }
 
 /* ── HEADER BOX ──────────────────────────────────────────────── */
@@ -47,13 +47,21 @@
 
 /* ── FORM PANEL ──────────────────────────────────────────────── */
 .form-panel {
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.06);
     overflow: hidden;
     max-width: 800px;
     margin: 0 auto 20px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.1);
 }
 
 .form-panel-header {
@@ -337,7 +345,7 @@ input[type="checkbox"] {
 }
 
 .custombutton {
-    background: #1e4f86;
+    background: linear-gradient(135deg, #1e4f86 0%, #11345d 100%);
     border: none;
     color: white;
     padding: 10px 24px;
@@ -345,16 +353,25 @@ input[type="checkbox"] {
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    transition: background 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(30, 79, 134, 0.2);
 }
 
 .custombutton:hover {
-    background: #163d6b;
+    background: linear-gradient(135deg, #163d6b 0%, #0b2545 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(30, 79, 134, 0.3);
+}
+
+.custombutton:active {
+    transform: translateY(1px);
 }
 
 .custombutton:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 .btn-cancel {

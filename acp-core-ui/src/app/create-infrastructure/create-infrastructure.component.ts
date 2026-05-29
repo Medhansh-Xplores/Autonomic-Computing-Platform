@@ -22,6 +22,8 @@ export class CreateInfrastructureComponent implements OnInit {
   submissionInfo = '';
   submitDisabled = false;
   hasErrors = false;
+  nameInvalid = false;
+  nameErrorMsg = '';
   obj: any;
   platforms = ['', 'AWS', 'Google', 'Azure', 'AWS - CloudHPC (Coming Soon)', 'Google - CloudHPC (Coming Soon)', 'Azure - CloudHPC (Coming Soon)', 'IBM - Quantum Cloud (Coming Soon)', 'AWS - Quantum Cloud (Coming Soon)'];
   landingZones = ['', 'Landing Zone Only', 'Landing Zone with Jenkins'];
@@ -158,6 +160,47 @@ export class CreateInfrastructureComponent implements OnInit {
   selectInfrastructureName(event: any) {
     this.obj.name = event.target.value;
     console.log('Infrastructure name is: ' + this.obj.name);
+    this.validateInfrastructureName(this.obj.name);
+  }
+
+  validateInfrastructureName(name: string): boolean {
+    if (!name) {
+      this.nameInvalid = false;
+      this.nameErrorMsg = '';
+      return false;
+    }
+
+    let regex: RegExp;
+    let errorMsg: string;
+
+    switch (this.platformSelected) {
+      case 'AWS':
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9-_]{0,99}$/;
+        errorMsg = 'AWS names must start with a letter/number and contain alphanumeric/hyphens/underscores.';
+        break;
+      case 'Google':
+        regex = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+        errorMsg = 'GCP names must be lowercase, start with a letter, and end with letter/number.';
+        break;
+      case 'Azure':
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,78}[a-zA-Z0-9_]$/;
+        errorMsg = 'Azure names must start with alphanumeric, and end with alphanumeric/underscore.';
+        break;
+      default:
+        regex = /^[a-zA-Z0-9-]+$/;
+        errorMsg = 'Name can only contain letters, numbers, and hyphens.';
+        break;
+    }
+
+    if (!regex.test(name)) {
+      this.nameInvalid = true;
+      this.nameErrorMsg = errorMsg;
+      return false;
+    } else {
+      this.nameInvalid = false;
+      this.nameErrorMsg = '';
+      return true;
+    }
   }
 
   selectPortfolio(event: any) {
@@ -488,9 +531,8 @@ export class CreateInfrastructureComponent implements OnInit {
 
   // validateNoSpecialCharacters is a function that checks to see if the provided parameter has special characters in the string.
   public validateNoSpecialCharacters(param: string) {
-    var regex = /^[A-Za-z0-9 ]+$/;
-    return param.length !== 0 && regex.test(param);
-    //Old regex pattern -- /[~`!#$%\^&*+=\-\[\] \\';,/{}|\\":<>\?]/
+    if (param == null || param.length === 0) return false;
+    return this.validateInfrastructureName(param);
   }
 
 
