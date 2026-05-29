@@ -628,6 +628,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
       {
         Effect = "Allow"
         Action = [
+          "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret",
           "secretsmanager:ListSecrets"
         ]
