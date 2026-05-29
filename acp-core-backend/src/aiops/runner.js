@@ -4,22 +4,31 @@
 
 const { InMemoryRunner, isFinalResponse } = require('@google/adk');
 const { createUserContent } = require('@google/genai');
-const { orchestratorAgent } = require('./agents/orchestrator.agent');
 const { _handlers } = require('./tools/remediation.tools');
 
 const db = require('../config/db');
 
 const APP_NAME = 'acp-aiops';
 
-const runner = new InMemoryRunner({
-    agent: orchestratorAgent,
-    appName: APP_NAME,
-});
+// Lazy singleton — created on first request, after loadGcpCredentials() has run
+let _runner = null;
+
+function getRunner() {
+    if (!_runner) {
+        const { orchestratorAgent } = require('./agents/orchestrator.agent');
+        _runner = new InMemoryRunner({
+            agent: orchestratorAgent,
+            appName: APP_NAME,
+        });
+    }
+    return _runner;
+}
 
 async function runAiOps({ userId, accountId, region, mode = 'full' }) {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const scanStartedAt = new Date().toISOString();
 
+    const runner = getRunner();
     await runner.sessionService.createSession({ appName: APP_NAME, userId, sessionId });
 
     const userMessage = createUserContent(
