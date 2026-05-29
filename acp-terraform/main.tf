@@ -778,6 +778,12 @@ resource "aws_secretsmanager_secret_version" "acp_cognito" {
   })
 }
 
+resource "aws_secretsmanager_secret" "acp_gcp" {
+  name                    = "acp/gcp-service-account"
+  recovery_window_in_days = 0
+  tags                    = { Name = "acp-gcp-service-account" }
+}
+
 #EFS
 resource "aws_efs_access_point" "acp_terraform" {
   file_system_id = aws_efs_file_system.acp.id
@@ -849,7 +855,10 @@ resource "aws_ecs_task_definition" "acp_backend" {
       { name = "DB_HOST",  value = aws_db_instance.acp.address },
       { name = "DB_PORT",  value = "5432" },
       { name = "DB_NAME",  value = var.db_name },
-      { name = "COGNITO_REGION", value = var.aws_region }
+      { name = "COGNITO_REGION", value = var.aws_region },
+      { name = "GOOGLE_GENAI_USE_VERTEXAI", value = "true" },
+      { name = "GOOGLE_CLOUD_PROJECT",      value = "project-30510953-3766-465b-816" },
+      { name = "GOOGLE_CLOUD_LOCATION",     value = "us-central1" }
     ]
 
     # Secrets pulled securely at container start — not visible in task definition JSON
@@ -869,6 +878,10 @@ resource "aws_ecs_task_definition" "acp_backend" {
       {
         name      = "COGNITO_CLIENT_ID"
         valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:client_id::"
+      },
+      {
+        name      = "GCP_SA_SECRET_ARN"
+        valueFrom = aws_secretsmanager_secret.acp_gcp.arn
       }
     ]
 
