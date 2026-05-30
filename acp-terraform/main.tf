@@ -857,6 +857,7 @@ resource "aws_ecs_task_definition" "acp_backend" {
   { name = "DB_HOST",     value = aws_db_instance.acp.address },
   { name = "DB_PORT",     value = "5432" },
   { name = "DB_NAME",     value = var.db_name },
+  { name = "DB_SSL",      value = "true" },
   { name = "COGNITO_REGION",            value = var.aws_region },
   { name = "GOOGLE_GENAI_USE_VERTEXAI", value = "true" },
   { name = "GOOGLE_CLOUD_PROJECT",      value = "project-30510953-3766-465b-816" },
