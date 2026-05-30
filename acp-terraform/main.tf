@@ -416,6 +416,7 @@ resource "aws_lb" "acp" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.acp_alb.id]
   subnets            = aws_subnet.acp_public[*].id
+  idle_timeout       = 300
 
   access_logs {
     bucket  = aws_s3_bucket.acp_alb_logs.id
