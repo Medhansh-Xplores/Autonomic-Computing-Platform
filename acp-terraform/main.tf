@@ -416,7 +416,7 @@ resource "aws_lb" "acp" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.acp_alb.id]
   subnets            = aws_subnet.acp_public[*].id
-  idle_timeout       = 300
+  idle_timeout               = 300  
 
   access_logs {
     bucket  = aws_s3_bucket.acp_alb_logs.id
@@ -629,6 +629,7 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
       {
         Effect = "Allow"
         Action = [
+          "secretsmanager:GetSecretValue",
           "secretsmanager:DescribeSecret",
           "secretsmanager:ListSecrets"
         ]
@@ -679,7 +680,8 @@ resource "aws_iam_role_policy" "acp_ecs_task" {
         Action = [
           "elasticloadbalancing:DescribeLoadBalancers",
           "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:DescribeTargetGroups"
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetHealth"
         ]
         Resource = "*"
       },
@@ -778,6 +780,33 @@ resource "aws_secretsmanager_secret_version" "acp_cognito" {
   })
 }
 
+resource "aws_secretsmanager_secret" "acp_gcp" {
+  name                    = "acp/gcp-service-account"
+  recovery_window_in_days = 0
+  tags                    = { Name = "acp-gcp-service-account" }
+}
+
+#EFS
+resource "aws_efs_access_point" "acp_terraform" {
+  file_system_id = aws_efs_file_system.acp.id
+
+  posix_user {
+    uid = 1000
+    gid = 1000
+  }
+
+  root_directory {
+    path = "/terraform/deployments"
+    creation_info {
+      owner_uid   = 1000
+      owner_gid   = 1000
+      permissions = "755"
+    }
+  }
+
+  tags = { Name = "acp-efs-terraform-ap" }
+}
+
 # ── ECS TASK DEFINITIONS ──────────────────────────────────────────────────────
 
 resource "aws_ecs_task_definition" "acp_backend" {
@@ -789,12 +818,16 @@ resource "aws_ecs_task_definition" "acp_backend" {
   execution_role_arn       = aws_iam_role.acp_ecs_execution.arn
   task_role_arn            = aws_iam_role.acp_ecs_task.arn
 
-  volume {
+    volume {
     name = "acp-efs"
 
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.acp.id
-      root_directory = "/"
+      file_system_id          = aws_efs_file_system.acp.id
+      transit_encryption      = "ENABLED"               # required for access points
+      authorization_config {
+        access_point_id = aws_efs_access_point.acp_terraform.id
+        iam             = "ENABLED"
+      }
     }
   }
 
@@ -818,34 +851,38 @@ resource "aws_ecs_task_definition" "acp_backend" {
     # FIX: Plain-text secrets removed from environment
     # Non-sensitive config kept as env vars; secrets pulled from Secrets Manager
     environment = [
-      { name = "NODE_ENV", value = "production" },
-      { name = "PORT",     value = "8080" },
-      { name = "USE_DB",   value = "true" },
-      { name = "DB_HOST",  value = aws_db_instance.acp.address },
-      { name = "DB_PORT",  value = "5432" },
-      { name = "DB_NAME",  value = var.db_name },
-      { name = "COGNITO_REGION", value = var.aws_region }
-    ]
+  { name = "NODE_ENV",    value = "production" },
+  { name = "PORT",        value = "8080" },
+  { name = "USE_DB",      value = "true" },
+  { name = "DB_HOST",     value = aws_db_instance.acp.address },
+  { name = "DB_PORT",     value = "5432" },
+  { name = "DB_NAME",     value = var.db_name },
+  { name = "COGNITO_REGION",            value = var.aws_region },
+  { name = "GOOGLE_GENAI_USE_VERTEXAI", value = "true" },
+  { name = "GOOGLE_CLOUD_PROJECT",      value = "project-30510953-3766-465b-816" },
+  { name = "GOOGLE_CLOUD_LOCATION",     value = "us-central1" },
+  { name = "GCP_SA_SECRET_ARN",         value = "acp/gcp-service-account" }  # ← MOVED HERE
+]
 
-    # Secrets pulled securely at container start — not visible in task definition JSON
-    secrets = [
-      {
-        name      = "DB_USER"
-        valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:username::"
-      },
-      {
-        name      = "DB_PASSWORD"
-        valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:password::"
-      },
-      {
-        name      = "COGNITO_USER_POOL_ID"
-        valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:user_pool_id::"
-      },
-      {
-        name      = "COGNITO_CLIENT_ID"
-        valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:client_id::"
-      }
-    ]
+secrets = [
+  {
+    name      = "DB_USER"
+    valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:username::"
+  },
+  {
+    name      = "DB_PASSWORD"
+    valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:password::"
+  },
+  {
+    name      = "COGNITO_USER_POOL_ID"
+    valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:user_pool_id::"
+  },
+  {
+    name      = "COGNITO_CLIENT_ID"
+    valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:client_id::"
+  }
+  # ← GCP_SA_SECRET_ARN removed from here
+]
 
     mountPoints = [
       {
