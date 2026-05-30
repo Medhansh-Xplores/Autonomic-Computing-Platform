@@ -850,41 +850,38 @@ resource "aws_ecs_task_definition" "acp_backend" {
     # FIX: Plain-text secrets removed from environment
     # Non-sensitive config kept as env vars; secrets pulled from Secrets Manager
     environment = [
-      { name = "NODE_ENV", value = "production" },
-      { name = "PORT",     value = "8080" },
-      { name = "USE_DB",   value = "true" },
-      { name = "DB_HOST",  value = aws_db_instance.acp.address },
-      { name = "DB_PORT",  value = "5432" },
-      { name = "DB_NAME",  value = var.db_name },
-      { name = "COGNITO_REGION", value = var.aws_region },
-      { name = "GOOGLE_GENAI_USE_VERTEXAI", value = "true" },
-      { name = "GOOGLE_CLOUD_PROJECT",      value = "project-30510953-3766-465b-816" },
-      { name = "GOOGLE_CLOUD_LOCATION",     value = "us-central1" }
-    ]
+  { name = "NODE_ENV",    value = "production" },
+  { name = "PORT",        value = "8080" },
+  { name = "USE_DB",      value = "true" },
+  { name = "DB_HOST",     value = aws_db_instance.acp.address },
+  { name = "DB_PORT",     value = "5432" },
+  { name = "DB_NAME",     value = var.db_name },
+  { name = "COGNITO_REGION",            value = var.aws_region },
+  { name = "GOOGLE_GENAI_USE_VERTEXAI", value = "true" },
+  { name = "GOOGLE_CLOUD_PROJECT",      value = "project-30510953-3766-465b-816" },
+  { name = "GOOGLE_CLOUD_LOCATION",     value = "us-central1" },
+  { name = "GCP_SA_SECRET_ARN",         value = "acp/gcp-service-account" }  # ← MOVED HERE
+]
 
-    # Secrets pulled securely at container start — not visible in task definition JSON
-    secrets = [
-      {
-        name      = "DB_USER"
-        valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:username::"
-      },
-      {
-        name      = "DB_PASSWORD"
-        valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:password::"
-      },
-      {
-        name      = "COGNITO_USER_POOL_ID"
-        valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:user_pool_id::"
-      },
-      {
-        name      = "COGNITO_CLIENT_ID"
-        valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:client_id::"
-      },
-      {
-        name      = "GCP_SA_SECRET_ARN"
-        valueFrom = aws_secretsmanager_secret.acp_gcp.arn
-      }
-    ]
+secrets = [
+  {
+    name      = "DB_USER"
+    valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:username::"
+  },
+  {
+    name      = "DB_PASSWORD"
+    valueFrom = "${aws_secretsmanager_secret.acp_db.arn}:password::"
+  },
+  {
+    name      = "COGNITO_USER_POOL_ID"
+    valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:user_pool_id::"
+  },
+  {
+    name      = "COGNITO_CLIENT_ID"
+    valueFrom = "${aws_secretsmanager_secret.acp_cognito.arn}:client_id::"
+  }
+  # ← GCP_SA_SECRET_ARN removed from here
+]
 
     mountPoints = [
       {
