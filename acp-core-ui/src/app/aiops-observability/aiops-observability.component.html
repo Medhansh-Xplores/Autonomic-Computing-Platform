@@ -30,6 +30,15 @@
         <div class="ctl-hint">
             <span class="ctl-hint-icon">⚡</span>
             ACP's Autonomous and Intelligent Agents continously learn and adapt.
+            <span class="mapek-info-wrapper">
+                <span class="mapek-info-icon">i</span>
+                <span class="mapek-tooltip">
+                    The ACP includes the MAPE-K Reference Model - Monitor, Analyze, Plan, Execute, and Knowledge, an
+                    Agentic AI control-loop that enables the ACP Agents to act autonomously by using a combination of
+                    Large Language Models, toolsets and orchestration that transform cloud infrastructure, applications
+                    and solutions into self-manageable Autonomic Systems.
+                </span>
+            </span>
         </div>
 
         <!-- Run Button -->
@@ -65,7 +74,7 @@
     <!-- ══════════════════════════════════════════════════════════════════ -->
     <div class="flow-section">
         <div class="flow-label">AGENTIC PIPELINE
-            <div class="flow-label-sub"> (Powered by Google Gemini and Agent Development Kit) </div>
+            <div class="flow-label-sub"> (Powered by Google's Gemini LLM and Agent Development Kit) </div>
         </div>
 
         <div class="flow-diagram">
@@ -102,7 +111,7 @@
                 [class.node-done]="scanResult || currentPhaseIndex > 1">
                 <div class="node-header">
                     <span class="node-icon" style="background: #7b2ff7">🖥</span>
-                    <div class="node-title">Infra Monitoring Agent</div>
+                    <div class="node-title">Infrastructure Monitoring Agent</div>
                 </div>
                 <div class="node-status">
                     <span class="ns-dot" [class.ns-purple]="true"></span>
@@ -155,7 +164,7 @@
                 [class.node-done]="scanResult || currentPhaseIndex > 2">
                 <div class="node-header">
                     <span class="node-icon" style="background: #0d9488">📦</span>
-                    <div class="node-title">App Monitoring Agent</div>
+                    <div class="node-title">Application Monitoring Agent</div>
                 </div>
                 <div class="node-status">
                     <span class="ns-dot" [class.ns-teal]="true"></span>
@@ -250,9 +259,10 @@
         <!-- Pre-scan ready hint -->
         <div class="ready-hint" *ngIf="!scanning && !scanResult && !accountsError">
             <span class="rh-icon">⚡</span>
-            <span>Click <strong>Run Agents</strong> to scan your infrastructure and applications. The Remediation Agent
+            <span>Click <strong>Run Agents</strong> to scan your infrastructure and applications. The Remediation
+                Self-Heal Agent
                 will request
-                approval before taking any action.</span>
+                approval (Human-in-the-Loop) before taking any self-healing actions.</span>
         </div>
 
     </div><!-- /flow-section -->
