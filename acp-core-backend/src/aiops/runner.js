@@ -4,20 +4,31 @@
 
 const { InMemoryRunner, isFinalResponse } = require('@google/adk');
 const { createUserContent } = require('@google/genai');
-const { orchestratorAgent } = require('./agents/orchestrator.agent');
+const { _handlers } = require('./tools/remediation.tools');
+
 const db = require('../config/db');
 
 const APP_NAME = 'acp-aiops';
 
-const runner = new InMemoryRunner({
-    agent: orchestratorAgent,
-    appName: APP_NAME,
-});
+// Lazy singleton — created on first request, after loadGcpCredentials() has run
+let _runner = null;
+
+function getRunner() {
+    if (!_runner) {
+        const { orchestratorAgent } = require('./agents/orchestrator.agent');
+        _runner = new InMemoryRunner({
+            agent: orchestratorAgent,
+            appName: APP_NAME,
+        });
+    }
+    return _runner;
+}
 
 async function runAiOps({ userId, accountId, region, mode = 'full' }) {
     const sessionId = `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const scanStartedAt = new Date().toISOString();
 
+    const runner = getRunner();
     await runner.sessionService.createSession({ appName: APP_NAME, userId, sessionId });
 
     const userMessage = createUserContent(
@@ -80,91 +91,81 @@ async function runAiOps({ userId, accountId, region, mode = 'full' }) {
     console.log(`[ADK] Authors seen: ${Object.keys(textByAuthor).join(', ') || '(none)'}`);
 
     // ── Primary path: read from session state ─────────────────────────────────
+    // SequentialAgent + outputKey writes reliably to session state.
+    // infra_monitor_agent → 'infra_health_findings'
+    // app_health_agent    → 'app_health_findings'
+    // acp_aiops_orchestrator → 'orchestrator_report'
     const session = await runner.sessionService.getSession({ appName: APP_NAME, userId, sessionId });
     const state = session?.state || {};
-    console.log('[ADK] Raw app_health_findings:', state.app_health_findings);
     console.log('[ADK] Session state keys:', Object.keys(state));
     Object.entries(state).forEach(([k, v]) => {
         console.log(`[ADK] state.${k}: ${String(v).slice(0, 300)}`);
     });
 
-    // Final report from orchestrator's own final response
-    const finalReport = (() => {
-        const finalTexts = allEvents.filter(e => e.isFinal).map(e => e.text).join('');
-        return safeJsonParse(finalTexts) || null;
-    })();
+    // Final report from the orchestrator's own outputKey
+    const finalReport = safeJsonParse(state.orchestrator_report)
+        || (() => {
+            const finalTexts = allEvents.filter(e => e.isFinal).map(e => e.text).join('');
+            return safeJsonParse(finalTexts) || null;
+        })();
 
+    // ── Primary: session state (SequentialAgent outputKey writes here) ────────
     let infraFindings = safeJsonParse(state.infra_health_findings);
-    // Primary path for appFindings is textByAuthor — outputKey on sub-agents invoked
-    // by an LlmAgent orchestrator does NOT reliably propagate to the parent session state.
-    let appFindings = (() => {
-        const appText = textByAuthor['app_health_agent'];
-        return appText ? safeJsonParse(appText) : null;
-    })() || safeJsonParse(state.app_health_findings);
+    let appFindings = safeJsonParse(state.app_health_findings);
     let remediation = safeJsonParse(state.remediation_results);
 
-    // ── Fallback path 1: match by author name ─────────────────────────────────
-    // outputKey writes to state but ParallelAgent sub-agents emit text events
-    // under their own agent name. We parse those directly.
-    if (!infraFindings) {
-        const infraText = textByAuthor['infra_monitor_agent'];
-        if (infraText) {
-            infraFindings = safeJsonParse(infraText);
-            if (infraFindings) console.log('[ADK] Extracted infraFindings from author event text');
-        }
+    // ── Fallback 1: author text events ────────────────────────────────────────
+    if (!infraFindings && textByAuthor['infra_monitor_agent']) {
+        infraFindings = safeJsonParse(textByAuthor['infra_monitor_agent']);
+        if (infraFindings) console.log('[ADK] infraFindings from author text event');
     }
-    if (appFindings) {
-        console.log('[ADK] appFindings resolved from primary path (textByAuthor or state)');
-        if (appFindings.scanMeta) {
-            console.log('[ADK] app_health scanMeta:', JSON.stringify(appFindings.scanMeta));
-        } else {
-            console.warn('[ADK] WARNING: appFindings has no scanMeta — agent may have returned partial JSON');
-        }
+    if (!appFindings && textByAuthor['app_health_agent']) {
+        appFindings = safeJsonParse(textByAuthor['app_health_agent']);
+        if (appFindings) console.log('[ADK] appFindings from author text event');
     }
-    if (!remediation) {
-        const remText = textByAuthor['remediation_agent'];
-        if (remText) {
-            remediation = safeJsonParse(remText);
-            if (remediation) console.log('[ADK] Extracted remediation from author event text');
-        }
+    if (!remediation && textByAuthor['remediation_agent']) {
+        remediation = safeJsonParse(textByAuthor['remediation_agent']);
+        if (remediation) console.log('[ADK] remediation from author text event');
     }
 
-    // ── Fallback path 2: scan all events by shape ─────────────────────────────
-    if (!infraFindings || !appFindings || !remediation) {
+    // ── Fallback 2: shape-scan all events ────────────────────────────────────
+    if (!infraFindings || !appFindings) {
         console.log('[ADK] Partial state — scanning all events by shape');
-
         for (const ev of allEvents) {
             const parsed = safeJsonParse(ev.text);
             if (!parsed) continue;
-
             if (!infraFindings && isInfraFinding(parsed, ev.author)) {
                 infraFindings = parsed;
-                console.log('[ADK] Extracted infraFindings from event stream (author:', ev.author, ')');
+                console.log('[ADK] infraFindings from event stream (author:', ev.author, ')');
             }
             if (!appFindings && isAppFinding(parsed, ev.author)) {
                 appFindings = parsed;
-                console.log('[ADK] Extracted appFindings from event stream (author:', ev.author, ')');
+                console.log('[ADK] appFindings from event stream (author:', ev.author, ')');
             }
             if (!remediation && isRemediation(parsed, ev.author)) {
                 remediation = parsed;
-                console.log('[ADK] Extracted remediation from event stream (author:', ev.author, ')');
+                console.log('[ADK] remediation from event stream (author:', ev.author, ')');
             }
         }
     }
 
-    // Fallback path 3: orchestrator now runs app health tools directly,
-    // so its final report IS the app findings source.
-    if (!appFindings && finalReport) {
+    // ── Fallback 3: orchestrator final report ─────────────────────────────────
+    if (!appFindings && finalReport?.appFindings !== undefined) {
         appFindings = {
             findings: finalReport.appFindings || [],
-            summary: finalReport.appSummary || 'App scan completed',
+            summary: finalReport.appSummary || null,
             scanMeta: finalReport.appScanMeta || null,
         };
-        console.log('[ADK] Extracted appFindings from orchestrator final report, appScanMeta=', JSON.stringify(finalReport.appScanMeta));
+        console.log('[ADK] appFindings from orchestrator final report');
+    }
+    if (!infraFindings && finalReport?.infraSummary) {
+        infraFindings = { summary: finalReport.infraSummary, findings: [], scanMeta: null };
+        console.log('[ADK] infraFindings from orchestrator final report');
     }
 
     console.log('[ADK] Final — infraFindings:', infraFindings ? 'OK' : 'NULL');
     console.log('[ADK] Final — appFindings:', appFindings ? 'OK' : 'NULL');
+    if (appFindings?.scanMeta) console.log('[ADK] appFindings.scanMeta:', JSON.stringify(appFindings.scanMeta));
     console.log('[ADK] Final — remediation:', remediation ? 'OK' : 'NULL');
 
     const scanCompletedAt = new Date().toISOString();
@@ -186,9 +187,9 @@ async function runAiOps({ userId, accountId, region, mode = 'full' }) {
         accountId,
         region,
         infraAgent: infraFindings?.scanMeta || null,
-        appAgent: appAgentMeta,
-        infraSummary: infraFindings?.summary || null,
-        appSummary: finalReport?.appSummary || appFindings?.summary || null,
+        appAgent: appFindings?.scanMeta || finalReport?.appScanMeta || null,
+        infraSummary: infraFindings?.summary || finalReport?.infraSummary || null,
+        appSummary: appFindings?.summary || finalReport?.appSummary || null,
     };
 
     try {
@@ -254,26 +255,48 @@ function isRemediation(obj, author) {
     return obj.actionsAttempted !== undefined || obj.pendingApproval !== undefined;
 }
 
-async function resumeAiOps({ sessionId, userId, approved, action, target }) {
-    const msg = createUserContent(JSON.stringify({
-        type: 'human_approval_response',
-        approved, action, target,
-        message: approved
-            ? `Human approved: proceed with ${action} on ${target}`
-            : `Human rejected: do NOT proceed with ${action} on ${target}. Create an incident instead.`,
-    }));
-
-    let finalReport = null;
-
-    for await (const event of runner.runAsync({ userId, sessionId, newMessage: msg })) {
-        if (isFinalResponse(event) && event.content?.parts?.length) {
-            const text = event.content.parts.filter(p => p.text).map(p => p.text).join('');
-            finalReport = safeJsonParse(text);
-        }
+async function resumeAiOps({ sessionId, userId, approved, action, target, accountId, region, desiredCount, reason }) {
+    if (!approved) {
+        await db.query(
+            `INSERT INTO aiops_audit_log (user_id, action, target, reason, approved, result, created_at)
+             VALUES ($1, $2, $3, $4, false, $5, NOW())`,
+            [userId, action, target, reason || 'User rejected', JSON.stringify({ rejected: true })]
+        );
+        return { report: null, remediation: { rejected: true, action, target } };
     }
 
-    const session = await runner.sessionService.getSession({ appName: APP_NAME, userId, sessionId });
-    return { report: finalReport, remediation: safeJsonParse(session?.state?.remediation_results) };
+    let result;
+    try {
+        if (action === 'scale_ecs_service') {
+            const [cluster, serviceName] = target.split('/');
+            result = await _handlers.scale_ecs_service({
+                accountId, region, userId, cluster, serviceName,
+                desiredCount: desiredCount ?? 1,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else if (action === 'restart_ecs_service') {
+            const [cluster, serviceName] = target.split('/');
+            result = await _handlers.restart_ecs_service({
+                accountId, region, userId, cluster, serviceName,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else if (action === 'reboot_rds_instance') {
+            result = await _handlers.reboot_rds_instance({
+                accountId, region, userId,
+                dbIdentifier: target,
+                reason: reason || 'Human approved via ACP Portal',
+                approvedByUser: true,
+            });
+        } else {
+            result = { success: false, message: `Unknown action: ${action}` };
+        }
+    } catch (err) {
+        result = { success: false, action, target, message: err.message };
+    }
+
+    return { report: result, remediation: { actionsAttempted: [{ action, target, result }] } };
 }
 
 /**

@@ -37,17 +37,18 @@ exports.runAiOpsScan = async (req, res) => {
 // Resume a session after a human approves or rejects a pending action.
 // Body: { sessionId, approved, action, target }
 exports.approveAction = async (req, res) => {
+    console.log('[aiops/approve] HIT — body:', JSON.stringify(req.body));
     const userId = req.user?.username;
-    const { sessionId, approved, action, target } = req.body;
+    const { sessionId, approved, action, target, accountId, region, desiredCount, reason } = req.body;
 
-    if (!sessionId || approved === undefined || !action || !target) {
+    if (!sessionId || approved === undefined || !action || !target || !accountId || !region) {
         return res.status(400).json({
-            error: 'Missing required fields: sessionId, approved (bool), action, target',
+            error: 'Missing required fields: sessionId, approved, action, target, accountId, region',
         });
     }
 
     try {
-        const result = await resumeAiOps({ sessionId, userId, approved, action, target });
+        const result = await resumeAiOps({ sessionId, userId, approved, action, target, accountId, region, desiredCount, reason });
         res.json(result);
     } catch (err) {
         console.error('[aiops/approve]', err.message);
@@ -60,12 +61,10 @@ exports.approveAction = async (req, res) => {
 exports.getIncidents = async (req, res) => {
     const userId = req.user?.username;
     const { status, limit = 50 } = req.query;
-
     try {
         const query = status
-            ? `SELECT * FROM aiops_incidents WHERE user_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3`
-            : `SELECT * FROM aiops_incidents WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`;
-
+            ? `SELECT * FROM aiops_events WHERE user_id = $1 AND title IS NOT NULL AND status = $2 ORDER BY created_at DESC LIMIT $3`
+            : `SELECT * FROM aiops_events WHERE user_id = $1 AND title IS NOT NULL ORDER BY created_at DESC LIMIT $2`;
         const params = status ? [userId, status, limit] : [userId, limit];
         const result = await db.query(query, params);
         res.json(result.rows);
@@ -99,14 +98,12 @@ exports.updateIncident = async (req, res) => {
     const userId = req.user?.username;
     const { id } = req.params;
     const { status } = req.body;
-
     if (!['open', 'acknowledged', 'resolved'].includes(status)) {
         return res.status(400).json({ error: 'status must be: open | acknowledged | resolved' });
     }
-
     try {
         const result = await db.query(
-            `UPDATE aiops_incidents SET status = $1, updated_at = NOW()
+            `UPDATE aiops_events SET status = $1, updated_at = NOW()
              WHERE id = $2 AND user_id = $3 RETURNING *`,
             [status, id, userId]
         );

@@ -1,0 +1,149 @@
+name: Deploy ACP Portal - AWS ECS
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/Agentic-AI-Observability
+
+env:
+  AWS_REGION: us-east-1
+  BACKEND_ECR_REPO: acp-backend
+  FRONTEND_ECR_REPO: acp-frontend
+  ECS_CLUSTER: acp-cluster
+  BACKEND_SERVICE: acp-backend-service
+  FRONTEND_SERVICE: acp-frontend-service
+  BACKEND_TASK_DEF: acp-backend-task
+  FRONTEND_TASK_DEF: acp-frontend-task
+
+jobs:
+  deploy:
+    name: Build, Push and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── AWS Credentials ─────────────────────────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── ECR Login ───────────────────────────────────────────────────────────
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Terraform ───────────────────────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: acp-terraform
+        run: terraform init -upgrade
+
+      # FIX: Delete log groups before apply so Terraform always creates them
+      # fresh with no "already exists" conflict. Safe on first run because
+      # "|| true" silently passes if the group doesn't exist yet.
+      - name: Delete existing CloudWatch log groups
+        run: |
+          aws logs delete-log-group --log-group-name /aws/vpc/acp-flow-logs 2>/dev/null || true
+          aws logs delete-log-group --log-group-name /ecs/acp 2>/dev/null || true
+          sleep 5
+
+      - name: Terraform Apply (infra)
+        working-directory: acp-terraform
+        run: |
+          terraform apply -auto-approve \
+            -var="db_password=${{ secrets.DB_PASSWORD }}" \
+            -var="cognito_user_pool_id=${{ secrets.COGNITO_USER_POOL_ID }}" \
+            -var="cognito_client_id=${{ secrets.COGNITO_CLIENT_ID }}"
+
+      # ── Upload GCP Service Account Key ──────────────────────────────────────
+      # Runs after terraform apply so the secret resource always exists.
+      # GCP_SA_JSON = contents of acp-portal-ai.json stored as a GitHub secret.
+      - name: Upload GCP service account key to Secrets Manager
+        run: |
+          aws secretsmanager put-secret-value \
+            --secret-id acp/gcp-service-account \
+            --secret-string '${{ secrets.GCP_SA_JSON }}'
+
+      # ── Build and Push Backend ───────────────────────────────────────────────
+      - name: Build and push backend image
+        working-directory: acp-core-backend
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPO }}:${{ github.sha }}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "BACKEND_IMAGE=$IMAGE_URI" >> $GITHUB_ENV
+
+      # ── Build and Push Frontend ──────────────────────────────────────────────
+      - name: Build and push frontend image
+        working-directory: acp-core-ui
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.FRONTEND_ECR_REPO }}:${{ github.sha }}
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "FRONTEND_IMAGE=$IMAGE_URI" >> $GITHUB_ENV
+
+      # ── Deploy Backend to ECS ────────────────────────────────────────────────
+      - name: Download backend task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.BACKEND_TASK_DEF }} \
+            --query taskDefinition > backend-task-def.json
+
+      - name: Render backend task definition
+        id: backend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: backend-task-def.json
+          container-name: acp-backend
+          image: ${{ env.BACKEND_IMAGE }}
+
+      - name: Deploy backend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.backend-task-def.outputs.task-definition }}
+          service: ${{ env.BACKEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # ── Deploy Frontend to ECS ───────────────────────────────────────────────
+      - name: Download frontend task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.FRONTEND_TASK_DEF }} \
+            --query taskDefinition > frontend-task-def.json
+
+      - name: Render frontend task definition
+        id: frontend-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: frontend-task-def.json
+          container-name: acp-frontend
+          image: ${{ env.FRONTEND_IMAGE }}
+
+      - name: Deploy frontend to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.frontend-task-def.outputs.task-definition }}
+          service: ${{ env.FRONTEND_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # ── Done ─────────────────────────────────────────────────────────────────
+      - name: ACP portal URL
+        working-directory: acp-terraform
+        run: |
+          echo "ACP Portal is live at:"
+          terraform output -raw alb_url

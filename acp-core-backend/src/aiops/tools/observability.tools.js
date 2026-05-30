@@ -122,9 +122,11 @@ Call this once per application you want to assess.`,
             const desired = (backend?.desiredCount ?? 0) + (frontend?.desiredCount ?? 0);
 
             let status = 'unknown';
-            if (desired > 0) {
+            if (desired === 0 && running === 0) {
+                status = 'unhealthy';
+            } else if (desired > 0) {
                 if (alarmsVal.length > 0 || running === 0) status = 'unhealthy';
-                else if (running < desired || (tgHealth && tgHealth.healthyCount < tgHealth.totalCount)) status = 'degraded';
+                else if (running < desired) status = 'degraded';
                 else status = 'healthy';
             }
 
@@ -163,7 +165,7 @@ const getAllDeploymentsHealth = {
     name: 'get_all_deployments_health',
     description: `Returns a summary health status for EVERY deployment stored in the ACP Portal DB for a given user.
 Useful to get a broad picture of which apps need attention before diving into individual ones.
-Returns an array of { id, name, status, runningCount, desiredCount }.`,
+Returns { deployments: [{ id, name, status, runningCount, desiredCount, activeAlarms }] }.`,
 
     parameters: {
         type: 'object',
@@ -211,18 +213,30 @@ Returns an array of { id, name, status, runningCount, desiredCount }.`,
                     const desired = (backend?.desiredCount ?? 0) + (frontend?.desiredCount ?? 0);
 
                     let status = 'unknown';
-                    if (desired > 0) {
+                    if (desired === 0 && running === 0) {
+                        status = 'unhealthy';
+                    } else if (desired > 0) {
                         if (alarmsVal.length > 0 || running === 0) status = 'unhealthy';
                         else if (running < desired) status = 'degraded';
                         else status = 'healthy';
                     }
-                    return { id, name, status, runningCount: running, desiredCount: desired, activeAlarms: alarmsVal.length };
+                    return {
+                        id, name, status,
+                        runningCount: running,
+                        desiredCount: desired,
+                        activeAlarms: alarmsVal.length,
+                        cluster: ecsCluster,
+                        ecsServiceBackend: backendSvc,
+                        ecsServiceFrontend: frontendSvc,
+                        region,
+                        accountId: accountID,
+                    };
                 } catch (err) {
                     return { id, name, status: 'unknown', reason: err.message };
                 }
             }));
 
-            return results;
+            return { deployments: results };
         } catch (err) {
             return { error: err.message };
         }
