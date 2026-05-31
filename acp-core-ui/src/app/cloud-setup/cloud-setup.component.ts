@@ -163,7 +163,6 @@ export class CloudSetupComponent implements OnInit {
     }
 
     openEdit(account: CloudAccount) {
-        this.resetForm();
         this.editingId = account.id!;
         this.form = { ...account };
         this.selectedCloud = account.provider?.toLowerCase() === 'azure' ? 'azure' : 'aws';
@@ -176,7 +175,12 @@ export class CloudSetupComponent implements OnInit {
         }
         this.error = '';
         this.success = '';
-        setTimeout(() => this.showForm = true, 0);
+        this.loading = false;
+        this.verifyStatus = 'idle';
+        this.copied = false;
+        this.copiedRoleName = false;
+        console.log('editingId:', this.editingId, 'authType:', this.authType, 'selectedCloud:', this.selectedCloud, 'pendingExternalId:', this.pendingExternalId);
+        this.showForm = true;
     }
 
     copied = false;
