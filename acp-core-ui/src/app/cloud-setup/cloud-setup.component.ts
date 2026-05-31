@@ -163,6 +163,7 @@ export class CloudSetupComponent implements OnInit {
     }
 
     openEdit(account: CloudAccount) {
+        this.resetForm();
         this.editingId = account.id!;
         this.form = { ...account };
         this.selectedCloud = account.provider?.toLowerCase() === 'azure' ? 'azure' : 'aws';
@@ -171,10 +172,11 @@ export class CloudSetupComponent implements OnInit {
             this.pendingExternalId = account.externalId || '';
         } else {
             this.authType = account.roleArn ? 'role' : 'keys';
+            this.pendingExternalId = account.externalId || '';
         }
-        this.showForm = true;
         this.error = '';
         this.success = '';
+        setTimeout(() => this.showForm = true, 0);
     }
 
     copied = false;

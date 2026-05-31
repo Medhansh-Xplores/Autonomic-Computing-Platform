@@ -32,8 +32,10 @@
             <div class="table-row" *ngFor="let acc of accounts" [class.default-row]="acc.isDefault">
                 <div class="cloud-col">
                     <div class="cloud-badge">
-                        <img *ngIf="acc.provider === 'AWS' || !acc.provider" src="assets/img/AWS-transparent.png" alt="AWS" />
-                        <img *ngIf="acc.provider === 'Azure'" src="assets/img/azure-transparent-logo.png" alt="Azure" style="max-height: 24px;" />
+                        <img *ngIf="acc.provider === 'AWS' || !acc.provider" src="assets/img/AWS-transparent.png"
+                            alt="AWS" />
+                        <img *ngIf="acc.provider === 'Azure'" src="assets/img/azure-transparent-logo.png" alt="Azure"
+                            style="max-height: 24px;" />
                     </div>
                 </div>
                 <div class="name-col">
@@ -88,8 +90,8 @@
                                     (click)="selectCloud('aws')">
                                     AWS
                                 </button>
-                                <button type="button" class="provider-btn" [class.active-btn]="selectedCloud === 'azure'"
-                                    (click)="selectCloud('azure')">
+                                <button type="button" class="provider-btn"
+                                    [class.active-btn]="selectedCloud === 'azure'" (click)="selectCloud('azure')">
                                     Azure
                                 </button>
                             </div>
@@ -133,7 +135,7 @@
                                     {{ selectedCloud === 'aws' ? 'AWS Account ID' : 'Azure Subscription ID' }}
                                 </label>
                                 <input class="usa-input" id="accountId" name="accountId" type="text"
-                                    [placeholder]="selectedCloud === 'aws' ? '12-digit account ID' : 'e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'" 
+                                    [placeholder]="selectedCloud === 'aws' ? '12-digit account ID' : 'e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'"
                                     [(ngModel)]="form.accountId" [maxlength]="selectedCloud === 'aws' ? 12 : 36">
                             </div>
                         </div>
@@ -142,10 +144,12 @@
                             <label class="form-label" for="region">Default Region</label>
                             <select class="usa-select" id="region" name="region" [(ngModel)]="form.region">
                                 <ng-container *ngIf="selectedCloud === 'aws'">
-                                    <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}</option>
+                                    <option *ngFor="let r of awsRegions" [value]="r.code">{{ r.code }} — {{ r.name }}
+                                    </option>
                                 </ng-container>
                                 <ng-container *ngIf="selectedCloud === 'azure'">
-                                    <option *ngFor="let r of azureRegions" [value]="r.code">{{ r.code }} — {{ r.name }}</option>
+                                    <option *ngFor="let r of azureRegions" [value]="r.code">{{ r.code }} — {{ r.name }}
+                                    </option>
                                 </ng-container>
                             </select>
                         </div>
@@ -185,8 +189,8 @@
                                     Directory (Tenant) ID <span class="required-marker">*required</span>
                                 </label>
                                 <input class="usa-input" id="tenantId" name="roleArn" type="text"
-                                    placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                                    [(ngModel)]="form.roleArn" required>
+                                    placeholder="e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" [(ngModel)]="form.roleArn"
+                                    required>
                             </div>
                             <div class="form-row-2">
                                 <div class="form-group">
@@ -206,7 +210,8 @@
                                         [(ngModel)]="form.secretAccessKey" required>
                                 </div>
                             </div>
-                            <p class="keys-warning">Ensure this Service Principal has at least Contributor access in your Azure subscription.</p>
+                            <p class="keys-warning">Ensure this Service Principal has at least Contributor access in
+                                your Azure subscription.</p>
                         </div>
 
                         <div class="form-actions">
@@ -218,7 +223,8 @@
 
                     </div><!-- /form-col-left -->
                     <!-- RIGHT COLUMN: IAM steps (AWS) -->
-                    <div class="form-col-right" *ngIf="selectedCloud === 'aws' && authType === 'role' && !editingId && pendingExternalId">
+                    <div class="form-col-right"
+                        *ngIf="selectedCloud === 'aws' && authType === 'role' && pendingExternalId">
                         <div class="iam-steps-block">
                             <p class="iam-steps-title">Complete these 4 steps in AWS, then paste the ACPDeploymentRole
                                 ARN on the left.</p>
@@ -227,9 +233,9 @@
                                 <div class="step-number">1</div>
                                 <div>
                                     <p class="step-text">Go to <a
-                                             href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
+                                            href="https://console.aws.amazon.com/iam/home#/roles/create" target="_blank"
                                             class="step-link">AWS IAM → Roles → Create role</a>. Under <strong>Trusted
-                                             entity type</strong>, choose <strong>AWS account</strong>, then select
+                                            entity type</strong>, choose <strong>AWS account</strong>, then select
                                         <strong>Another AWS account</strong>.
                                     </p>
                                     <p class="step-hint">Enter this as the Account ID:</p>
@@ -284,14 +290,17 @@
                     </div><!-- /form-col-right (AWS) -->
 
                     <!-- RIGHT COLUMN: Service Principal steps (Azure) -->
-                    <div class="form-col-right" *ngIf="selectedCloud === 'azure' && authType === 'secret' && !editingId">
+                    <div class="form-col-right"
+                        *ngIf="selectedCloud === 'azure' && authType === 'secret' && !editingId">
                         <div class="iam-steps-block">
-                            <p class="iam-steps-title">Complete these steps in Azure, then copy and paste the values on the left.</p>
+                            <p class="iam-steps-title">Complete these steps in Azure, then copy and paste the values on
+                                the left.</p>
 
                             <div class="iam-step">
                                 <div class="step-number">1</div>
                                 <div>
-                                    <p class="step-text">Register a new application in Microsoft Entra ID (formerly Azure AD) under App registrations.</p>
+                                    <p class="step-text">Register a new application in Microsoft Entra ID (formerly
+                                        Azure AD) under App registrations.</p>
                                     <p class="step-hint">Name it <strong>ACP-Deployment-Service</strong>.</p>
                                 </div>
                             </div>
@@ -299,23 +308,29 @@
                             <div class="iam-step">
                                 <div class="step-number">2</div>
                                 <div>
-                                    <p class="step-text">Under <strong>Certificates & secrets</strong>, create a new <strong>Client secret</strong>.</p>
-                                    <p class="step-hint">Copy the secret value immediately, as it will not be shown again.</p>
+                                    <p class="step-text">Under <strong>Certificates & secrets</strong>, create a new
+                                        <strong>Client secret</strong>.</p>
+                                    <p class="step-hint">Copy the secret value immediately, as it will not be shown
+                                        again.</p>
                                 </div>
                             </div>
 
                             <div class="iam-step">
                                 <div class="step-number">3</div>
                                 <div>
-                                    <p class="step-text">Assign the <strong>Contributor</strong> role to your newly created application.</p>
-                                    <p class="step-hint">Navigate to your Azure Subscription → Access control (IAM) → Add role assignment.</p>
+                                    <p class="step-text">Assign the <strong>Contributor</strong> role to your newly
+                                        created application.</p>
+                                    <p class="step-hint">Navigate to your Azure Subscription → Access control (IAM) →
+                                        Add role assignment.</p>
                                 </div>
                             </div>
 
                             <div class="iam-step">
                                 <div class="step-number">4</div>
                                 <div>
-                                    <p class="step-text">Retrieve the <strong>Subscription ID</strong>, <strong>Directory (Tenant) ID</strong>, and <strong>Application (Client) ID</strong> from your registration overview and paste them on the left.</p>
+                                    <p class="step-text">Retrieve the <strong>Subscription ID</strong>,
+                                        <strong>Directory (Tenant) ID</strong>, and <strong>Application (Client)
+                                            ID</strong> from your registration overview and paste them on the left.</p>
                                 </div>
                             </div>
                         </div>
