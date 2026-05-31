@@ -2,13 +2,14 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const db = require('./config/db');
+const { loadGcpCredentials } = require('./config/gcp');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Request Logger
+// Request Logger (Raghu)
 app.use((req, res, next) => {
   console.log(`[REQUEST] ${req.method} ${req.url}`);
   next();
@@ -28,8 +29,8 @@ const cloudAccountRoutes = require('./routes/cloudAccount.routes');
 const observabilityRoutes = require('./routes/observability.routes');
 const securityRoutes = require('./routes/security.routes');
 const aiopsRoutes = require('./routes/aiops.routes');
-const costRoutes = require('./routes/cost.routes');
-const azureRoutes = require('./routes/azure.routes');
+const costRoutes = require('./routes/cost.routes');       // Raghu
+const azureRoutes = require('./routes/azure.routes');     // Raghu
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -45,8 +46,8 @@ app.use('/api/v1/cloud-accounts', cloudAccountRoutes);
 app.use('/api/v1/observability', observabilityRoutes);
 app.use('/api/v1/security', securityRoutes);
 app.use('/api/v1/aiops', aiopsRoutes);
-app.use('/api/v1/cost-estimates', costRoutes);
-app.use('/api/v1/azure', azureRoutes);
+app.use('/api/v1/cost-estimates', costRoutes);           // Raghu
+app.use('/api/v1/azure', azureRoutes);                   // Raghu
 
 // Health
 app.get("/health", (req, res) => {
@@ -55,20 +56,19 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 8080;
 
-// Init DB schema if running in ECS (USE_DB=true), then start server
-if (process.env.USE_DB === 'true') {
-  db.initSchema()
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`ACP Backend running on port ${PORT}`);
-      });
-    })
-    .catch(err => {
+async function startServer() {
+  await loadGcpCredentials();                            // Medhansh — must run before ADK
+  if (process.env.USE_DB === 'true') {
+    try {
+      await db.initSchema();
+      app.listen(PORT, () => console.log(`ACP Backend running on port ${PORT}`));
+    } catch (err) {
       console.error('DB init failed:', err.message);
       process.exit(1);
-    });
-} else {
-  app.listen(PORT, () => {
-    console.log(`ACP Backend running on port ${PORT} (DB skipped)`);
-  });
+    }
+  } else {
+    app.listen(PORT, () => console.log(`ACP Backend running on port ${PORT} (DB skipped)`));
+  }
 }
+
+startServer();
