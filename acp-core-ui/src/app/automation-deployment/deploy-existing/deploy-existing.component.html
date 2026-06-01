@@ -176,7 +176,7 @@
                             (ngModelChange)="loadAzureRegions()">
                             <option value="">
                                 {{ loadingAzureAccounts ? 'Loading accounts...' :
-                                 (azureAccountOptions.length ? 'Select Azure Account' : 'No Azure accounts available') }}
+                                (azureAccountOptions.length ? 'Select Azure Account' : 'No Azure accounts available') }}
                             </option>
                             <option *ngFor="let acc of azureAccountOptions" [value]="acc.accountId">
                                 {{ acc.accountName }} ({{ acc.accountId }})
@@ -193,7 +193,8 @@
                             [disabled]="loadingAzureRegions || !azureAccount"
                             (ngModelChange)="loadContainerAppEnvironments(); loadAksClusters(); loadAppServicePlans()">
                             <option value="">
-                                {{ loadingAzureRegions ? 'Loading regions...' : (azureAccount ? 'Select Region' : 'Select account first') }}
+                                {{ loadingAzureRegions ? 'Loading regions...' : (azureAccount ? 'Select Region' :
+                                'Select account first') }}
                             </option>
                             <option *ngFor="let r of azureRegionOptions" [value]="r">{{ r }}</option>
                         </select>
@@ -214,7 +215,8 @@
                             [disabled]="loadingContainerAppEnvironments || !region">
                             <option value="">
                                 {{ loadingContainerAppEnvironments ? 'Loading environments...' :
-                                   (region ? (containerAppEnvironments.length ? 'Select Environment' : 'No environments found') : 'Select region first') }}
+                                (region ? (containerAppEnvironments.length ? 'Select Environment' : 'No environments
+                                found') : 'Select region first') }}
                             </option>
                             <option *ngFor="let env of containerAppEnvironments" [value]="env.name">
                                 {{ env.name }} ({{ env.resourceGroup }})
@@ -234,11 +236,11 @@
                     <label class="form-label">AKS Cluster</label>
                     <div class="dropdown-with-loader">
                         <select class="usa-select" [(ngModel)]="selectedAksCluster"
-                            [disabled]="loadingAksClusters || !region"
-                            (ngModelChange)="onAksClusterChange()">
+                            [disabled]="loadingAksClusters || !region" (ngModelChange)="onAksClusterChange()">
                             <option value="">
                                 {{ loadingAksClusters ? 'Loading AKS clusters...' :
-                                   (region ? (aksClusters.length ? 'Select AKS Cluster' : 'No clusters found') : 'Select region first') }}
+                                (region ? (aksClusters.length ? 'Select AKS Cluster' : 'No clusters found') : 'Select
+                                region first') }}
                             </option>
                             <option *ngFor="let c of aksClusters" [value]="c.name">
                                 {{ c.name }} ({{ c.resourceGroup }})
@@ -261,7 +263,8 @@
                             [disabled]="loadingAppServicePlans || !region">
                             <option value="">
                                 {{ loadingAppServicePlans ? 'Loading plans...' :
-                                   (region ? (appServicePlans.length ? 'Select App Service Plan' : 'No plans found') : 'Select region first') }}
+                                (region ? (appServicePlans.length ? 'Select App Service Plan' : 'No plans found') :
+                                'Select region first') }}
                             </option>
                             <option *ngFor="let p of appServicePlans" [value]="p.name">
                                 {{ p.name }} ({{ p.sku }}) — {{ p.resourceGroup }}
@@ -462,7 +465,8 @@
                     <label class="form-label">Application Repository URL</label>
                     <input type="text" class="usa-input" [(ngModel)]="repoUrl"
                         placeholder="https://github.com/org/repo  or  .../tree/main/subfolder">
-                    <div class="field-hint">Paste a full repo URL or a /tree/branch/subfolder URL — branch and paths are detected automatically.</div>
+                    <div class="field-hint">Paste a full repo URL or a /tree/branch/subfolder URL — branch and paths are
+                        detected automatically.</div>
                 </div>
                 <div class="form-row-2">
                     <div class="form-group">
@@ -503,7 +507,8 @@
                     <label class="form-label">GitHub Token <span style="color:red">*</span></label>
                     <input type="password" class="usa-input" [(ngModel)]="githubToken"
                         placeholder="GitHub Personal Access Token (repo + workflow scopes)">
-                    <div *ngIf="azureRepoType === 'public'" class="field-hint">Required to commit the workflow file to your repository.</div>
+                    <div *ngIf="azureRepoType === 'public'" class="field-hint">Required to commit the workflow file to
+                        your repository.</div>
                 </div>
             </div>
         </div>
@@ -614,6 +619,7 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Listener Priority</label>
                     <input type="number" class="usa-input" [(ngModel)]="priority" [class.is-invalid]="isPriorityTaken()"
                         placeholder="100">
                     <div *ngIf="takenPriorities.length > 0" class="field-hint">
