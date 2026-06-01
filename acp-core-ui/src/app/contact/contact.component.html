@@ -32,6 +32,8 @@
                     </svg>
                 </span> Demo Video</h3>
             <div class="video-placeholder" (click)="openVideoModal()">
+                <!-- Custom thumbnail image — replace src with your actual image path -->
+                <img class="video-thumb-img" src="assets/img/video-thumbnail.jpg" alt="ACP Platform Demo Thumbnail" />
                 <div class="video-thumb-overlay">
                     <div class="play-btn">
                         <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -41,8 +43,6 @@
                     </div>
                     <div class="video-label">
                         <span class="video-badge">DEMO</span>
-                        <p class="video-title">ACP Platform Walkthrough</p>
-                        <p class="video-sub">Click to watch the full platform demo</p>
                     </div>
                 </div>
             </div>
@@ -205,11 +205,11 @@
             <button class="modal-close" (click)="closeModal()" aria-label="Close">&#10005;</button>
         </div>
         <div class="modal-body modal-body--video">
-            <video class="demo-video" controls controlsList="nodownload" disablePictureInPicture
-                oncontextmenu="return false;">
-                <source src="assets/video/acp-demo.mp4" type="video/mp4">
-                Your browser does not support HTML5 video.
-            </video>
+            <iframe class="demo-video" src="https://www.youtube.com/embed/BxmhCzGG7i8?autoplay=1&rel=0"
+                title="ACP Platform Walkthrough" frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>
         </div>
     </div>
 </div>
