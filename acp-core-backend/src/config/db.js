@@ -115,6 +115,26 @@ exports.initSchema = async () => {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id               TEXT PRIMARY KEY,
+      app_name         TEXT,
+      app_type         TEXT,
+      tech_stack       TEXT,
+      cloud_provider   TEXT,
+      deployment_type  TEXT,
+      environment      TEXT,
+      repo_name        TEXT,
+      github_org       TEXT,
+      repo_url         TEXT,
+      files_committed  INTEGER DEFAULT 0,
+      status           TEXT,
+      created_at       TIMESTAMPTZ DEFAULT NOW(),
+      updated_at       TIMESTAMPTZ DEFAULT NOW(),
+      user_id          TEXT
+    )
+  `);
+
   console.log('DB schema ready');
 };
 

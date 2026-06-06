@@ -31,6 +31,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
 import { AcpSecurityComponent } from './acp-security/acp-security.component';
 import { InfraAppSecurityComponent } from './infra-app-security/infra-app-security.component';
 import { AiopsObservabilityComponent } from './aiops-observability/aiops-observability.component';
+import { ViewApplicationsComponent } from './view-applications/view-applications.component';
 
 
 const routes: Routes = [
@@ -65,6 +66,7 @@ const routes: Routes = [
   { path: 'security/acp-security', component: AcpSecurityComponent, canActivate: [AuthGuardService] },
   { path: 'security-compliance/infra-app', component: InfraAppSecurityComponent, canActivate: [AuthGuardService] },
   { path: 'aiops', component: AiopsObservabilityComponent, canActivate: [AuthGuardService] },
+  { path: 'view-applications', component: ViewApplicationsComponent, canActivate: [AuthGuardService] },
 ];
 
 @NgModule({

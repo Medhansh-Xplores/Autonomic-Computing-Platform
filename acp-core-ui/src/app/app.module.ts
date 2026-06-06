@@ -44,6 +44,8 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
 import { AcpSecurityComponent } from './acp-security/acp-security.component';
 import { InfraAppSecurityComponent } from './infra-app-security/infra-app-security.component';
 import { AiopsObservabilityComponent } from './aiops-observability/aiops-observability.component';
+import { AppGenerateComponent } from './app-generate/app-generate.component';
+import { ViewApplicationsComponent } from './view-applications/view-applications.component';
 
 @NgModule({
   declarations: [
@@ -78,6 +80,8 @@ import { AiopsObservabilityComponent } from './aiops-observability/aiops-observa
     AcpSecurityComponent,
     InfraAppSecurityComponent,
     AiopsObservabilityComponent,
+    AppGenerateComponent,
+    ViewApplicationsComponent,
   ],
   imports: [
     BrowserModule,

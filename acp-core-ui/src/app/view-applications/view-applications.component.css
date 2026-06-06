@@ -1,0 +1,181 @@
+.container {
+    padding: 30px;
+    min-height: calc(100vh - 290px);
+}
+
+.create-header-box {
+    width: 50%;
+    margin: 30px auto 15px;
+    padding: 12px;
+    background: #eaeaea;
+    border-radius: 10px;
+    border-left: 4px solid #003160;
+    text-align: center;
+}
+
+.create-header-title {
+    font-size: 20px;
+    font-weight: 750;
+    color: #003160;
+}
+
+.header-subtitle {
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: #003160;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.infra-table {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1.6fr 1.8fr 0.6fr 1fr 1.4fr 0.8fr;
+    padding: 16px;
+    background: #1e4f86;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.4px;
+    border-bottom: 3px solid #ffc107;
+    align-items: center;
+}
+
+.table-header>*,
+.table-row>* {
+    padding: 0 12px;
+}
+
+.table-body {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1.2fr 1.6fr 1.8fr 0.6fr 1fr 1.4fr 0.8fr;
+    padding: 14px 12px;
+    color: #0b2545;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 1px solid #e6e6e6;
+    align-items: center;
+}
+
+.table-row:nth-child(odd) {
+    background: #f2f3f6;
+}
+
+.table-row:nth-child(even) {
+    background: #ccdff5;
+}
+
+.table-row:hover {
+    background: #b8c6f8;
+    border-left: 4px solid #1e4f86;
+    padding-left: 8px;
+}
+
+.app-name {
+    font-weight: 600;
+}
+
+.app-type-badge {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    background: #e3edf9;
+    color: #1e4f86;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.deployment-cell {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+}
+
+.deployment-sub {
+    color: #2c3e50;
+    font-size: 13px;
+}
+
+.header-sub {
+    font-size: 11px;
+    opacity: 0.8;
+    font-weight: normal;
+}
+
+.repo-link {
+    color: #1a73e8;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.repo-link:hover {
+    text-decoration: underline;
+}
+
+.status {
+    font-weight: 600;
+    color: #1e4f86;
+}
+
+.status.running {
+    color: #ff9800;
+}
+
+.status.completed {
+    color: #4caf50;
+}
+
+.status.failed {
+    color: #f44336;
+}
+
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #666;
+}
+
+.delete-btn {
+    background: #e53935;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-btn:hover {
+    background: #c62828;
+}
+
+.table-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.table-body::-webkit-scrollbar-thumb {
+    background: #c2d3f3;
+    border-radius: 10px;
+}
+
+.table-body::-webkit-scrollbar-thumb:hover {
+    background: #9fb8e8;
+}

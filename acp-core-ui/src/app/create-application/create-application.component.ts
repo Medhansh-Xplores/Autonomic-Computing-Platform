@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthServiceService } from '../services/auth-service.service';
 import { EnvService } from 'src/environments/env.service';
 import { IUser } from '../models/user.model';
 import { Subscription } from 'rxjs';
+import { AppGenerateComponent } from '../app-generate/app-generate.component';
 
 @Component({
   selector: 'app-create-application',
@@ -12,6 +13,8 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./create-application.component.css']
 })
 export class CreateApplicationComponent implements OnInit {
+
+  @ViewChild('generateScreen') generateScreen!: AppGenerateComponent;
 
   authSub: Subscription | undefined;
   curUser: IUser | undefined;
@@ -21,19 +24,20 @@ export class CreateApplicationComponent implements OnInit {
   hasErrors = false;
   errorMessages: string[] = [];
 
+  // ── Generation screen toggle
+  showGenerateScreen = false;
+
   // ── Step 1: App Identity
   appName = '';
   appType = '';
-  techStack = '';
   appDescription = '';
-  frontendFramework = '';             // NEW: React / Angular / Vue / None
-  backendFramework = '';              // NEW: Express / FastAPI / Spring Boot / Django / None
+  frontendFramework = '';
+  backendFramework = '';
 
   // ── Step 2: AI Generation / App Detail
-  aiPrompt = '';
-  frontendDescription = '';          // NEW: Describe frontend pages / UX
-  backendDescription = '';           // NEW: Describe backend logic / services
-  apiEndpoints = '';                 // NEW: List key REST endpoints
+  frontendDescription = '';
+  backendDescription = '';
+  apiEndpoints = '';
   database = 'none';
   authType = 'none';
   dataModels = '';
@@ -54,50 +58,16 @@ export class CreateApplicationComponent implements OnInit {
   deploymentOptions: string[] = [];
   environment = '';
   containerPort: number | null = 8080;
-  healthCheckUrl = '/health';
-  domainName = '';                   // NEW: custom domain
-  sslEnabled = true;                 // NEW: SSL toggle
 
-  // ── Step 4: Runtime & Scaling
-  memoryLimit = '';
-  cpu = '';
-  minReplicas: number | null = 1;
-  maxReplicas: number | null = 3;
-  imageTag = 'latest';
-  autoScalingPolicy = 'cpu';         // NEW: cpu / rps / custom
-  storageSize = '';                  // NEW: persistent storage GB
-  loggingLevel = 'info';             // NEW: debug / info / warn / error
-  monitoringEnabled = true;          // NEW: enable APM / monitoring
-
-  // ── Step 5: GitHub & CI/CD
+  // ── Step 4: GitHub & CI/CD
   repoName = '';
   githubOrg = '';
-  branchStrategy = 'main';
-  includeCICD = true;
-  includeTests = true;               // NEW: generate test scaffolding
-  testFramework = '';                // NEW: Jest / Pytest / JUnit
-  codeQualityTools: any[] = [       // NEW: linting / formatting
-    { label: 'ESLint / Pylint', selected: false },
-    { label: 'Prettier', selected: false },
-    { label: 'SonarQube', selected: false },
-    { label: 'Snyk (security scan)', selected: false },
-  ];
-  notifyOnDeploy = false;            // NEW: Slack/email notify
-  notifyChannel = '';                // NEW: Slack channel or email
+  branch = 'main';
+  isPrivate = false;
+  githubPAT = '';
 
-  // ── Generation State
+  // ── Generation State (kept for backwards compat, not shown in form anymore)
   isGenerating = false;
-  generatingMessage = '';
-
-  private generatingMessages = [
-    'Analyzing your requirements...',
-    'Scaffolding project structure...',
-    'Generating application code with AI...',
-    'Creating Dockerfile and container config...',
-    'Building CI/CD pipeline...',
-    'Pushing to GitHub repository...',
-    'Finalizing deployment configuration...',
-  ];
 
   constructor(
     private router: Router,
@@ -155,25 +125,16 @@ export class CreateApplicationComponent implements OnInit {
     }
   }
 
-  // ── Sync repo name from app name
-  syncRepoName(): void {
-    if (!this.repoName || this.repoName === this.slugify(this.appName.slice(0, -1))) {
-      this.repoName = this.slugify(this.appName);
+  onAppTypeChange(): void {
+    if (this.appType === 'MicroService') {
+      this.frontendFramework = '';
+      this.frontendDescription = '';
     }
   }
 
-  // ── Test framework based on stack
-  onStackChange(): void {
-    if (this.techStack.includes('NodeJS') || this.techStack.includes('Rails')) {
-      this.testFramework = 'Jest';
-    } else if (this.techStack.includes('Python')) {
-      this.testFramework = 'Pytest';
-    } else if (this.techStack.includes('Java')) {
-      this.testFramework = 'JUnit';
-    } else if (this.techStack.includes('Go')) {
-      this.testFramework = 'Go Testing';
-    } else {
-      this.testFramework = '';
+  syncRepoName(): void {
+    if (!this.repoName || this.repoName === this.slugify(this.appName.slice(0, -1))) {
+      this.repoName = this.slugify(this.appName);
     }
   }
 
@@ -192,14 +153,16 @@ export class CreateApplicationComponent implements OnInit {
           this.errorMessages.push('App Name must be lowercase, numbers, and hyphens only.');
         }
         if (!this.appType) this.errorMessages.push('App Type is required.');
-        if (!this.techStack) this.errorMessages.push('Programming Stack is required.');
         if (!this.appDescription || this.appDescription.trim().length === 0) {
           this.errorMessages.push('App Description is required.');
         }
         break;
       case 2:
-        if (!this.aiPrompt || this.aiPrompt.trim().length < 20) {
-          this.errorMessages.push('Please describe what the app should do (at least 20 characters).');
+        if (this.appType === 'Full-Stack' && !this.frontendFramework) {
+          this.errorMessages.push('Frontend Framework is required for Full-Stack apps.');
+        }
+        if (!this.backendFramework) {
+          this.errorMessages.push('Backend Framework is required.');
         }
         if (!this.backendDescription || this.backendDescription.trim().length < 10) {
           this.errorMessages.push('Backend description is required (at least 10 characters).');
@@ -209,21 +172,20 @@ export class CreateApplicationComponent implements OnInit {
         if (!this.cloudProvider) this.errorMessages.push('Cloud Provider is required.');
         if (!this.deploymentType) this.errorMessages.push('Deployment Type is required.');
         if (!this.environment) this.errorMessages.push('Environment is required.');
-        if (!this.containerPort || this.containerPort < 1024 || this.containerPort > 49151) {
-          this.errorMessages.push('Container Port must be between 1024 and 49151.');
-        }
+        if (!this.containerPort) this.errorMessages.push('Container Port is required.');
         break;
       case 4:
-        if (!this.memoryLimit) this.errorMessages.push('Memory Limit is required.');
-        if (!this.cpu) this.errorMessages.push('CPU allocation is required.');
-        break;
-      case 5:
         if (!this.repoName || this.repoName.trim().length === 0) {
           this.errorMessages.push('GitHub Repository Name is required.');
         }
-        if (this.notifyOnDeploy && !this.notifyChannel.trim()) {
-          this.errorMessages.push('Please provide a Slack channel or email for deploy notifications.');
+        if (!this.githubOrg || this.githubOrg.trim().length === 0) {
+          this.errorMessages.push('GitHub Organization is required.');
         }
+        if (!this.githubPAT || this.githubPAT.trim().length === 0) {
+          this.errorMessages.push('GitHub Personal Access Token is required to create and push to a repository.');
+        }
+        break;
+      case 5:
         break;
     }
     return this.errorMessages.length === 0;
@@ -237,48 +199,45 @@ export class CreateApplicationComponent implements OnInit {
       return;
     }
     this.hasErrors = false;
-    this.isGenerating = true;
 
-    let msgIndex = 0;
-    this.generatingMessage = this.generatingMessages[0];
-    const msgInterval = setInterval(() => {
-      msgIndex = (msgIndex + 1) % this.generatingMessages.length;
-      this.generatingMessage = this.generatingMessages[msgIndex];
-    }, 2200);
+    // Switch to the progress screen immediately
+    this.showGenerateScreen = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     try {
       const apiBase = this.envService.apiUrl;
-      await this.http.post(`${apiBase}applications/generate`, this.buildPayload()).toPromise();
-      clearInterval(msgInterval);
-      this.isGenerating = false;
-      this.router.navigateByUrl('/appservices');
-    } catch (_err) {
-      clearInterval(msgInterval);
-      // Demo mode: simulate generation steps then redirect
-      let idx = 0;
-      this.generatingMessage = this.generatingMessages[0];
-      const demoInterval = setInterval(() => {
-        idx++;
-        if (idx < this.generatingMessages.length) {
-          this.generatingMessage = this.generatingMessages[idx];
-        }
-      }, 1800);
-      await this.delay(this.generatingMessages.length * 1800);
-      clearInterval(demoInterval);
-      this.isGenerating = false;
-      this.router.navigateByUrl('/appservices');
+      const result: any = await this.http
+        .post(`${apiBase}applications/generate`, this.buildPayload())
+        .toPromise();
+
+      // Tell the progress screen we're done
+      setTimeout(() => {
+        this.generateScreen?.onComplete({
+          repoUrl: result.repoUrl,
+          filesCommitted: result.filesCommitted,
+          summary: result.summary,
+          error: result.error || null,
+        });
+      }, 0);
+
+    } catch (err: any) {
+      const message = err?.error?.error || err?.message || 'Generation failed. Please try again.';
+      setTimeout(() => {
+        this.generateScreen?.onComplete({
+          repoUrl: null,
+          filesCommitted: 0,
+          summary: '',
+          error: message,
+        });
+      }, 0);
     }
   }
 
   private buildPayload(): any {
     return {
-      // Step 1
       appName: this.appName,
       appType: this.appType,
-      techStack: this.techStack,
       appDescription: this.appDescription,
-      // Step 2
-      aiPrompt: this.aiPrompt,
       frontendDescription: this.frontendDescription,
       backendDescription: this.backendDescription,
       apiEndpoints: this.apiEndpoints,
@@ -286,38 +245,17 @@ export class CreateApplicationComponent implements OnInit {
       authType: this.authType,
       dataModels: this.dataModels,
       integrations: this.apiIntegrations.filter(a => a.selected).map(a => a.label),
-      // Step 3
+      frontendFramework: this.frontendFramework,
+      backendFramework: this.backendFramework,
       cloudProvider: this.cloudProvider,
       deploymentType: this.deploymentType,
       environment: this.environment,
       containerPort: this.containerPort,
-      healthCheckUrl: this.healthCheckUrl,
-      domainName: this.domainName,
-      sslEnabled: this.sslEnabled,
-      // Step 4
-      memoryLimit: this.memoryLimit,
-      cpu: this.cpu,
-      minReplicas: this.minReplicas,
-      maxReplicas: this.maxReplicas,
-      imageTag: this.imageTag,
-      autoScalingPolicy: this.autoScalingPolicy,
-      storageSize: this.storageSize,
-      loggingLevel: this.loggingLevel,
-      monitoringEnabled: this.monitoringEnabled,
-      // Step 5
       repoName: this.repoName,
       githubOrg: this.githubOrg,
-      branchStrategy: this.branchStrategy,
-      includeCICD: this.includeCICD,
-      includeTests: this.includeTests,
-      testFramework: this.testFramework,
-      codeQualityTools: this.codeQualityTools.filter(t => t.selected).map(t => t.label),
-      notifyOnDeploy: this.notifyOnDeploy,
-      notifyChannel: this.notifyChannel,
+      branch: this.branch,
+      isPrivate: this.isPrivate,
+      githubPAT: this.githubPAT,
     };
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

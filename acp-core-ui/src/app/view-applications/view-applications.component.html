@@ -1,0 +1,82 @@
+<div class="container">
+
+    <div class="create-header-box">
+        <div class="header-subtitle">APPLICATION SERVICES</div>
+        <div class="create-header-title">VIEW CREATED APPLICATIONS</div>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="applications.length === 0" class="empty">
+        No Applications Found
+    </div>
+
+    <!-- Table -->
+    <div class="infra-table" *ngIf="applications.length > 0">
+
+        <!-- Header -->
+        <div class="table-header">
+            <th>Application</th>
+            <th>Tech Stack</th>
+            <th>
+                Cloud & Deployment
+                <div class="header-sub">Provider · Type · Env</div>
+            </th>
+            <th>GitHub Repo</th>
+            <th>Files</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </div>
+
+        <!-- Rows -->
+        <div class="table-body">
+            <div class="table-row" *ngFor="let app of applications">
+
+                <!-- Application -->
+                <div>
+                    <div class="app-name">{{ app.app_name || '—' }}</div>
+                    <div class="app-type-badge">{{ app.app_type || '' }}</div>
+                </div>
+
+                <!-- Tech Stack -->
+                <div>{{ app.tech_stack || '—' }}</div>
+
+                <!-- Cloud & Deployment -->
+                <div class="deployment-cell">
+                    <div class="deployment-sub">{{ app.cloud_provider || '—' }}</div>
+                    <div class="deployment-sub">{{ app.deployment_type || '—' }}</div>
+                    <div class="deployment-sub">{{ app.environment || '—' }}</div>
+                </div>
+
+                <!-- GitHub Repo -->
+                <div>
+                    <a *ngIf="app.repo_url" [href]="app.repo_url" target="_blank" rel="noopener" class="repo-link">
+                        {{ app.github_org }}/{{ app.repo_name }}
+                    </a>
+                    <span *ngIf="!app.repo_url">{{ app.github_org }}/{{ app.repo_name }}</span>
+                </div>
+
+                <!-- Files Committed -->
+                <div>{{ app.files_committed ?? '—' }}</div>
+
+                <!-- Status -->
+                <div class="status" [ngClass]="getStatusClass(app)">
+                    {{ getStatusLabel(app) }}
+                </div>
+
+                <!-- Created At -->
+                <div>{{ app.created_at ? (app.created_at | date:'medium') : '—' }}</div>
+
+                <!-- Actions -->
+                <div>
+                    <button class="delete-btn" (click)="deleteApplication($event, app)">
+                        Delete
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,69 @@
+<div class="gen-overlay">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="gen-header">
+    <div class="gen-logo">✨</div>
+    <div>
+      <div class="gen-title">{{ isGenerating ? 'Generating Your Application Code' : (hasError ? 'Generation Failed' :
+        'Application Ready!') }}</div>
+      <div class="gen-subtitle">{{ appName || 'your-app' }} → {{ githubOrg }}/{{ repoName }}</div>
+    </div>
+  </div>
+
+  <!-- ── Phase steps (shown while generating) ───────────────────────────── -->
+  <div class="gen-steps" *ngIf="isGenerating || (!isGenerating && !hasError)">
+    <div class="gen-step" *ngFor="let step of phaseSteps" [class.done]="step.done" [class.active]="step.active">
+
+      <div class="step-icon-wrap">
+        <span class="step-icon" *ngIf="!step.done">{{ step.icon }}</span>
+        <span class="step-check" *ngIf="step.done">✓</span>
+        <div class="step-pulse" *ngIf="step.active && !step.done"></div>
+      </div>
+
+      <span class="step-label">{{ step.label }}</span>
+    </div>
+  </div>
+
+  <!-- ── Spinner bar (while generating) ────────────────────────────────── -->
+  <div class="gen-progress-bar" *ngIf="isGenerating">
+    <div class="gen-progress-fill"></div>
+  </div>
+
+  <!-- ── Success result ─────────────────────────────────────────────────── -->
+  <div class="gen-result success" *ngIf="!isGenerating && !hasError && result">
+    <div class="result-badge success-badge">✓ Success</div>
+
+    <div class="result-stats">
+      <div class="stat-card">
+        <div class="stat-number">{{ result.filesCommitted }}</div>
+        <div class="stat-label">Files committed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">1</div>
+        <div class="stat-label">Repo created</div>
+      </div>
+    </div>
+
+    <div class="result-summary">{{ result.summary }}</div>
+
+    <div class="deploy-hint">
+      🚀 Ready to go live? Deploy your app on your cloud platform using
+      <a class="hint-link" (click)="goToDeployment()">Automation &amp; Deployment Services</a>.
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-primary" (click)="openRepo()">Open Repository ↗</button>
+      <button class="btn-secondary" (click)="goToAppServices()">Back to Application Services</button>
+    </div>
+  </div>
+
+  <!-- ── Error result ───────────────────────────────────────────────────── -->
+  <div class="gen-result error" *ngIf="!isGenerating && hasError && result">
+    <div class="result-badge error-badge">✗ Failed</div>
+    <div class="error-message">{{ result.error || 'Generation failed. Please check backend logs.' }}</div>
+    <div class="result-actions">
+      <button class="btn-secondary" (click)="goToAppServices()">Back to Application Services</button>
+    </div>
+  </div>
+
+</div>

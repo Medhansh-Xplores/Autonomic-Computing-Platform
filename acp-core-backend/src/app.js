@@ -31,6 +31,7 @@ const securityRoutes = require('./routes/security.routes');
 const aiopsRoutes = require('./routes/aiops.routes');
 const costRoutes = require('./routes/cost.routes');       // Raghu
 const azureRoutes = require('./routes/azure.routes');     // Raghu
+const applicationsRoutes = require('./routes/applications.routes');
 
 // API Version
 app.use("/api/v1/tenants", tenantRoutes);
@@ -48,6 +49,7 @@ app.use('/api/v1/security', securityRoutes);
 app.use('/api/v1/aiops', aiopsRoutes);
 app.use('/api/v1/cost-estimates', costRoutes);           // Raghu
 app.use('/api/v1/azure', azureRoutes);                   // Raghu
+app.use('/api/v1/applications', applicationsRoutes);
 
 // Health
 app.get("/health", (req, res) => {

@@ -1,4 +1,9 @@
-<div class="container">
+<div *ngIf="showGenerateScreen">
+  <app-generate #generateScreen [appName]="appName" [repoName]="repoName" [githubOrg]="githubOrg">
+  </app-generate>
+</div>
+
+<div class="container" [hidden]="showGenerateScreen">
 
   <!-- ── HEADER BOX ──────────────────────────────────────────── -->
   <div class="create-header-box">
@@ -41,7 +46,7 @@
           <span *ngIf="currentStep <= 4">4</span>
           <span *ngIf="currentStep > 4" class="check-icon">✓</span>
         </div>
-        <div class="step-label">Runtime</div>
+        <div class="step-label">GitHub</div>
       </div>
       <div class="step-connector" [class.filled]="currentStep > 4"></div>
 
@@ -50,7 +55,7 @@
           <span *ngIf="currentStep <= 5">5</span>
           <span *ngIf="currentStep > 5" class="check-icon">✓</span>
         </div>
-        <div class="step-label">GitHub & CI/CD</div>
+        <div class="step-label">Review & Deploy</div>
       </div>
     </div>
   </div>
@@ -72,6 +77,7 @@
         <span class="panel-icon">📦</span>
         Step 1 — App Identity &amp; Architecture
       </div>
+      <!-- REMOVE everything inside form-panel-body of Step 1 and replace with: -->
       <div class="form-panel-body">
 
         <!-- Row: App Name + App Type -->
@@ -84,65 +90,19 @@
           </div>
           <div class="form-group">
             <label class="form-label">App Type <span class="required">*</span></label>
-            <select class="usa-select" [(ngModel)]="appType">
+            <select class="usa-select" [(ngModel)]="appType" (change)="onAppTypeChange()">
               <option value="">-- Select Type --</option>
               <option value="MicroService">MicroService</option>
-              <option value="WebApp">Web Application</option>
-              <option value="REST-API">REST API</option>
               <option value="Full-Stack">Full-Stack App</option>
             </select>
           </div>
         </div>
-        <!-- Row: Frontend Framework + Backend Framework -->
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Frontend Framework</label>
-            <select class="usa-select" [(ngModel)]="frontendFramework">
-              <option value="">-- None / Backend only --</option>
-              <option value="React">React</option>
-              <option value="Angular">Angular</option>
-              <option value="Vue">Vue.js</option>
-              <option value="Next.js">Next.js (SSR)</option>
-              <option value="Svelte">Svelte</option>
-              <option value="Plain HTML/CSS">Plain HTML / CSS</option>
-            </select>
-            <span class="field-hint">Leave blank if this is a pure backend / API service.</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Backend Framework</label>
-            <select class="usa-select" [(ngModel)]="backendFramework">
-              <option value="">-- None / Frontend only --</option>
-              <option value="Express">Node.js + Express</option>
-              <option value="NestJS">Node.js + NestJS</option>
-              <option value="FastAPI">Python + FastAPI</option>
-              <option value="Django">Python + Django</option>
-              <option value="Spring Boot">Java + Spring Boot</option>
-              <option value="Gin">Go + Gin</option>
-              <option value="Rails">Ruby on Rails</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Stack -->
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Primary Language / Stack <span class="required">*</span></label>
-            <select class="usa-select" [(ngModel)]="techStack" (change)="onStackChange()">
-              <option value="">-- Select Stack --</option>
-              <option value="NodeJS-Express">Node.js + Express</option>
-              <option value="Python-FastAPI">Python + FastAPI</option>
-              <option value="Java-SpringBoot">Java + Spring Boot</option>
-              <option value="Go">Go</option>
-              <option value="Rails">Ruby on Rails</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- App Description (full width) -->
+        <!-- App Description -->
         <div class="form-group">
           <label class="form-label">App Description <span class="required">*</span></label>
           <textarea class="usa-textarea" [(ngModel)]="appDescription" rows="3"
-            placeholder="e.g. A microservice that manages product inventory. It exposes REST APIs for CRUD operations on products, categories, and stock levels, consumed by the e-commerce frontend."></textarea>
+            placeholder="e.g. A microservice that manages product inventory..."></textarea>
           <span class="field-hint">1–3 sentences covering the app's purpose and what problem it solves.</span>
         </div>
 
@@ -155,66 +115,92 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- STEP 2 — APP DETAILS & AI GENERATION                         -->
-  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- STEP 2 — TECH STACK & AI GENERATION -->
   <div class="form-page" [hidden]="currentStep !== 2">
 
-    <!-- AI Prompt Panel -->
+    <!-- Tech Stack Panel -->
     <div class="form-panel">
       <div class="form-panel-header">
-        <span class="panel-icon">🤖</span>
-        Step 2 — App Details &amp; AI Generation
+        <span class="panel-icon">🛠️</span>
+        Step 2 — Tech Stack &amp; AI Generation
       </div>
       <div class="form-panel-body">
 
-        <div class="form-group">
-          <label class="form-label">Overall App Description (for AI) <span class="required">*</span></label>
-          <textarea class="usa-textarea" [(ngModel)]="aiPrompt" rows="4"
-            placeholder="Describe the app's full functionality in plain English. e.g.:&#10;'A REST API for managing inventory. Supports CRUD for products, categories, and stock levels. Needs JWT auth and PostgreSQL. Include pagination and search filtering.'"></textarea>
-          <span class="field-hint">The more detail you provide, the better the generated code will be.</span>
-        </div>
+        <div class="form-row-2">
 
+          <!-- Frontend Framework — Full-Stack only -->
+          <div class="form-group" *ngIf="appType === 'Full-Stack'">
+            <label class="form-label">Frontend Framework <span class="required">*</span></label>
+            <select class="usa-select" [(ngModel)]="frontendFramework">
+              <option value="">-- Select Framework --</option>
+              <option value="React">React</option>
+              <option value="Angular">Angular</option>
+              <option value="Vue">Vue.js</option>
+              <option value="Next.js">Next.js (SSR)</option>
+              <option value="Svelte">Svelte</option>
+              <option value="Plain HTML/CSS">Plain HTML / CSS</option>
+            </select>
+          </div>
+
+          <!-- Backend Framework -->
+          <div class="form-group">
+            <label class="form-label">Backend Framework <span class="required">*</span></label>
+            <select class="usa-select" [(ngModel)]="backendFramework">
+              <option value="">-- Select Framework --</option>
+              <option value="Express">Node.js + Express</option>
+              <option value="NestJS">Node.js + NestJS</option>
+              <option value="FastAPI">Python + FastAPI</option>
+              <option value="Django">Python + Django</option>
+              <option value="Spring Boot">Java + Spring Boot</option>
+              <option value="Gin">Go + Gin</option>
+              <option value="Rails">Ruby on Rails</option>
+            </select>
+          </div>
+
+        </div>
       </div>
     </div>
 
-    <!-- Frontend & Backend Detail Panel -->
+    <!-- Descriptions Panel -->
     <div class="form-panel">
       <div class="form-panel-header">
         <span class="panel-icon">🖥️</span>
-        Frontend &amp; Backend Description
+        App Details
       </div>
       <div class="form-panel-body">
 
-        <div class="form-group">
+        <!-- Frontend Description — Full-Stack only -->
+        <div class="form-group" *ngIf="appType === 'Full-Stack'">
           <label class="form-label">Frontend Description</label>
           <textarea class="usa-textarea" [(ngModel)]="frontendDescription" rows="4"
-            placeholder="Describe the UI/UX of the app. e.g.:&#10;- Dashboard with a product table, search bar, and filter by category&#10;- Product detail page with edit form&#10;- Login page with email + password&#10;- Responsive layout using Tailwind CSS&#10;&#10;Leave blank if this is a backend-only service."></textarea>
-          <span class="field-hint">List the key pages, components, user flows, and UI behaviour you expect to be
-            generated.</span>
+            placeholder="Describe the key pages, components, and user flows. e.g.:&#10;- Dashboard with product table, search bar, filter by category&#10;- Login page with email + password&#10;- Responsive layout using Tailwind CSS"></textarea>
+          <span class="field-hint">List the key pages, components, and user flows you expect to be generated.</span>
         </div>
 
+        <!-- Backend Description -->
         <div class="form-group">
           <label class="form-label">Backend Description <span class="required">*</span></label>
           <textarea class="usa-textarea" [(ngModel)]="backendDescription" rows="4"
-            placeholder="Describe the backend services and logic. e.g.:&#10;- Products service: CRUD with soft-delete, category linking&#10;- Stock service: increment / decrement with low-stock alerts&#10;- Auth service: JWT login, refresh tokens, role-based access (admin, viewer)&#10;- Scheduled job: daily stock report email via SendGrid"></textarea>
+            placeholder="Describe the backend services and logic. e.g.:&#10;- Products service: CRUD with soft-delete, category linking&#10;- Auth service: JWT login, refresh tokens, role-based access (admin, viewer)&#10;- Scheduled job: daily stock report email"></textarea>
           <span class="field-hint">Describe each service/module, its responsibilities, and key business logic.</span>
         </div>
 
+        <!-- Key API Endpoints -->
         <div class="form-group">
           <label class="form-label">Key API Endpoints</label>
           <textarea class="usa-textarea" [(ngModel)]="apiEndpoints" rows="4"
-            placeholder="List the main REST / GraphQL endpoints. e.g.:&#10;GET    /products          – list with pagination &amp; filter&#10;POST   /products          – create product&#10;PUT    /products/:id      – update product&#10;DELETE /products/:id      – soft delete&#10;POST   /auth/login        – returns JWT&#10;GET    /stock/:productId  – get stock level"></textarea>
+            placeholder="GET    /products&#10;POST   /products&#10;PUT    /products/:id&#10;DELETE /products/:id&#10;POST   /auth/login"></textarea>
           <span class="field-hint">Not exhaustive — just the key routes. AI will infer CRUD variants.</span>
         </div>
+
       </div>
     </div>
 
-    <!-- Data & Integrations Panel -->
+    <!-- Data & Auth Panel -->
     <div class="form-panel">
       <div class="form-panel-header">
         <span class="panel-icon">🗄️</span>
-        Data, Auth &amp; Integrations
+        Data &amp; Auth
       </div>
       <div class="form-panel-body">
 
@@ -241,24 +227,11 @@
           </div>
         </div>
 
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Data Models / Entities</label>
-            <input type="text" class="usa-input" [(ngModel)]="dataModels"
-              placeholder="e.g. User, Product, Order, Category">
-            <span class="field-hint">Comma-separated. AI will generate schema + CRUD for each.</span>
-          </div>
-        </div>
-
         <div class="form-group">
-          <label class="form-label">APIs / Integrations</label>
-          <div class="tag-grid">
-            <label class="tag-checkbox" *ngFor="let api of apiIntegrations">
-              <input type="checkbox" [(ngModel)]="api.selected">
-              <span>{{ api.label }}</span>
-            </label>
-          </div>
-          <span class="field-hint">Select all that apply. AI will scaffold the relevant modules.</span>
+          <label class="form-label">Data Models / Entities</label>
+          <input type="text" class="usa-input" [(ngModel)]="dataModels"
+            placeholder="e.g. User, Product, Order, Category">
+          <span class="field-hint">Comma-separated. AI will generate schema + CRUD for each.</span>
         </div>
 
       </div>
@@ -319,29 +292,6 @@
               max="49151">
             <span class="field-hint">Port your app listens on inside the container (1024–49151).</span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Health Check URL</label>
-            <input type="text" class="usa-input" [(ngModel)]="healthCheckUrl" placeholder="/health">
-            <span class="field-hint">Used by load balancer and readiness probes.</span>
-          </div>
-        </div>
-
-        <div class="form-row-2" *ngIf="cloudProvider">
-          <div class="form-group">
-            <label class="form-label">Custom Domain Name</label>
-            <input type="text" class="usa-input" [(ngModel)]="domainName" placeholder="e.g. inventory.mycompany.com">
-            <span class="field-hint">Leave blank to use the cloud provider's default DNS.</span>
-          </div>
-          <div class="form-group toggle-group">
-            <label class="form-label">Enable SSL / HTTPS</label>
-            <div class="toggle-row">
-              <label class="toggle-switch">
-                <input type="checkbox" [(ngModel)]="sslEnabled">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">{{ sslEnabled ? 'Yes — TLS certificate will be provisioned' : 'No' }}</span>
-            </div>
-          </div>
         </div>
 
       </div>
@@ -354,122 +304,13 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- STEP 4 — RUNTIME & SCALING                                   -->
+  <!-- STEP 4 — GITHUB & CI/CD + REVIEW                            -->
   <!-- ════════════════════════════════════════════════════════════ -->
   <div class="form-page" [hidden]="currentStep !== 4">
     <div class="form-panel">
       <div class="form-panel-header">
-        <span class="panel-icon">⚙️</span>
-        Step 4 — Runtime &amp; Scaling
-      </div>
-      <div class="form-panel-body">
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Memory Limit <span class="required">*</span></label>
-            <select class="usa-select" [(ngModel)]="memoryLimit">
-              <option value="">-- Select --</option>
-              <option value="256">256 MB</option>
-              <option value="512">512 MB</option>
-              <option value="1024">1 GB</option>
-              <option value="2048">2 GB</option>
-              <option value="4096">4 GB</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">CPU <span class="required">*</span></label>
-            <select class="usa-select" [(ngModel)]="cpu">
-              <option value="">-- Select --</option>
-              <option value="0.25">0.25 vCPU</option>
-              <option value="0.5">0.5 vCPU</option>
-              <option value="1">1 vCPU</option>
-              <option value="2">2 vCPU</option>
-              <option value="4">4 vCPU</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Min Replicas</label>
-            <input type="number" class="usa-input" [(ngModel)]="minReplicas" placeholder="1" min="1" max="10">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Max Replicas</label>
-            <input type="number" class="usa-input" [(ngModel)]="maxReplicas" placeholder="3" min="1" max="50">
-          </div>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Auto-Scaling Policy</label>
-            <select class="usa-select" [(ngModel)]="autoScalingPolicy">
-              <option value="cpu">CPU-based (scale when CPU &gt; 70%)</option>
-              <option value="rps">RPS-based (scale on requests/sec)</option>
-              <option value="memory">Memory-based</option>
-              <option value="custom">Custom / Manual</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Persistent Storage</label>
-            <select class="usa-select" [(ngModel)]="storageSize">
-              <option value="">None (stateless)</option>
-              <option value="5">5 GB</option>
-              <option value="20">20 GB</option>
-              <option value="50">50 GB</option>
-              <option value="100">100 GB</option>
-              <option value="500">500 GB</option>
-            </select>
-            <span class="field-hint">Only needed if the container writes data to disk.</span>
-          </div>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label">Container Image Tag</label>
-            <input type="text" class="usa-input" [(ngModel)]="imageTag" placeholder="latest">
-            <span class="field-hint">Leave as 'latest' or specify a version tag e.g. v1.0.0</span>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Logging Level</label>
-            <select class="usa-select" [(ngModel)]="loggingLevel">
-              <option value="debug">Debug (verbose)</option>
-              <option value="info">Info (recommended)</option>
-              <option value="warn">Warn</option>
-              <option value="error">Error only</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group toggle-group">
-          <label class="form-label">Enable APM / Monitoring</label>
-          <div class="toggle-row">
-            <label class="toggle-switch">
-              <input type="checkbox" [(ngModel)]="monitoringEnabled">
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">{{ monitoringEnabled ? 'Yes — metrics, tracing, and alerts will be configured' :
-              'No' }}</span>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="navbutton">
-      <button class="btn-cancel" (click)="prevStep()">← Back</button>
-      <button class="custombutton" (click)="nextStep()">Next →</button>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- STEP 5 — GITHUB & CI/CD + REVIEW                            -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div class="form-page" [hidden]="currentStep !== 5">
-    <div class="form-panel">
-      <div class="form-panel-header">
         <span class="panel-icon">🔗</span>
-        Step 5 — GitHub &amp; CI/CD
+        Step 4 — GitHub &amp; CI/CD
       </div>
       <div class="form-panel-body">
 
@@ -479,89 +320,55 @@
             <input type="text" class="usa-input" [(ngModel)]="repoName" placeholder="my-service-repo">
           </div>
           <div class="form-group">
-            <label class="form-label">GitHub Organization</label>
+            <label class="form-label">GitHub Organization <span class="required">*</span></label>
             <input type="text" class="usa-input" [(ngModel)]="githubOrg" placeholder="my-org">
           </div>
         </div>
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">Branch Strategy</label>
-            <select class="usa-select" [(ngModel)]="branchStrategy">
-              <option value="main">Main only</option>
-              <option value="gitflow">GitFlow (main + develop + feature/*)</option>
-              <option value="trunk">Trunk-based</option>
-            </select>
+            <label class="form-label">Branch</label>
+            <input type="text" class="usa-input" [(ngModel)]="branch" placeholder="main">
+            <span class="field-hint">Branch the files will be committed to. Defaults to main.</span>
           </div>
           <div class="form-group toggle-group">
-            <label class="form-label">Include CI/CD Pipeline?</label>
+            <label class="form-label">Repository Visibility</label>
             <div class="toggle-row">
               <label class="toggle-switch">
-                <input type="checkbox" [(ngModel)]="includeCICD">
+                <input type="checkbox" [(ngModel)]="isPrivate">
                 <span class="toggle-slider"></span>
               </label>
-              <span class="toggle-label">{{ includeCICD ? 'Yes — GitHub Actions workflow will be generated' : 'No'
-                }}</span>
+              <span class="toggle-label">{{ isPrivate ? 'Private — repo will be private' : 'Public — repo will be
+                public' }}</span>
             </div>
-          </div>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group toggle-group">
-            <label class="form-label">Generate Test Scaffolding?</label>
-            <div class="toggle-row">
-              <label class="toggle-switch">
-                <input type="checkbox" [(ngModel)]="includeTests">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">{{ includeTests ? 'Yes — unit + integration test files will be created' : 'No'
-                }}</span>
-            </div>
-          </div>
-          <div class="form-group" *ngIf="includeTests">
-            <label class="form-label">Test Framework</label>
-            <input type="text" class="usa-input" [(ngModel)]="testFramework" placeholder="e.g. Jest, Pytest, JUnit">
-            <span class="field-hint">Auto-detected from your stack. Override if needed.</span>
+            <span class="field-hint">Controls whether the generated GitHub repository is public or private.</span>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Code Quality Tools</label>
-          <div class="tag-grid">
-            <label class="tag-checkbox" *ngFor="let tool of codeQualityTools">
-              <input type="checkbox" [(ngModel)]="tool.selected">
-              <span>{{ tool.label }}</span>
-            </label>
-          </div>
-          <span class="field-hint">Selected tools will be configured in the CI pipeline.</span>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group toggle-group">
-            <label class="form-label">Notify on Deploy?</label>
-            <div class="toggle-row">
-              <label class="toggle-switch">
-                <input type="checkbox" [(ngModel)]="notifyOnDeploy">
-                <span class="toggle-slider"></span>
-              </label>
-              <span class="toggle-label">{{ notifyOnDeploy ? 'Yes' : 'No' }}</span>
-            </div>
-          </div>
-          <div class="form-group" *ngIf="notifyOnDeploy">
-            <label class="form-label">Slack Channel or Email <span class="required">*</span></label>
-            <input type="text" class="usa-input" [(ngModel)]="notifyChannel"
-              placeholder="#deployments or team@company.com">
-          </div>
+          <label class="form-label">GitHub Personal Access Token (PAT) <span class="required">*</span></label>
+          <input type="password" class="usa-input" [(ngModel)]="githubPAT" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <span class="field-hint">Requires <strong>repo</strong> scope. Needed to create the repository and push
+            generated files — never stored.</span>
         </div>
 
       </div>
     </div>
 
-    <!-- ── REVIEW SUMMARY ─────────────────────────────────────── -->
+    <div class="navbutton">
+      <button class="btn-cancel" (click)="prevStep()">← Back</button>
+      <button class="custombutton" (click)="nextStep()">Next →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 — REVIEW & DEPLOY -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div class="form-page" [hidden]="currentStep !== 5">
+
     <div class="form-panel review-panel">
       <div class="form-panel-header">
         <span class="panel-icon">📋</span>
-        Review Summary
+        Step 5 — Review &amp; Deploy
       </div>
       <div class="form-panel-body">
 
@@ -580,10 +387,6 @@
             <td class="review-key">Backend</td>
             <td class="review-val">{{ backendFramework || 'None' }}</td>
           </tr>
-          <tr>
-            <td class="review-key">Stack</td>
-            <td class="review-val">{{ techStack || '—' }}</td>
-          </tr>
         </table>
 
         <!-- Section: App Details -->
@@ -601,8 +404,8 @@
           </tr>
         </table>
 
-        <!-- Section: Deployment & Runtime -->
-        <div class="review-section-label">Deployment &amp; Runtime</div>
+        <!-- Section: Deployment -->
+        <div class="review-section-label">Deployment</div>
         <table class="review-table">
           <tr>
             <td class="review-key">Cloud</td>
@@ -616,66 +419,32 @@
             <td class="review-key">Port</td>
             <td class="review-val">{{ containerPort || '—' }}</td>
           </tr>
-          <tr>
-            <td class="review-key">Domain</td>
-            <td class="review-val">{{ domainName || 'Default DNS' }}</td>
-            <td class="review-key">SSL</td>
-            <td class="review-val">{{ sslEnabled ? 'Enabled' : 'Disabled' }}</td>
-          </tr>
-          <tr>
-            <td class="review-key">Memory</td>
-            <td class="review-val">{{ memoryLimit ? memoryLimit + ' MB' : '—' }}</td>
-            <td class="review-key">CPU</td>
-            <td class="review-val">{{ cpu ? cpu + ' vCPU' : '—' }}</td>
-          </tr>
-          <tr>
-            <td class="review-key">Replicas</td>
-            <td class="review-val">{{ minReplicas || 1 }} – {{ maxReplicas || 3 }}</td>
-            <td class="review-key">Auto-Scale</td>
-            <td class="review-val">{{ autoScalingPolicy || '—' }}</td>
-          </tr>
-          <tr>
-            <td class="review-key">Monitoring</td>
-            <td class="review-val">{{ monitoringEnabled ? 'Enabled' : 'Disabled' }}</td>
-            <td class="review-key">Log Level</td>
-            <td class="review-val">{{ loggingLevel || '—' }}</td>
-          </tr>
         </table>
 
-        <!-- Section: CI/CD -->
-        <div class="review-section-label">GitHub &amp; CI/CD</div>
+        <!-- Section: GitHub -->
+        <div class="review-section-label">GitHub</div>
         <table class="review-table">
           <tr>
             <td class="review-key">GitHub Repo</td>
             <td class="review-val">{{ githubOrg ? githubOrg + '/' : '' }}{{ repoName || '—' }}</td>
-            <td class="review-key">Branch Strategy</td>
-            <td class="review-val">{{ branchStrategy || '—' }}</td>
+            <td class="review-key">Branch</td>
+            <td class="review-val">{{ branch || 'main' }}</td>
           </tr>
           <tr>
-            <td class="review-key">CI/CD</td>
-            <td class="review-val">{{ includeCICD ? 'GitHub Actions' : 'None' }}</td>
-            <td class="review-key">Tests</td>
-            <td class="review-val">{{ includeTests ? testFramework || 'Yes' : 'No' }}</td>
-          </tr>
-          <tr>
-            <td class="review-key">Notify</td>
-            <td class="review-val" colspan="3">{{ notifyOnDeploy ? notifyChannel : 'Disabled' }}</td>
+            <td class="review-key">Visibility</td>
+            <td class="review-val">{{ isPrivate ? 'Private' : 'Public' }}</td>
+            <td class="review-key">PAT</td>
+            <td class="review-val">{{ githubPAT ? '••••••••' : '—' }}</td>
           </tr>
         </table>
 
       </div>
     </div>
 
-    <!-- AI generating progress -->
-    <div class="generating-box" *ngIf="isGenerating">
-      <div class="generating-spinner"></div>
-      <div class="generating-text">{{ generatingMessage }}</div>
-    </div>
-
     <div class="navbutton">
       <button class="btn-cancel" (click)="prevStep()">← Back</button>
       <button class="custombutton generate-btn" (click)="generate()" [disabled]="isGenerating">
-        <span *ngIf="!isGenerating">🚀 Generate &amp; Deploy</span>
+        <span *ngIf="!isGenerating">🚀 Generate Application Code</span>
         <span *ngIf="isGenerating">Generating...</span>
       </button>
     </div>
